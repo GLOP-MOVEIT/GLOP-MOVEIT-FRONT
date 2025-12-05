@@ -2,18 +2,19 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import userService from '@/services/userService'
 import type { User, LoginRequest, RegisterRequest } from '@/types/user'
+import { UserRole } from '@/types/user'
 
 export const useUserStore = defineStore('user', () => {
-  // État
-  const user = ref<User | null>(null)
+  // État - Initialiser depuis le localStorage
+  const user = ref<User | null>(userService.getCurrentUser())
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
   // Getters
-  const isAuthenticated = computed(() => !!user.value)
-  const userRole = computed(() => user.value?.role || null)
-  const isAdmin = computed(() => user.value?.role === 'admin')
-  const isCommissaire = computed(() => user.value?.role === 'commissaire')
+  const isAuthenticated = computed(() => !!user.value && userService.isAuthenticated())
+  const userRole = computed(() => user.value?.role?.name || null)
+  const isAdmin = computed(() => user.value?.role?.name === UserRole.ADMIN)
+  const isSpectator = computed(() => user.value?.role?.name === UserRole.SPECTATOR)
 
   // Actions
   async function login(credentials: LoginRequest) {
@@ -37,9 +38,11 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      const response = await userService.register(userData)
-      user.value = response.user
-      return response
+      // Le backend Spring Boot ne retourne que l'utilisateur, pas de token
+      const registeredUser = await userService.register(userData)
+      // On ne connecte pas automatiquement l'utilisateur après l'inscription
+      // Il devra se connecter manuellement
+      return { success: true, user: registeredUser }
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Erreur lors de l\'inscription'
       throw err
@@ -48,19 +51,9 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  async function logout() {
-    isLoading.value = true
-    error.value = null
-
-    try {
-      await userService.logout()
-      user.value = null
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Erreur lors de la déconnexion'
-      console.error('Logout error:', err)
-    } finally {
-      isLoading.value = false
-    }
+  function logout() {
+    userService.logout()
+    user.value = null
   }
 
   async function fetchCurrentUser() {
@@ -98,7 +91,7 @@ export const useUserStore = defineStore('user', () => {
     isAuthenticated,
     userRole,
     isAdmin,
-    isCommissaire,
+    isSpectator,
     // Actions
     login,
     register,

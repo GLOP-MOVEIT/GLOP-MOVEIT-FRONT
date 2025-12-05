@@ -114,7 +114,7 @@
               v-model="validRegister"
               @submit.prevent="handleRegister"
             >
-              <!-- Nom -->
+              <!-- Prénom -->
               <v-text-field
                 v-model="registerData.firstName"
                 :rules="[(v) => !!v || 'Le prénom est requis']"
@@ -125,13 +125,28 @@
                 class="mb-3"
               ></v-text-field>
 
-              <!-- Prénom -->
+              <!-- Nom -->
               <v-text-field
-                v-model="registerData.lastName"
+                v-model="registerData.surname"
                 :rules="[(v) => !!v || 'Le nom est requis']"
                 label="Nom"
                 prepend-inner-icon="mdi-account"
                 variant="outlined"
+                required
+                class="mb-3"
+              ></v-text-field>
+
+              <!-- Téléphone -->
+              <v-text-field
+                v-model="registerData.phoneNumber"
+                :rules="[
+                  (v) => !!v || 'Le numéro de téléphone est requis',
+                  (v) => /^[0-9]{10}$/.test(v) || 'Le numéro doit contenir 10 chiffres'
+                ]"
+                label="Numéro de téléphone"
+                prepend-inner-icon="mdi-phone"
+                variant="outlined"
+                type="tel"
                 required
                 class="mb-3"
               ></v-text-field>
@@ -181,7 +196,7 @@
 
               <!-- Options de consentement -->
               <v-checkbox
-                v-model="registerData.acceptNotifications"
+                v-model="registerData.acceptsNotifications"
                 color="primary"
                 hide-details
                 class="mb-2"
@@ -194,7 +209,7 @@
               </v-checkbox>
 
               <v-checkbox
-                v-model="registerData.acceptLocation"
+                v-model="registerData.acceptsLocation"
                 color="primary"
                 hide-details
                 class="mb-2"
@@ -309,13 +324,14 @@ const showRegisterForm = ref(false)
 // Données d'inscription
 const registerData = ref({
   firstName: '',
-  lastName: '',
+  surname: '',
+  phoneNumber: '',
   email: '',
   password: '',
   confirmPassword: '',
   acceptTerms: false,
-  acceptNotifications: false,
-  acceptLocation: false,
+  acceptsNotifications: false,
+  acceptsLocation: false,
 })
 
 // Règles de validation
@@ -343,7 +359,6 @@ const handleLogin = async () => {
     const credentials: LoginRequest = {
       email: email.value,
       password: password.value,
-      rememberMe: rememberMe.value,
     }
 
     await userStore.login(credentials)
@@ -373,13 +388,14 @@ const toggleForm = () => {
   password.value = ''
   registerData.value = {
     firstName: '',
-    lastName: '',
+    surname: '',
+    phoneNumber: '',
     email: '',
     password: '',
     confirmPassword: '',
     acceptTerms: false,
-    acceptNotifications: false,
-    acceptLocation: false,
+    acceptsNotifications: false,
+    acceptsLocation: false,
   }
 }
 
@@ -396,19 +412,22 @@ const handleRegister = async () => {
   try {
     const userData: RegisterRequest = {
       firstName: registerData.value.firstName,
-      lastName: registerData.value.lastName,
+      surname: registerData.value.surname,
+      phoneNumber: registerData.value.phoneNumber,
       email: registerData.value.email,
       password: registerData.value.password,
+      acceptsNotifications: registerData.value.acceptsNotifications,
+      acceptsLocation: registerData.value.acceptsLocation,
       confirmPassword: registerData.value.confirmPassword,
       acceptTerms: registerData.value.acceptTerms,
-      acceptNotifications: registerData.value.acceptNotifications,
-      acceptLocation: registerData.value.acceptLocation,
     }
 
     await userStore.register(userData)
     
-    // Après inscription réussie, rediriger vers l'accueil
-    router.push('/')
+    // Après inscription réussie, basculer vers le formulaire de connexion
+    alert('Inscription réussie ! Vous pouvez maintenant vous connecter.')
+    showRegisterForm.value = false
+    email.value = registerData.value.email // Pré-remplir l'email
   } catch (error: any) {
     errorMessage.value = error.response?.data?.message || 'Une erreur est survenue lors de l\'inscription'
     console.error('Register error:', error)
