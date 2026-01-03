@@ -2,6 +2,9 @@
   <v-container fluid class="fill-height login-container">
     <v-row align="center" justify="center">
       <v-col cols="12" sm="10" md="8" lg="6" xl="5">
+        <div class="d-flex justify-end mb-4">
+          <LanguageSwitcher button-color="white" />
+        </div>
         <v-card 
           elevation="8" 
           rounded="lg"
@@ -307,6 +310,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import type { LoginRequest, RegisterRequest } from '@/types/user'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 const router = useRouter()
 const userStore = useUserStore()

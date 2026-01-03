@@ -3,23 +3,14 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
 const drawer = ref(false)
-const { t, locale } = useI18n()
+const { t } = useI18n()
 
 const menuItems = computed(() => [{ title: t('nav.home'), icon: 'mdi-home', to: '/' }])
-
-const localeOptions = computed(() => [
-  { value: 'fr', label: t('locales.fr') },
-  { value: 'en', label: t('locales.en') },
-])
-
-const currentLocaleLabel = computed(() => {
-  const current = localeOptions.value.find((option) => option.value === locale.value)
-  return current ? current.label : locale.value
-})
 
 const currentYear = computed(() => new Date().getFullYear())
 
@@ -28,13 +19,6 @@ const logout = async () => {
   router.push('/login')
 }
 
-const setLocale = (value: string) => {
-  locale.value = value
-
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('locale', value)
-  }
-}
 </script>
 
 <template>
@@ -64,23 +48,7 @@ const setLocale = (value: string) => {
         <v-icon :icon="item.icon" class="mr-2"></v-icon>
         {{ item.title }}
       </v-btn>
-      <v-menu>
-        <template v-slot:activator="{ props }">
-          <v-btn variant="text" v-bind="props" class="ml-2">
-            <v-icon icon="mdi-translate" class="mr-2"></v-icon>
-            {{ currentLocaleLabel }}
-          </v-btn>
-        </template>
-        <v-list>
-          <v-list-item
-            v-for="option in localeOptions"
-            :key="option.value"
-            @click="setLocale(option.value)"
-          >
-            <v-list-item-title>{{ option.label }}</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+      <LanguageSwitcher class="ml-2" />
       <v-menu v-if="userStore.isAuthenticated">
         <template v-slot:activator="{ props }">
           <v-btn icon v-bind="props">
