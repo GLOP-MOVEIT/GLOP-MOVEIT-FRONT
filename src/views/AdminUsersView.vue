@@ -15,28 +15,13 @@
       {{ t('admin.usersInfo') }}
     </v-alert>
 
-    <v-row class="mb-4">
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="searchQuery"
-          :label="t('admin.searchUsers')"
-          prepend-inner-icon="mdi-magnify"
-          variant="outlined"
-          clearable
-          density="comfortable"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-select
-          v-model="selectedRole"
-          :items="roleOptions"
-          :label="t('admin.filterRole')"
-          variant="outlined"
-          clearable
-          density="comfortable"
-        ></v-select>
-      </v-col>
-    </v-row>
+    <UserFilterBar
+      v-model:search="searchQuery"
+      v-model:role="selectedRole"
+      :role-options="roleOptions"
+      :search-label="t('admin.searchUsers')"
+      :role-label="t('admin.filterRole')"
+    />
 
     <v-table>
       <thead>
@@ -83,6 +68,7 @@ import { useI18n } from 'vue-i18n'
 import userService from '@/services/userService'
 import type { User } from '@/types/user'
 import { UserRole } from '@/types/user'
+import UserFilterBar from '@/components/filters/UserFilterBar.vue'
 
 const { t } = useI18n()
 

@@ -15,6 +15,14 @@
       {{ t('commissioner.requestsInfo') }}
     </v-alert>
 
+    <UserFilterBar
+      v-model:search="searchQuery"
+      v-model:role="selectedRole"
+      :role-options="roleOptions"
+      :search-label="t('commissioner.searchRequests')"
+      :role-label="t('commissioner.filterRole')"
+    />
+
     <v-table>
       <thead>
         <tr>
@@ -25,12 +33,12 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-if="requests.length === 0" class="table-row">
+        <tr v-if="filteredRequests.length === 0" class="table-row">
           <td colspan="4" class="text-center text-grey-darken-1 py-6">
             {{ t('commissioner.noRequests') }}
           </td>
         </tr>
-        <tr v-for="request in requests" :key="request.id" class="table-row">
+        <tr v-for="request in filteredRequests" :key="request.id" class="table-row">
           <td>{{ request.user }}</td>
           <td>{{ request.role }}</td>
           <td>
@@ -81,12 +89,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { commissionerRequests } from '@/data/commissionerRequests'
 import type { CommissionerDocument, CommissionerRequest, CommissionerDocumentStatus } from '@/data/commissionerRequests'
 import DocumentPreviewDialog from '@/components/commissioner/DocumentPreviewDialog.vue'
 import RejectRequestDialog from '@/components/commissioner/RejectRequestDialog.vue'
+import UserFilterBar from '@/components/filters/UserFilterBar.vue'
 
 const { t } = useI18n()
 
@@ -101,6 +110,8 @@ const showDocument = ref(false)
 const selectedDocument = ref<CommissionerDocument | null>(null)
 const showReject = ref(false)
 const selectedRequest = ref<CommissionerRequest | null>(null)
+const searchQuery = ref('')
+const selectedRole = ref<string | null>(null)
 
 const openDocument = (doc: CommissionerDocument, request: CommissionerRequest) => {
   selectedDocument.value = doc
@@ -130,6 +141,25 @@ const submitReject = () => {
 const validateDocument = (doc: CommissionerDocument) => {
   doc.status = 'validated'
 }
+
+const roleOptions = computed(() => [
+  { title: t('roles.SPORTIF'), value: 'SPORTIF' },
+  { title: t('roles.VOLONTAIRE'), value: 'VOLONTAIRE' },
+])
+
+const filteredRequests = computed(() => {
+  const query = (searchQuery.value || '').trim().toLowerCase()
+  return requests.value.filter((request) => {
+    const matchesQuery =
+      !query ||
+      request.user.toLowerCase().includes(query) ||
+      request.role.toLowerCase().includes(query)
+
+    const matchesRole = !selectedRole.value || request.role === selectedRole.value
+
+    return matchesQuery && matchesRole
+  })
+})
 </script>
 
 <style scoped>
