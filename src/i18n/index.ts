@@ -63,6 +63,16 @@ const messages = {
         'Registration successful! You can now sign in.',
       passwordRecovery: 'Password recovery feature to be implemented',
     },
+    forgotPassword: {
+      title: 'Reset password',
+      description:
+        'Enter your email address to receive reset instructions. This is a placeholder and will be wired later.',
+      submit: 'Send',
+      cancel: 'Cancel',
+      required: 'Please enter your email address.',
+      invalid: 'Please enter a valid email address.',
+      success: 'We would send you an email if this was connected.',
+    },
     profile: {
       title: 'My profile',
       subtitle: 'Review your account details',
@@ -177,6 +187,16 @@ const messages = {
         'Inscription réussie ! Vous pouvez maintenant vous connecter.',
       passwordRecovery:
         'Fonctionnalité de récupération de mot de passe à implémenter',
+    },
+    forgotPassword: {
+      title: 'Réinitialiser le mot de passe',
+      description:
+        'Saisissez votre adresse email pour recevoir les instructions. Cette fonctionnalité sera reliée ultérieurement.',
+      submit: 'Envoyer',
+      cancel: 'Annuler',
+      required: 'Veuillez saisir votre adresse email.',
+      invalid: 'Veuillez saisir une adresse email valide.',
+      success: 'Un email serait envoyé si la fonctionnalité était active.',
     },
     profile: {
       title: 'Mon profil',

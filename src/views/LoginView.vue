@@ -29,86 +29,92 @@
           <!-- Formulaire de connexion -->
           <v-card-text class="pa-6">
             <!-- FORMULAIRE DE CONNEXION -->
-            <v-form 
-              v-if="!showRegisterForm"
-              ref="form" 
-              v-model="valid"
-              @submit.prevent="handleLogin"
-            >
-              <!-- Champ email -->
-              <v-text-field
-                v-model="email"
-                :rules="emailRules"
-                :label="t('login.emailLabel')"
-                prepend-inner-icon="mdi-email"
-                variant="outlined"
-                type="email"
-                required
-                class="mb-3"
-                :error-messages="errorMessage"
-              ></v-text-field>
-
-              <!-- Champ mot de passe -->
-              <v-text-field
-                v-model="password"
-                :rules="passwordRules"
-                :label="t('login.passwordLabel')"
-                prepend-inner-icon="mdi-lock"
-                :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                :type="showPassword ? 'text' : 'password'"
-                variant="outlined"
-                required
-                @click:append-inner="showPassword = !showPassword"
-                :error-messages="errorMessage"
-              ></v-text-field>
-
-              <!-- Se souvenir de moi -->
-              <v-checkbox
-                v-model="rememberMe"
-                :label="t('login.rememberMe')"
-                color="primary"
-                hide-details
-                class="mb-4"
-              ></v-checkbox>
-
-              <!-- Message d'erreur global -->
-              <v-alert
-                v-if="errorMessage"
-                type="error"
-                variant="tonal"
-                class="mb-4"
-                closable
-                @click:close="errorMessage = ''"
+            <template v-if="!showRegisterForm">
+              <v-form 
+                ref="form" 
+                v-model="valid"
+                @submit.prevent="handleLogin"
               >
-                {{ errorMessage }}
-              </v-alert>
+                <!-- Champ email -->
+                <v-text-field
+                  v-model="email"
+                  :rules="emailRules"
+                  :label="t('login.emailLabel')"
+                  prepend-inner-icon="mdi-email"
+                  variant="outlined"
+                  type="email"
+                  required
+                  class="mb-3"
+                  :error-messages="errorMessage"
+                ></v-text-field>
 
-              <!-- Bouton de connexion -->
-              <v-btn
-                type="submit"
-                color="primary"
-                size="large"
-                block
-                :loading="loading"
-                :disabled="!valid || loading"
-                class="mb-3"
-              >
-                <v-icon left class="mr-2">mdi-login</v-icon>
-                {{ t('login.signIn') }}
-              </v-btn>
+                <!-- Champ mot de passe -->
+                <v-text-field
+                  v-model="password"
+                  :rules="passwordRules"
+                  :label="t('login.passwordLabel')"
+                  prepend-inner-icon="mdi-lock"
+                  :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                  :type="showPassword ? 'text' : 'password'"
+                  variant="outlined"
+                  required
+                  @click:append-inner="showPassword = !showPassword"
+                  :error-messages="errorMessage"
+                ></v-text-field>
 
-              <!-- Mot de passe oublié -->
-              <div class="text-center">
-                <v-btn
-                  variant="text"
+                <!-- Se souvenir de moi -->
+                <v-checkbox
+                  v-model="rememberMe"
+                  :label="t('login.rememberMe')"
                   color="primary"
-                  size="small"
-                  @click="forgotPassword"
+                  hide-details
+                  class="mb-4"
+                ></v-checkbox>
+
+                <!-- Message d'erreur global -->
+                <v-alert
+                  v-if="errorMessage"
+                  type="error"
+                  variant="tonal"
+                  class="mb-4"
+                  closable
+                  @click:close="errorMessage = ''"
                 >
-                  {{ t('login.forgotPassword') }}
+                  {{ errorMessage }}
+                </v-alert>
+
+                <!-- Bouton de connexion -->
+                <v-btn
+                  type="submit"
+                  color="primary"
+                  size="large"
+                  block
+                  :loading="loading"
+                  :disabled="!valid || loading"
+                  class="mb-3"
+                >
+                  <v-icon left class="mr-2">mdi-login</v-icon>
+                  {{ t('login.signIn') }}
                 </v-btn>
-              </div>
-            </v-form>
+
+                <!-- Mot de passe oublié -->
+                <div class="text-center">
+                  <v-btn
+                    variant="text"
+                    color="primary"
+                    size="small"
+                    @click="forgotPassword"
+                  >
+                    {{ t('login.forgotPassword') }}
+                  </v-btn>
+                </div>
+              </v-form>
+
+              <ForgotPasswordDialog
+                v-model="showForgotPassword"
+                :initial-email="email"
+              />
+            </template>
 
             <!-- FORMULAIRE D'INSCRIPTION -->
             <v-form 
@@ -311,6 +317,7 @@ import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import type { LoginRequest, RegisterRequest } from '@/types/user'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import ForgotPasswordDialog from '@/components/ForgotPasswordDialog.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -328,6 +335,7 @@ const showPassword = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
 const showRegisterForm = ref(false)
+const showForgotPassword = ref(false)
 
 // Données d'inscription
 const registerData = ref({
@@ -383,9 +391,7 @@ const handleLogin = async () => {
 
 // Mot de passe oublié
 const forgotPassword = () => {
-  // TODO: Implémenter la logique de récupération de mot de passe
-  console.log('Forgot password clicked')
-  alert(t('login.passwordRecovery'))
+  showForgotPassword.value = true
 }
 
 // Basculer entre connexion et inscription
