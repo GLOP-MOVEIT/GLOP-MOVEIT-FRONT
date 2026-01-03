@@ -10,7 +10,7 @@
           
           <v-card-text class="text-center">
             <p class="text-h6 mb-4">
-              Votre plateforme complète pour suivre et organiser des compétitions sportives
+              {{ t('about.tagline') }}
             </p>
             
             <v-divider class="my-6"></v-divider>
@@ -18,19 +18,17 @@
             <v-row class="mt-6">
               <v-col cols="12" md="6">
                 <v-icon icon="mdi-eye" size="60" color="primary" class="mb-3"></v-icon>
-                <h3 class="text-h5 mb-2">Pour les spectateurs</h3>
+                <h3 class="text-h5 mb-2">{{ t('about.spectatorsTitle') }}</h3>
                 <p class="text-body-1">
-                  Retrouvez toutes les informations sur les compétitions sportives : 
-                  calendriers, résultats, classements et actualités en temps réel.
+                  {{ t('about.spectatorsBody') }}
                 </p>
               </v-col>
               
               <v-col cols="12" md="6">
                 <v-icon icon="mdi-account-cog" size="60" color="success" class="mb-3"></v-icon>
-                <h3 class="text-h5 mb-2">Pour les organisateurs</h3>
+                <h3 class="text-h5 mb-2">{{ t('about.organizersTitle') }}</h3>
                 <p class="text-body-1">
-                  En tant qu'administrateur ou commissaire, organisez et gérez 
-                  vos compétitions facilement avec nos outils dédiés.
+                  {{ t('about.organizersBody') }}
                 </p>
               </v-col>
             </v-row>
@@ -42,5 +40,7 @@
 </template>
 
 <script setup lang="ts">
-// Page À propos
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 </script>

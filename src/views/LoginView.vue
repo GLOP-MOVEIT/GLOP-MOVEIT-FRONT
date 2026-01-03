@@ -19,7 +19,7 @@
               CiblOrgaSport
             </v-card-title>
             <v-card-subtitle class="text-white">
-              {{ showRegisterForm ? 'Créez votre compte' : 'Connectez-vous à votre espace' }}
+              {{ showRegisterForm ? t('login.subtitleRegister') : t('login.subtitleLogin') }}
             </v-card-subtitle>
           </v-card-item>
 
@@ -36,7 +36,7 @@
               <v-text-field
                 v-model="email"
                 :rules="emailRules"
-                label="Adresse email"
+                :label="t('login.emailLabel')"
                 prepend-inner-icon="mdi-email"
                 variant="outlined"
                 type="email"
@@ -49,7 +49,7 @@
               <v-text-field
                 v-model="password"
                 :rules="passwordRules"
-                label="Mot de passe"
+                :label="t('login.passwordLabel')"
                 prepend-inner-icon="mdi-lock"
                 :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                 :type="showPassword ? 'text' : 'password'"
@@ -62,7 +62,7 @@
               <!-- Se souvenir de moi -->
               <v-checkbox
                 v-model="rememberMe"
-                label="Se souvenir de moi"
+                :label="t('login.rememberMe')"
                 color="primary"
                 hide-details
                 class="mb-4"
@@ -91,7 +91,7 @@
                 class="mb-3"
               >
                 <v-icon left class="mr-2">mdi-login</v-icon>
-                Se connecter
+                {{ t('login.signIn') }}
               </v-btn>
 
               <!-- Mot de passe oublié -->
@@ -102,7 +102,7 @@
                   size="small"
                   @click="forgotPassword"
                 >
-                  Mot de passe oublié ?
+                  {{ t('login.forgotPassword') }}
                 </v-btn>
               </div>
             </v-form>
@@ -117,8 +117,8 @@
               <!-- Prénom -->
               <v-text-field
                 v-model="registerData.firstName"
-                :rules="[(v) => !!v || 'Le prénom est requis']"
-                label="Prénom"
+                :rules="[(v) => !!v || t('validation.firstNameRequired')]"
+                :label="t('login.firstName')"
                 prepend-inner-icon="mdi-account"
                 variant="outlined"
                 required
@@ -128,8 +128,8 @@
               <!-- Nom -->
               <v-text-field
                 v-model="registerData.surname"
-                :rules="[(v) => !!v || 'Le nom est requis']"
-                label="Nom"
+                :rules="[(v) => !!v || t('validation.surnameRequired')]"
+                :label="t('login.surname')"
                 prepend-inner-icon="mdi-account"
                 variant="outlined"
                 required
@@ -140,10 +140,10 @@
               <v-text-field
                 v-model="registerData.phoneNumber"
                 :rules="[
-                  (v) => !!v || 'Le numéro de téléphone est requis',
-                  (v) => /^[0-9]{10}$/.test(v) || 'Le numéro doit contenir 10 chiffres'
+                  (v) => !!v || t('validation.phoneRequired'),
+                  (v) => /^[0-9]{10}$/.test(v) || t('validation.phoneInvalid')
                 ]"
-                label="Numéro de téléphone"
+                :label="t('login.phoneNumber')"
                 prepend-inner-icon="mdi-phone"
                 variant="outlined"
                 type="tel"
@@ -155,7 +155,7 @@
               <v-text-field
                 v-model="registerData.email"
                 :rules="emailRules"
-                label="Adresse email"
+                :label="t('login.emailLabel')"
                 prepend-inner-icon="mdi-email"
                 variant="outlined"
                 type="email"
@@ -167,7 +167,7 @@
               <v-text-field
                 v-model="registerData.password"
                 :rules="passwordRules"
-                label="Mot de passe"
+                :label="t('login.passwordLabel')"
                 prepend-inner-icon="mdi-lock"
                 :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                 :type="showPassword ? 'text' : 'password'"
@@ -181,10 +181,10 @@
               <v-text-field
                 v-model="registerData.confirmPassword"
                 :rules="[
-                  (v) => !!v || 'La confirmation est requise',
-                  (v) => v === registerData.password || 'Les mots de passe ne correspondent pas'
+                  (v) => !!v || t('validation.confirmPasswordRequired'),
+                  (v) => v === registerData.password || t('validation.passwordsMismatch')
                 ]"
-                label="Confirmer le mot de passe"
+                :label="t('login.confirmPassword')"
                 prepend-inner-icon="mdi-lock-check"
                 :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                 :type="showPassword ? 'text' : 'password'"
@@ -203,7 +203,7 @@
               >
                 <template v-slot:label>
                   <div class="text-caption">
-                    J'accepte de recevoir des notifications sur les événements et compétitions
+                    {{ t('login.acceptNotifications') }}
                   </div>
                 </template>
               </v-checkbox>
@@ -216,20 +216,22 @@
               >
                 <template v-slot:label>
                   <div class="text-caption">
-                    J'accepte d'être localisé(e) en temps réel lors des événements
+                    {{ t('login.acceptLocation') }}
                   </div>
                 </template>
               </v-checkbox>
 
               <v-checkbox
                 v-model="registerData.acceptTerms"
-                :rules="[(v) => !!v || 'Vous devez accepter les conditions']"
+                :rules="[(v) => !!v || t('validation.termsRequired')]"
                 color="primary"
                 class="mb-4"
               >
                 <template v-slot:label>
                   <div class="text-caption">
-                    J'accepte les <a href="#" @click.stop>conditions générales d'utilisation</a>
+                    {{ t('login.acceptTermsText') }}
+                    
+                    <a href="#" @click.stop>{{ t('login.termsLink') }}</a>
                   </div>
                 </template>
               </v-checkbox>
@@ -257,7 +259,7 @@
                 class="mb-3"
               >
                 <v-icon left class="mr-2">mdi-account-plus</v-icon>
-                S'inscrire
+                {{ t('login.signUp') }}
               </v-btn>
             </v-form>
           </v-card-text>
@@ -266,7 +268,7 @@
           <v-divider></v-divider>
           <v-card-actions class="justify-center pa-4">
             <span class="text-body-2 mr-2">
-              {{ showRegisterForm ? 'Déjà un compte ?' : 'Pas encore de compte ?' }}
+              {{ showRegisterForm ? t('login.alreadyAccount') : t('login.noAccount') }}
             </span>
             <v-btn
               variant="text"
@@ -274,7 +276,7 @@
               size="small"
               @click="toggleForm"
             >
-              {{ showRegisterForm ? 'Se connecter' : 'S\'inscrire' }}
+              {{ showRegisterForm ? t('login.signIn') : t('login.signUp') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -283,15 +285,15 @@
         <v-row class="mt-6" justify="center">
           <v-col cols="12" sm="4" class="text-center">
             <v-icon color="white" size="large">mdi-shield-check</v-icon>
-            <div class="text-caption mt-2 text-white">Connexion sécurisée</div>
+            <div class="text-caption mt-2 text-white">{{ t('login.secureLogin') }}</div>
           </v-col>
           <v-col cols="12" sm="4" class="text-center">
             <v-icon color="white" size="large">mdi-trophy</v-icon>
-            <div class="text-caption mt-2 text-white">Gestion des compétitions</div>
+            <div class="text-caption mt-2 text-white">{{ t('login.competitionsManagement') }}</div>
           </v-col>
           <v-col cols="12" sm="4" class="text-center">
             <v-icon color="white" size="large">mdi-calendar-check</v-icon>
-            <div class="text-caption mt-2 text-white">Événements sportifs</div>
+            <div class="text-caption mt-2 text-white">{{ t('login.sportEvents') }}</div>
           </v-col>
         </v-row>
       </v-col>
@@ -302,11 +304,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import type { LoginRequest, RegisterRequest } from '@/types/user'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 // États du formulaire
 const form = ref()
@@ -336,13 +340,13 @@ const registerData = ref({
 
 // Règles de validation
 const emailRules = [
-  (v: string) => !!v || 'L\'email est requis',
-  (v: string) => /.+@.+\..+/.test(v) || 'L\'email doit être valide',
+  (v: string) => !!v || t('validation.emailRequired'),
+  (v: string) => /.+@.+\..+/.test(v) || t('validation.emailInvalid'),
 ]
 
 const passwordRules = [
-  (v: string) => !!v || 'Le mot de passe est requis',
-  (v: string) => v.length >= 6 || 'Le mot de passe doit contenir au moins 6 caractères',
+  (v: string) => !!v || t('validation.passwordRequired'),
+  (v: string) => v.length >= 6 || t('validation.passwordMin'),
 ]
 
 // Gestion de la connexion
@@ -366,7 +370,7 @@ const handleLogin = async () => {
     // Redirection après connexion réussie
     router.push('/')
   } catch (error: any) {
-    errorMessage.value = error.response?.data?.message || 'Email ou mot de passe incorrect'
+    errorMessage.value = error.response?.data?.message || t('login.invalidCredentials')
     console.error('Login error:', error)
   } finally {
     loading.value = false
@@ -377,7 +381,7 @@ const handleLogin = async () => {
 const forgotPassword = () => {
   // TODO: Implémenter la logique de récupération de mot de passe
   console.log('Forgot password clicked')
-  alert('Fonctionnalité de récupération de mot de passe à implémenter')
+  alert(t('login.passwordRecovery'))
 }
 
 // Basculer entre connexion et inscription
@@ -425,11 +429,11 @@ const handleRegister = async () => {
     await userStore.register(userData)
     
     // Après inscription réussie, basculer vers le formulaire de connexion
-    alert('Inscription réussie ! Vous pouvez maintenant vous connecter.')
+    alert(t('login.registerSuccess'))
     showRegisterForm.value = false
     email.value = registerData.value.email // Pré-remplir l'email
   } catch (error: any) {
-    errorMessage.value = error.response?.data?.message || 'Une erreur est survenue lors de l\'inscription'
+    errorMessage.value = error.response?.data?.message || t('login.registerError')
     console.error('Register error:', error)
   } finally {
     loading.value = false

@@ -1,21 +1,41 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
 const drawer = ref(false)
+const { t, locale } = useI18n()
 
-const menuItems = [
-  { title: 'Accueil', icon: 'mdi-home', to: '/' },
-]
+const menuItems = computed(() => [
+  { title: t('nav.home'), icon: 'mdi-home', to: '/' },
+])
+
+const localeOptions = computed(() => [
+  { value: 'fr', label: t('locales.fr') },
+  { value: 'en', label: t('locales.en') },
+])
+
+const currentLocaleLabel = computed(() => {
+  const current = localeOptions.value.find((option) => option.value === locale.value)
+  return current ? current.label : locale.value
+})
 
 const currentYear = computed(() => new Date().getFullYear())
 
 const logout = async () => {
   await userStore.logout()
   router.push('/login')
+}
+
+const setLocale = (value: string) => {
+  locale.value = value
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('locale', value)
+  }
 }
 </script>
 
@@ -38,7 +58,7 @@ const logout = async () => {
       <v-spacer></v-spacer>
       <v-btn 
         v-for="item in menuItems" 
-        :key="item.title"
+        :key="item.to"
         :to="item.to"
         variant="text"
         class="d-none d-md-flex"
@@ -46,6 +66,23 @@ const logout = async () => {
         <v-icon :icon="item.icon" class="mr-2"></v-icon>
         {{ item.title }}
       </v-btn>
+      <v-menu>
+        <template v-slot:activator="{ props }">
+          <v-btn variant="text" v-bind="props" class="ml-2">
+            <v-icon icon="mdi-translate" class="mr-2"></v-icon>
+            {{ currentLocaleLabel }}
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item
+            v-for="option in localeOptions"
+            :key="option.value"
+            @click="setLocale(option.value)"
+          >
+            <v-list-item-title>{{ option.label }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
       <v-menu v-if="userStore.isAuthenticated">
         <template v-slot:activator="{ props }">
           <v-btn icon v-bind="props">
@@ -55,14 +92,14 @@ const logout = async () => {
         <v-list>
           <v-list-item>
             <!-- TODO: Mon profil & paramètres : modification/ préférences etc-->
-            <v-list-item-title>Mon profil</v-list-item-title>
+            <v-list-item-title>{{ t('nav.profile') }}</v-list-item-title>
           </v-list-item>
           <v-list-item>
-            <v-list-item-title>Paramètres</v-list-item-title>
+            <v-list-item-title>{{ t('nav.settings') }}</v-list-item-title>
           </v-list-item>
           <v-divider></v-divider>
           <v-list-item @click="logout">
-            <v-list-item-title>Déconnexion</v-list-item-title>
+            <v-list-item-title>{{ t('nav.logout') }}</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
@@ -72,7 +109,7 @@ const logout = async () => {
         variant="text"
       >
         <v-icon icon="mdi-login" class="mr-2"></v-icon>
-        Connexion
+        {{ t('nav.login') }}
       </v-btn>
     </v-app-bar>
     <v-navigation-drawer
@@ -84,14 +121,14 @@ const logout = async () => {
         <v-list-item
           prepend-icon="mdi-medal"
           title="CiblOrgaSport"
-          subtitle="Menu"
+          :subtitle="t('nav.menu')"
         ></v-list-item>
       </v-list>
       <v-divider></v-divider>
       <v-list density="compact" nav>
         <v-list-item
           v-for="item in menuItems"
-          :key="item.title"
+          :key="item.to"
           :prepend-icon="item.icon"
           :title="item.title"
           :to="item.to"
@@ -111,7 +148,7 @@ const logout = async () => {
       <v-container>
         <v-row align="center" justify="space-between">
           <v-col cols="12" md="6" class="text-center text-md-left">
-            <strong>CiblOrgaSport</strong> © {{ currentYear }} - Tous droits réservés
+            <strong>CiblOrgaSport</strong> © {{ currentYear }} - {{ t('footer.rightsReserved') }}
           </v-col>
           <v-col cols="12" md="6" class="text-center text-md-right">
             <v-btn 
@@ -120,7 +157,7 @@ const logout = async () => {
               href="#" 
               class="mx-1"
             >
-              Mentions légales
+              {{ t('footer.legal') }}
             </v-btn>
             <v-btn 
               variant="text" 
@@ -128,7 +165,7 @@ const logout = async () => {
               href="#" 
               class="mx-1"
             >
-              Confidentialité
+              {{ t('footer.privacy') }}
             </v-btn>
             <v-btn 
               variant="text" 
@@ -136,7 +173,7 @@ const logout = async () => {
               href="#" 
               class="mx-1"
             >
-              Contact
+              {{ t('footer.contact') }}
             </v-btn>
           </v-col>
         </v-row>

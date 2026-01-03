@@ -5,11 +5,11 @@
         <v-icon icon="mdi-trophy" size="120" color="primary" class="mb-6"></v-icon>
         
         <h1 class="text-h3 font-weight-bold mb-4">
-          Bienvenue sur CiblOrgaSport
+          {{ t('home.title') }}
         </h1>
         
         <p class="text-h6 text-grey-darken-1 mb-8">
-          La plateforme de gestion de compétitions sportives
+          {{ t('home.subtitle') }}
         </p>
 
         <v-btn
@@ -20,7 +20,7 @@
           class="mr-4"
         >
           <v-icon icon="mdi-login" class="mr-2"></v-icon>
-          Se connecter
+          {{ t('home.signIn') }}
         </v-btn>
 
         <v-btn
@@ -30,7 +30,7 @@
           variant="outlined"
         >
           <v-icon icon="mdi-view-dashboard" class="mr-2"></v-icon>
-          Tableau de bord
+          {{ t('home.dashboard') }}
         </v-btn>
       </v-col>
     </v-row>
@@ -38,7 +38,9 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
+const { t } = useI18n()
 </script>
