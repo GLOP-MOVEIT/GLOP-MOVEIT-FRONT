@@ -36,6 +36,14 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'parametres',
+        name: 'settings',
+        component: () => import('@/views/SettingsView.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
         path: 'demande-role/:role',
         name: 'role-request',
         component: () => import('@/views/RoleRequestView.vue'),

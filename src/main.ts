@@ -3,9 +3,10 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
+import { applyUiPreferences, getUiPreferencesFromSettings } from './services/uiSettings'
 
 // Vuetify
-import 'vuetify/styles'
+import '@/styles/main.scss'
 import '@mdi/font/css/materialdesignicons.css'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
@@ -36,6 +37,8 @@ const vuetify = createVuetify({
     },
   },
 })
+
+applyUiPreferences(getUiPreferencesFromSettings())
 
 const app = createApp(App)
 

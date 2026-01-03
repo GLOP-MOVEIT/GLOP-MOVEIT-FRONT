@@ -46,7 +46,7 @@ const logout = async () => {
           <!-- TODO: Mon profil & paramètres : modification/ préférences etc-->
           <v-list-item-title>{{ t('nav.profile') }}</v-list-item-title>
         </v-list-item>
-        <v-list-item>
+        <v-list-item to="/parametres">
           <v-list-item-title>{{ t('nav.settings') }}</v-list-item-title>
         </v-list-item>
         <v-divider></v-divider>
