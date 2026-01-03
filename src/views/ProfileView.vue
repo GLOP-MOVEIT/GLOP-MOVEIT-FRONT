@@ -12,7 +12,7 @@
             </v-col>
             <v-col cols="12" md="4" class="text-md-right">
               <v-chip color="primary" variant="elevated" class="ma-1">
-                {{ t('profile.primaryRole') }} {{ formatRole(primaryRole) }}
+                {{ t('profile.primaryRole') }} {{ formatRoleLabel(primaryRole) }}
               </v-chip>
             </v-col>
           </v-row>
@@ -62,7 +62,7 @@
               :color="role === primaryRole ? 'primary' : 'secondary'"
               :variant="role === primaryRole ? 'elevated' : 'outlined'"
             >
-              {{ formatRole(role) }}
+              {{ formatRoleLabel(role) }}
             </v-chip>
           </div>
 
@@ -137,11 +137,24 @@ const primaryRole = computed(() => {
   return user.value?.role?.name || roles.value[0]
 })
 
-const formatRole = (role?: string) => {
-  if (!role) return '-'
-  const key = `roles.${role}`
+const normalizeRoleKey = (role: string) => {
+  const normalized = role.replace(/^ROLE_/, '').trim().toUpperCase()
+  if (normalized === 'VOLUNTEER') return 'VOLONTAIRE'
+  if (normalized === 'COMMISSIONER') return 'COMMISSAIRE'
+  return normalized
+}
+
+const formatRoleValue = (role?: string) => {
+  if (!role) return ''
+  return normalizeRoleKey(role)
+}
+
+const formatRoleLabel = (role?: string) => {
+  const normalized = formatRoleValue(role)
+  if (!normalized) return '-'
+  const key = `roles.${normalized}`
   const translated = t(key)
-  return translated === key ? role : translated
+  return translated === key ? normalized : translated
 }
 
 const showRoleRequests = computed(() => {

@@ -170,6 +170,8 @@ const messages = {
     },
     roles: {
       SPECTATOR: 'Spectator',
+      VOLUNTEER: 'Volunteer',
+      COMMISSIONER: 'Commissioner',
       SPORTIF: 'Athlete',
       VOLONTAIRE: 'Volunteer',
       COMMISSAIRE: 'Commissioner',
@@ -363,6 +365,8 @@ const messages = {
     },
     roles: {
       SPECTATOR: 'Spectateur',
+      VOLUNTEER: 'Volontaire',
+      COMMISSIONER: 'Commissaire',
       SPORTIF: 'Sportif',
       VOLONTAIRE: 'Volontaire',
       COMMISSAIRE: 'Commissaire',

@@ -14,7 +14,7 @@
           </div>
 
           <v-form @submit.prevent="saveSettings">
-            <div class="text-overline mb-3">{{ t('settings.preferencesSection') }}</div>
+            <div class="text-overliwne mb-3">{{ t('settings.preferencesSection') }}</div>
 
             <v-switch
               v-model="formState.notifications"

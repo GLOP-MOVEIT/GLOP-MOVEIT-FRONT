@@ -96,8 +96,16 @@ const formatName = (user: User) => {
   return `${user.firstName ?? ''} ${user.surname ?? ''}`.trim() || '-'
 }
 
+const normalizeRoleKey = (role: string) => {
+  const normalized = role.replace(/^ROLE_/, '').trim().toUpperCase()
+  if (normalized === 'VOLUNTEER') return 'VOLONTAIRE'
+  if (normalized === 'COMMISSIONER') return 'COMMISSAIRE'
+  return normalized
+}
+
 const formatRoleValue = (user: User) => {
-  return user.role?.name || user.authorities?.[0]?.authority?.replace(/^ROLE_/, '') || ''
+  const raw = user.role?.name || user.authorities?.[0]?.authority || ''
+  return raw ? normalizeRoleKey(raw) : ''
 }
 
 const formatRoleLabel = (user: User) => {
