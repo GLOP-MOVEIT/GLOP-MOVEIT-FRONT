@@ -15,6 +15,29 @@
       {{ t('admin.usersInfo') }}
     </v-alert>
 
+    <v-row class="mb-4">
+      <v-col cols="12" md="6">
+        <v-text-field
+          v-model="searchQuery"
+          :label="t('admin.searchUsers')"
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          clearable
+          density="comfortable"
+        ></v-text-field>
+      </v-col>
+      <v-col cols="12" md="6">
+        <v-select
+          v-model="selectedRole"
+          :items="roleOptions"
+          :label="t('admin.filterRole')"
+          variant="outlined"
+          clearable
+          density="comfortable"
+        ></v-select>
+      </v-col>
+    </v-row>
+
     <v-table>
       <thead>
         <tr>
@@ -30,15 +53,15 @@
             {{ t('admin.loading') }}
           </td>
         </tr>
-        <tr v-else-if="users.length === 0">
+        <tr v-else-if="filteredUsers.length === 0">
           <td colspan="4" class="text-center text-grey-darken-1 py-6">
             {{ t('admin.noUsers') }}
           </td>
         </tr>
-        <tr v-for="user in users" :key="user.id">
+        <tr v-for="user in filteredUsers" :key="user.id">
           <td>{{ formatName(user) }}</td>
           <td>{{ user.email }}</td>
-          <td>{{ formatRole(user) }}</td>
+          <td>{{ formatRoleLabel(user) }}</td>
           <td>
             <v-btn size="small" color="primary" variant="outlined" disabled>
               {{ t('admin.promoteCommissaire') }}
@@ -55,23 +78,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import userService from '@/services/userService'
 import type { User } from '@/types/user'
+import { UserRole } from '@/types/user'
 
 const { t } = useI18n()
 
 const users = ref<User[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
+const searchQuery = ref('')
+const selectedRole = ref<string | null>(null)
 
 const formatName = (user: User) => {
   return `${user.firstName ?? ''} ${user.surname ?? ''}`.trim() || '-'
 }
 
-const formatRole = (user: User) => {
-  return user.role?.name || user.authorities?.[0]?.authority?.replace(/^ROLE_/, '') || '-'
+const formatRoleValue = (user: User) => {
+  return user.role?.name || user.authorities?.[0]?.authority?.replace(/^ROLE_/, '') || ''
+}
+
+const formatRoleLabel = (user: User) => {
+  const role = formatRoleValue(user)
+  if (!role) return '-'
+  const key = `roles.${role}`
+  const translated = t(key)
+  return translated === key ? role : translated
 }
 
 const fetchUsers = async () => {
@@ -88,5 +122,29 @@ const fetchUsers = async () => {
 
 onMounted(() => {
   fetchUsers()
+})
+
+const roleOptions = computed(() => [
+  { title: t('roles.SPECTATOR'), value: UserRole.SPECTATOR },
+  { title: t('roles.SPORTIF'), value: UserRole.SPORTIF },
+  { title: t('roles.VOLONTAIRE'), value: UserRole.VOLONTAIRE },
+  { title: t('roles.COMMISSAIRE'), value: UserRole.COMMISSAIRE },
+  { title: t('roles.ADMIN'), value: UserRole.ADMIN },
+])
+
+const filteredUsers = computed(() => {
+  const query = (searchQuery.value || '').trim().toLowerCase()
+  return users.value.filter((user) => {
+    const role = formatRoleValue(user)
+    const matchesQuery =
+      !query ||
+      user.email?.toLowerCase().includes(query) ||
+      formatName(user).toLowerCase().includes(query) ||
+      role.toLowerCase().includes(query)
+
+    const matchesRole = !selectedRole.value || role === selectedRole.value
+
+    return matchesQuery && matchesRole
+  })
 })
 </script>

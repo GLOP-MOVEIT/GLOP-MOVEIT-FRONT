@@ -7,14 +7,15 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/components/AdminLayout.vue'
 
 const { t } = useI18n()
 
-const menuItems = [
+const menuItems = computed(() => [
   { title: t('admin.menuUsers'), icon: 'mdi-account-group', to: '/admin/users' },
   { title: t('admin.menuCompetitions'), icon: 'mdi-flag-checkered' },
   { title: t('admin.menuChampionships'), icon: 'mdi-trophy' },
-]
+])
 </script>

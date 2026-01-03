@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { applyUiPreferences, saveUiPreferences } from '@/services/uiSettings'
 import { loadSettings, saveSettings as saveStoredSettings } from '@/services/settingsStorage'
@@ -174,9 +174,9 @@ watch(
   { immediate: false },
 )
 
-const textSizeOptions = [
+const textSizeOptions = computed(() => [
   { title: t('settings.textSizeSmall'), value: 'small' },
   { title: t('settings.textSizeNormal'), value: 'normal' },
   { title: t('settings.textSizeLarge'), value: 'large' },
-]
+])
 </script>
