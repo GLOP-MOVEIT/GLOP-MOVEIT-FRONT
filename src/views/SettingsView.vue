@@ -13,7 +13,7 @@
             </div>
           </div>
 
-          <v-form ref="form" v-model="valid" @submit.prevent="saveSettings">
+          <v-form @submit.prevent="saveSettings">
             <div class="text-overline mb-3">{{ t('settings.preferencesSection') }}</div>
 
             <v-switch
@@ -90,54 +90,48 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useUserStore } from '@/stores/user'
-import { applyUiPreferences } from '@/services/uiSettings'
+import { applyUiPreferences, saveUiPreferences } from '@/services/uiSettings'
+import { loadSettings, saveSettings as saveStoredSettings } from '@/services/settingsStorage'
+import type { SettingsState } from '@/types/settings'
 
 const { t } = useI18n()
-const userStore = useUserStore()
-
-const form = ref()
-const valid = ref(true)
 const infoMessage = ref('')
 
-const formState = ref({
-  notifications: false,
-  location: false,
-  textSize: 'normal',
-  dyslexiaMode: false,
+type SettingsFormState = SettingsState & {
+  password: string
+  confirmPassword: string
+}
+
+const formState = ref<SettingsFormState>({
+  ...loadSettings(),
+  password: '',
+  confirmPassword: '',
+})
+const isHydrated = ref(false)
+
+const buildFormState = (stored: SettingsState): SettingsFormState => ({
+  ...stored,
   password: '',
   confirmPassword: '',
 })
 
-const getInitialSettings = () => {
-  return {
-    notifications: userStore.user?.acceptsNotifications ?? false,
-    location: userStore.user?.acceptsLocation ?? false,
-    textSize: 'normal',
-    dyslexiaMode: false,
-    password: '',
-    confirmPassword: '',
-  }
+const applyUiFromSettings = (stored: SettingsState) => {
+  applyUiPreferences({
+    textSize: stored.textSize,
+    dyslexiaMode: stored.dyslexiaMode,
+  })
 }
 
-const loadSettings = () => {
-  const stored = localStorage.getItem('userSettings')
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored)
-      formState.value = {
-        ...getInitialSettings(),
-        ...parsed,
-        password: '',
-        confirmPassword: '',
-      }
-      return
-    } catch {
-      // Ignore invalid storage values.
-    }
+const applyFormSettings = (stored: SettingsState) => {
+  formState.value = {
+    ...buildFormState(stored),
   }
+  applyUiFromSettings(stored)
+  isHydrated.value = true
+}
 
-  formState.value = getInitialSettings()
+const hydrateForm = () => {
+  applyFormSettings(loadSettings())
 }
 
 const saveSettings = () => {
@@ -148,14 +142,10 @@ const saveSettings = () => {
     }
   }
 
-  const payload = {
+  saveStoredSettings({
     notifications: formState.value.notifications,
     location: formState.value.location,
-    textSize: formState.value.textSize,
-    dyslexiaMode: formState.value.dyslexiaMode,
-  }
-
-  localStorage.setItem('userSettings', JSON.stringify(payload))
+  })
   infoMessage.value = t('settings.saved')
   formState.value.password = ''
   formState.value.confirmPassword = ''
@@ -163,27 +153,25 @@ const saveSettings = () => {
 
 const resetForm = () => {
   infoMessage.value = ''
-  loadSettings()
+  hydrateForm()
 }
 
 onMounted(() => {
-  loadSettings()
+  hydrateForm()
 })
 
 watch(
   () => [formState.value.textSize, formState.value.dyslexiaMode],
   () => {
+    if (!isHydrated.value) return
     const preferences = {
       textSize: formState.value.textSize,
       dyslexiaMode: formState.value.dyslexiaMode,
     }
     applyUiPreferences(preferences)
-
-    const stored = localStorage.getItem('userSettings')
-    const payload = stored ? { ...JSON.parse(stored), ...preferences } : preferences
-    localStorage.setItem('userSettings', JSON.stringify(payload))
+    saveUiPreferences(preferences)
   },
-  { immediate: true },
+  { immediate: false },
 )
 
 const textSizeOptions = [
