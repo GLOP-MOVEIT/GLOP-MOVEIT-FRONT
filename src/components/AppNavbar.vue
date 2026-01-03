@@ -12,6 +12,7 @@ const { t } = useI18n()
 
 const drawer = ref(false)
 const isAdmin = computed(() => userStore.hasRole(UserRole.ADMIN))
+const isCommissaire = computed(() => userStore.hasRole(UserRole.COMMISSIONER))
 
 const menuItems = computed(() => [{ title: t('nav.home'), icon: 'mdi-home', to: '/' }])
 
@@ -50,6 +51,9 @@ const logout = async () => {
         </v-list-item>
         <v-list-item v-if="isAdmin" to="/admin">
           <v-list-item-title>{{ t('nav.adminPanel') }}</v-list-item-title>
+        </v-list-item>
+        <v-list-item v-if="isCommissaire" to="/commissaire">
+          <v-list-item-title>{{ t('nav.commissairePanel') }}</v-list-item-title>
         </v-list-item>
         <v-list-item to="/parametres">
           <v-list-item-title>{{ t('nav.settings') }}</v-list-item-title>

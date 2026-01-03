@@ -14,6 +14,7 @@ import AdminLayout from '@/components/AdminLayout.vue'
 const { t } = useI18n()
 
 const menuItems = computed(() => [
+  { title: t('admin.menuOverview'), icon: 'mdi-view-dashboard', to: '/admin' },
   { title: t('admin.menuUsers'), icon: 'mdi-account-group', to: '/admin/users' },
   { title: t('admin.menuCompetitions'), icon: 'mdi-flag-checkered' },
   { title: t('admin.menuChampionships'), icon: 'mdi-trophy' },

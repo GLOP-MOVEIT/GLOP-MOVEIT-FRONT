@@ -139,8 +139,8 @@ const primaryRole = computed(() => {
 
 const normalizeRoleKey = (role: string) => {
   const normalized = role.replace(/^ROLE_/, '').trim().toUpperCase()
-  if (normalized === 'VOLUNTEER') return 'VOLONTAIRE'
-  if (normalized === 'COMMISSIONER') return 'COMMISSAIRE'
+  if (normalized === 'VOLONTAIRE') return 'VOLUNTEER'
+  if (normalized === 'COMMISSAIRE') return 'COMMISSIONER'
   return normalized
 }
 
@@ -158,7 +158,7 @@ const formatRoleLabel = (role?: string) => {
 }
 
 const showRoleRequests = computed(() => {
-  return !userStore.hasRole(UserRole.ADMIN) && !userStore.hasRole(UserRole.COMMISSAIRE)
+  return !userStore.hasRole(UserRole.ADMIN) && !userStore.hasRole(UserRole.COMMISSIONER)
 })
 
 const formatDate = (value?: string) => {

@@ -49,7 +49,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/RoleRequestView.vue'),
         meta: {
           requiresAuth: true,
-          disallowRoles: [UserRole.ADMIN, UserRole.COMMISSAIRE],
+          disallowRoles: [UserRole.ADMIN, UserRole.COMMISSIONER],
         },
       },
       {
@@ -69,6 +69,26 @@ const routes: RouteRecordRaw[] = [
             path: 'users',
             name: 'admin-users',
             component: () => import('@/views/AdminUsersView.vue'),
+          },
+        ],
+      },
+      {
+        path: 'commissaire',
+        component: () => import('@/views/CommissionerShellView.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresRole: UserRole.COMMISSIONER,
+        },
+        children: [
+          {
+            path: '',
+            name: 'commissioner-overview',
+            component: () => import('@/views/CommissionerOverviewView.vue'),
+          },
+          {
+            path: 'demandes',
+            name: 'commissioner-requests',
+            component: () => import('@/views/CommissionerRequestsView.vue'),
           },
         ],
       },

@@ -3,8 +3,8 @@ export enum UserRole {
   ADMIN = 'ADMIN',
   SPECTATOR = 'SPECTATOR',
   SPORTIF = 'SPORTIF',
-  VOLONTAIRE = 'VOLONTAIRE',
-  COMMISSAIRE = 'COMMISSAIRE',
+  VOLUNTEER = 'VOLUNTEER',
+  COMMISSIONER = 'COMMISSIONER',
 }
 
 // Interface pour l'objet role complet du backend

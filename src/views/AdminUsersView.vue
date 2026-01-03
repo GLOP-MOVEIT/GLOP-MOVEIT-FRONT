@@ -98,8 +98,8 @@ const formatName = (user: User) => {
 
 const normalizeRoleKey = (role: string) => {
   const normalized = role.replace(/^ROLE_/, '').trim().toUpperCase()
-  if (normalized === 'VOLUNTEER') return 'VOLONTAIRE'
-  if (normalized === 'COMMISSIONER') return 'COMMISSAIRE'
+  if (normalized === 'VOLONTAIRE') return 'VOLUNTEER'
+  if (normalized === 'COMMISSAIRE') return 'COMMISSIONER'
   return normalized
 }
 
@@ -135,8 +135,8 @@ onMounted(() => {
 const roleOptions = computed(() => [
   { title: t('roles.SPECTATOR'), value: UserRole.SPECTATOR },
   { title: t('roles.SPORTIF'), value: UserRole.SPORTIF },
-  { title: t('roles.VOLONTAIRE'), value: UserRole.VOLONTAIRE },
-  { title: t('roles.COMMISSAIRE'), value: UserRole.COMMISSAIRE },
+  { title: t('roles.VOLUNTEER'), value: UserRole.VOLUNTEER },
+  { title: t('roles.COMMISSIONER'), value: UserRole.COMMISSIONER },
   { title: t('roles.ADMIN'), value: UserRole.ADMIN },
 ])
 

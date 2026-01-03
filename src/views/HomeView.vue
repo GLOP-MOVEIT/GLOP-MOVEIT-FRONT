@@ -33,6 +33,16 @@
           <v-icon icon="mdi-view-dashboard" class="mr-2"></v-icon>
           {{ t('home.dashboard') }}
         </v-btn>
+        <v-btn
+          v-else-if="isCommissaire"
+          to="/commissaire"
+          color="primary"
+          size="large"
+          variant="outlined"
+        >
+          <v-icon icon="mdi-view-dashboard" class="mr-2"></v-icon>
+          {{ t('home.dashboard') }}
+        </v-btn>
       </v-col>
     </v-row>
   </v-container>
@@ -47,4 +57,5 @@ import { UserRole } from '@/types/user'
 const userStore = useUserStore()
 const { t } = useI18n()
 const isAdmin = computed(() => userStore.hasRole(UserRole.ADMIN))
+const isCommissaire = computed(() => userStore.hasRole(UserRole.COMMISSIONER))
 </script>
