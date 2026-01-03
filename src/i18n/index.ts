@@ -5,6 +5,7 @@ const messages = {
     nav: {
       home: 'Home',
       profile: 'My profile',
+      adminPanel: 'Admin panel',
       settings: 'Settings',
       logout: 'Sign out',
       login: 'Sign in',
@@ -22,6 +23,38 @@ const messages = {
       subtitle: 'The platform for managing sports competitions',
       signIn: 'Sign in',
       dashboard: 'Dashboard',
+    },
+    admin: {
+      title: 'Administration',
+      subtitle: 'Administer users and application rules',
+      menuUsers: 'Users',
+      menuCompetitions: 'Events',
+      menuChampionships: 'Championships',
+      overviewInfo:
+        'This space summarizes your responsibilities as administrator. Use the menu to act.',
+      roleGovernanceTitle: 'Role governance',
+      roleGovernanceBody:
+        'Validate commissioner assignments and ensure role changes follow the rules.',
+      roleGovernanceHint: 'Only admins can promote users to COMMISSAIRE.',
+      moderationTitle: 'Competition oversight',
+      moderationBody:
+        'Keep the ecosystem healthy: review requests and monitor published data.',
+      moderationHint: 'Future tools will include championships and events.',
+      usersSection: 'Users',
+      usersInfo: 'User management will be connected to the API soon.',
+      userName: 'Name',
+      userEmail: 'Email',
+      userRole: 'Role',
+      userActions: 'Actions',
+      noUsers: 'No users to display yet.',
+      loading: 'Loading users...',
+      usersError: 'Unable to load users.',
+      promoteCommissaire: 'Promote to COMMISSAIRE',
+      backToDashboard: 'Back to admin',
+      competitionsSection: 'Events',
+      competitionsInfo: 'Upcoming management for events and races.',
+      championshipsSection: 'Championships',
+      championshipsInfo: 'Upcoming management for championships.',
     },
     about: {
       tagline:
@@ -162,6 +195,7 @@ const messages = {
     nav: {
       home: 'Accueil',
       profile: 'Mon profil',
+      adminPanel: 'Panel admin',
       settings: 'Paramètres',
       logout: 'Déconnexion',
       login: 'Connexion',
@@ -179,6 +213,38 @@ const messages = {
       subtitle: 'La plateforme de gestion de compétitions sportives',
       signIn: 'Se connecter',
       dashboard: 'Tableau de bord',
+    },
+    admin: {
+      title: 'Administration',
+      subtitle: 'Administrer les utilisateurs et les règles de l’application',
+      menuUsers: 'Utilisateurs',
+      menuCompetitions: 'Épreuves',
+      menuChampionships: 'Championnats',
+      overviewInfo:
+        'Cet espace résume vos responsabilités d’administrateur. Utilisez le menu pour agir.',
+      roleGovernanceTitle: 'Gouvernance des rôles',
+      roleGovernanceBody:
+        'Validez les affectations de commissaires et appliquez les règles de promotion.',
+      roleGovernanceHint: 'Seuls les admins peuvent promouvoir COMMISSAIRE.',
+      moderationTitle: 'Supervision des compétitions',
+      moderationBody:
+        'Assurez la qualité des données : demandes, inscriptions et publications.',
+      moderationHint: 'Les outils pour épreuves et championnats arrivent bientôt.',
+      usersSection: 'Utilisateurs',
+      usersInfo: 'La gestion des utilisateurs sera reliée à l\'API prochainement.',
+      userName: 'Nom',
+      userEmail: 'Email',
+      userRole: 'Rôle',
+      userActions: 'Actions',
+      noUsers: 'Aucun utilisateur à afficher pour le moment.',
+      loading: 'Chargement des utilisateurs...',
+      usersError: 'Impossible de charger les utilisateurs.',
+      promoteCommissaire: 'Promouvoir COMMISSAIRE',
+      backToDashboard: 'Retour au panel admin',
+      competitionsSection: 'Épreuves',
+      competitionsInfo: 'Gestion des épreuves et courses à venir.',
+      championshipsSection: 'Championnats',
+      championshipsInfo: 'Gestion des championnats à venir.',
     },
     about: {
       tagline:

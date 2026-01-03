@@ -90,6 +90,23 @@ export const userService = {
   },
 
   /**
+   * Récupérer la liste des utilisateurs (ADMIN)
+   */
+  async getUsers(): Promise<User[]> {
+    try {
+      const token = this.getToken()
+      const response = await axios.get<User[]>(`${API_URL}/auth/users`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+
+      return response.data
+    } catch (error) {
+      console.error('Get users error:', error)
+      throw error
+    }
+  },
+
+  /**
    * Vérifier si un utilisateur est connecté
    */
   isAuthenticated(): boolean {

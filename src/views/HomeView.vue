@@ -24,7 +24,8 @@
         </v-btn>
 
         <v-btn
-          v-else
+          v-else-if="isAdmin"
+          to="/admin"
           color="primary"
           size="large"
           variant="outlined"
@@ -39,8 +40,11 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { computed } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { UserRole } from '@/types/user'
 
 const userStore = useUserStore()
 const { t } = useI18n()
+const isAdmin = computed(() => userStore.hasRole(UserRole.ADMIN))
 </script>

@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
+import { UserRole } from '@/types/user'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 const router = useRouter()
@@ -10,6 +11,7 @@ const userStore = useUserStore()
 const { t } = useI18n()
 
 const drawer = ref(false)
+const isAdmin = computed(() => userStore.hasRole(UserRole.ADMIN))
 
 const menuItems = computed(() => [{ title: t('nav.home'), icon: 'mdi-home', to: '/' }])
 
@@ -45,6 +47,9 @@ const logout = async () => {
         <v-list-item to="/profil">
           <!-- TODO: Mon profil & paramètres : modification/ préférences etc-->
           <v-list-item-title>{{ t('nav.profile') }}</v-list-item-title>
+        </v-list-item>
+        <v-list-item v-if="isAdmin" to="/admin">
+          <v-list-item-title>{{ t('nav.adminPanel') }}</v-list-item-title>
         </v-list-item>
         <v-list-item to="/parametres">
           <v-list-item-title>{{ t('nav.settings') }}</v-list-item-title>

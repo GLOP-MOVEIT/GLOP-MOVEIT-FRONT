@@ -52,6 +52,26 @@ const routes: RouteRecordRaw[] = [
           disallowRoles: [UserRole.ADMIN, UserRole.COMMISSAIRE],
         },
       },
+      {
+        path: 'admin',
+        component: () => import('@/views/AdminShellView.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresRole: UserRole.ADMIN,
+        },
+        children: [
+          {
+            path: '',
+            name: 'admin-overview',
+            component: () => import('@/views/AdminOverviewView.vue'),
+          },
+          {
+            path: 'users',
+            name: 'admin-users',
+            component: () => import('@/views/AdminUsersView.vue'),
+          },
+        ],
+      },
     ],
   },
   {
@@ -78,6 +98,13 @@ router.beforeEach((to, from, next) => {
 
     if (hasDisallowedRole) {
       next({ name: 'profile' })
+    } else {
+      next()
+    }
+  } else if (to.meta.requiresRole) {
+    const requiredRole = to.meta.requiresRole as UserRole
+    if (!userStore.hasRole(requiredRole)) {
+      next({ name: 'home' })
     } else {
       next()
     }
