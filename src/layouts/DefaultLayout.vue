@@ -9,9 +9,7 @@ const userStore = useUserStore()
 const drawer = ref(false)
 const { t, locale } = useI18n()
 
-const menuItems = computed(() => [
-  { title: t('nav.home'), icon: 'mdi-home', to: '/' },
-])
+const menuItems = computed(() => [{ title: t('nav.home'), icon: 'mdi-home', to: '/' }])
 
 const localeOptions = computed(() => [
   { value: 'fr', label: t('locales.fr') },
@@ -90,8 +88,7 @@ const setLocale = (value: string) => {
           </v-btn>
         </template>
         <v-list>
-          <v-list-item>
-            <!-- TODO: Mon profil & paramètres : modification/ préférences etc-->
+          <v-list-item to="/profil">
             <v-list-item-title>{{ t('nav.profile') }}</v-list-item-title>
           </v-list-item>
           <v-list-item>

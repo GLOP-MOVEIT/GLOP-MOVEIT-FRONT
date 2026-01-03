@@ -15,6 +15,25 @@ export const useUserStore = defineStore('user', () => {
   const userRole = computed(() => user.value?.role?.name || null)
   const isAdmin = computed(() => user.value?.role?.name === UserRole.ADMIN)
   const isSpectator = computed(() => user.value?.role?.name === UserRole.SPECTATOR)
+  const roles = computed(() => {
+    const list = new Set<string>()
+
+    if (user.value?.role?.name) {
+      list.add(user.value.role.name)
+    }
+
+    user.value?.authorities?.forEach((authority) => {
+      list.add(authority.authority.replace(/^ROLE_/, ''))
+    })
+
+    if (list.size === 0) {
+      list.add(UserRole.SPECTATOR)
+    }
+
+    return Array.from(list)
+  })
+
+  const hasRole = (role: UserRole) => roles.value.includes(role)
 
   // Actions
   async function login(credentials: LoginRequest) {
@@ -38,10 +57,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      // Le backend Spring Boot ne retourne que l'utilisateur, pas de token
       const registeredUser = await userService.register(userData)
-      // On ne connecte pas automatiquement l'utilisateur après l'inscription
-      // Il devra se connecter manuellement
       return { success: true, user: registeredUser }
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Erreur lors de l\'inscription'
@@ -65,11 +81,10 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      const userData = await userService.getCurrentUser()
+      const userData = await userService.getProfile()
       user.value = userData
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Erreur lors de la récupération du profil'
-      // Si erreur 401, le token est invalide
       if (err.response?.status === 401) {
         user.value = null
       }
@@ -92,6 +107,8 @@ export const useUserStore = defineStore('user', () => {
     userRole,
     isAdmin,
     isSpectator,
+    roles,
+    hasRole,
     // Actions
     login,
     register,

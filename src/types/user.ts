@@ -2,7 +2,9 @@
 export enum UserRole {
   ADMIN = 'ADMIN',
   SPECTATOR = 'SPECTATOR',
-  // Ajouter d'autres rôles ici plus tard
+  SPORTIF = 'SPORTIF',
+  VOLONTAIRE = 'VOLONTAIRE',
+  COMMISSAIRE = 'COMMISSAIRE',
 }
 
 // Interface pour l'objet role complet du backend
@@ -14,6 +16,10 @@ export interface Role {
   updatedAt?: string
 }
 
+export interface Authority {
+  authority: string
+}
+
 // Types pour l'utilisateur 
 export interface User {
   id: number
@@ -23,8 +29,11 @@ export interface User {
   phoneNumber?: string
   role?: Role
   createdAt?: string
+  updatedAt?: string
   acceptsNotifications?: boolean
   acceptsLocation?: boolean
+  authorities?: Authority[]
+  username?: string
 }
 
 // Types pour les requêtes d'authentification (correspond aux DTOs du backend)

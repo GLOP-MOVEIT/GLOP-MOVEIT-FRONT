@@ -15,7 +15,6 @@ export const userService = {
         },
       })
       
-      // Stocker le token et l'utilisateur dans le localStorage
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token)
         localStorage.setItem('user', JSON.stringify(response.data.user))
@@ -48,10 +47,6 @@ export const userService = {
           'Content-Type': 'application/json',
         },
       })
-      
-      // Note: Le backend  ne retourne que l'User lors du signup, pas de token
-      // L'utilisateur devra se connecter après l'inscription
-      
       return response.data
     } catch (error) {
       console.error('Register error:', error)
@@ -73,6 +68,25 @@ export const userService = {
   getCurrentUser(): User | null {
     const user = localStorage.getItem('user')
     return user ? JSON.parse(user) : null
+  },
+
+  /**
+   * Récupérer le profil de l'utilisateur depuis l'API
+   */
+  async getProfile(): Promise<User> {
+    try {
+      const token = this.getToken()
+      const response = await axios.get<User>(`${API_URL}/auth/users/me`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+
+      localStorage.setItem('user', JSON.stringify(response.data))
+
+      return response.data
+    } catch (error) {
+      console.error('Get profile error:', error)
+      throw error
+    }
   },
 
   /**
