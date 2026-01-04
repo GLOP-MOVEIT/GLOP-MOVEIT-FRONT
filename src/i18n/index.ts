@@ -523,7 +523,7 @@ const getStartingLocale = () => {
     return storedLocale
   }
 
-  const browserLocale = navigator.language.split('-')[0]
+  const browserLocale = navigator.language.split('-')[0] || ''
   if (availableLocales.includes(browserLocale)) {
     return browserLocale
   }
