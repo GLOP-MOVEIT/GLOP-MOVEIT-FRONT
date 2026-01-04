@@ -14,6 +14,8 @@ services:
       - NODE_ENV=development
     profiles:
       - dev
+    networks:
+      - moveit-network
 
   # Service pour la production
   app-prod:
@@ -27,3 +29,9 @@ services:
     profiles:
       - prod
     restart: unless-stopped
+    networks:
+      - moveit-network
+
+networks:
+  moveit-network:
+    external: true
