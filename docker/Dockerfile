@@ -18,6 +18,9 @@ RUN npm ci
 # Copie le code source
 COPY . .
 
+# S'assure que le fichier .env.production est utilisé
+ENV NODE_ENV=production
+
 # Build l'application pour la production
 RUN npm run build
 
