@@ -15,4 +15,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  css: {
+    preprocessorOptions: {
+      sass: {
+        silenceDeprecations: ['if-function'],
+      },
+      scss: {
+        silenceDeprecations: ['if-function'],
+      },
+    },
+  },
 })
