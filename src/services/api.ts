@@ -1,7 +1,11 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
 
 // Configuration de base pour les appels API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+// Si VITE_API_BASE_URL est défini (même vide), l'utilise pour le proxy nginx
+// Sinon utilise localhost pour le développement local
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL !== undefined 
+  ? import.meta.env.VITE_API_BASE_URL 
+  : 'http://localhost:8080'
 
 // Création de l'instance Axios
 const apiClient: AxiosInstance = axios.create({

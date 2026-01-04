@@ -21,7 +21,10 @@ COPY . .
 # Configuration pour le build de production
 # IMPORTANT: VITE_API_BASE_URL doit être vide pour utiliser le proxy nginx
 ENV NODE_ENV=production
-ENV VITE_API_BASE_URL=""
+
+# Crée un fichier .env.production avec la configuration correcte
+# Cela écrase tout fichier .env.production existant
+RUN echo "VITE_API_BASE_URL=" > .env.production
 
 # Build l'application pour la production
 RUN npm run build
