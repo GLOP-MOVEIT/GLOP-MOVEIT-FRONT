@@ -6,6 +6,9 @@ FROM node:22-alpine AS builder
 # Définit le répertoire de travail
 WORKDIR /app
 
+# Augmente la mémoire pour Node.js
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 # Copie les fichiers de dépendances
 COPY package.json package-lock.json* ./
 
