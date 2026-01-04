@@ -18,11 +18,9 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       sass: {
-        api: 'modern-compiler',
         silenceDeprecations: ['if-function', 'global-builtin', 'import', 'color-functions'],
       },
       scss: {
-        api: 'modern-compiler',
         silenceDeprecations: ['if-function', 'global-builtin', 'import', 'color-functions'],
       },
     },
