@@ -65,6 +65,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { isAxiosError } from 'axios'
 import userService from '@/services/userService'
 import type { User } from '@/types/user'
 import { UserRole } from '@/types/user'
@@ -107,8 +108,12 @@ const fetchUsers = async () => {
   errorMessage.value = ''
   try {
     users.value = await userService.getUsers()
-  } catch (error: any) {
-    errorMessage.value = error.response?.data?.message || t('admin.usersError')
+  } catch (error: unknown) {
+    if (isAxiosError<{ message?: string }>(error)) {
+      errorMessage.value = error.response?.data?.message || t('admin.usersError')
+    } else {
+      errorMessage.value = t('admin.usersError')
+    }
   } finally {
     isLoading.value = false
   }

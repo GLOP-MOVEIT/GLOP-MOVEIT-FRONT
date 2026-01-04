@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { isAxiosError } from 'axios'
 import userService from '@/services/userService'
 import type { User, LoginRequest, RegisterRequest } from '@/types/user'
 import { UserRole } from '@/types/user'
@@ -35,6 +36,13 @@ export const useUserStore = defineStore('user', () => {
 
   const hasRole = (role: UserRole) => roles.value.includes(role)
 
+  const getErrorMessage = (err: unknown, fallback: string) => {
+    if (isAxiosError<{ message?: string }>(err)) {
+      return err.response?.data?.message || fallback
+    }
+    return fallback
+  }
+
   // Actions
   async function login(credentials: LoginRequest) {
     isLoading.value = true
@@ -44,8 +52,8 @@ export const useUserStore = defineStore('user', () => {
       const response = await userService.login(credentials)
       user.value = response.user
       return response
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Erreur lors de la connexion'
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, 'Erreur lors de la connexion')
       throw err
     } finally {
       isLoading.value = false
@@ -59,8 +67,8 @@ export const useUserStore = defineStore('user', () => {
     try {
       const registeredUser = await userService.register(userData)
       return { success: true, user: registeredUser }
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Erreur lors de l\'inscription'
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, 'Erreur lors de l\'inscription')
       throw err
     } finally {
       isLoading.value = false
@@ -83,9 +91,9 @@ export const useUserStore = defineStore('user', () => {
     try {
       const userData = await userService.getProfile()
       user.value = userData
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Erreur lors de la récupération du profil'
-      if (err.response?.status === 401) {
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, 'Erreur lors de la récupération du profil')
+      if (isAxiosError(err) && err.response?.status === 401) {
         user.value = null
       }
     } finally {

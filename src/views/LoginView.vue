@@ -314,6 +314,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { isAxiosError } from 'axios'
 import { useUserStore } from '@/stores/user'
 import type { LoginRequest, RegisterRequest } from '@/types/user'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
@@ -361,6 +362,13 @@ const passwordRules = [
   (v: string) => v.length >= 6 || t('validation.passwordMin'),
 ]
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (isAxiosError<{ message?: string }>(error)) {
+    return error.response?.data?.message || fallback
+  }
+  return fallback
+}
+
 // Gestion de la connexion
 const handleLogin = async () => {
   errorMessage.value = ''
@@ -381,8 +389,8 @@ const handleLogin = async () => {
     
     // Redirection après connexion réussie
     router.push('/')
-  } catch (error: any) {
-    errorMessage.value = error.response?.data?.message || t('login.invalidCredentials')
+  } catch (error: unknown) {
+    errorMessage.value = getErrorMessage(error, t('login.invalidCredentials'))
     console.error('Login error:', error)
   } finally {
     loading.value = false
@@ -442,8 +450,8 @@ const handleRegister = async () => {
     alert(t('login.registerSuccess'))
     showRegisterForm.value = false
     email.value = registerData.value.email // Pré-remplir l'email
-  } catch (error: any) {
-    errorMessage.value = error.response?.data?.message || t('login.registerError')
+  } catch (error: unknown) {
+    errorMessage.value = getErrorMessage(error, t('login.registerError'))
     console.error('Register error:', error)
   } finally {
     loading.value = false
