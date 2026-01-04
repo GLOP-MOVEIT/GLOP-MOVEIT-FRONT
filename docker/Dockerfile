@@ -15,11 +15,13 @@ COPY package.json package-lock.json* ./
 # Installe toutes les dépendances (nécessaires pour le build)
 RUN npm ci
 
-# Copie le code source
+# Copie le code source (.env est exclu via .dockerignore)
 COPY . .
 
-# S'assure que le fichier .env.production est utilisé
+# Configuration pour le build de production
+# IMPORTANT: VITE_API_BASE_URL doit être vide pour utiliser le proxy nginx
 ENV NODE_ENV=production
+ENV VITE_API_BASE_URL=""
 
 # Build l'application pour la production
 RUN npm run build
