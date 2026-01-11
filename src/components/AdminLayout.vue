@@ -35,7 +35,6 @@ const isRail = ref(false)
           :to="item.to"
           :prepend-icon="item.icon"
           :title="item.title"
-          exact
         ></v-list-item>
       </v-list>
     </v-navigation-drawer>

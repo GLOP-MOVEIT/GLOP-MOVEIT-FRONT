@@ -70,6 +70,11 @@ const routes: RouteRecordRaw[] = [
             name: 'admin-users',
             component: () => import('@/views/AdminUsersView.vue'),
           },
+          {
+            path: 'championships',
+            name: 'admin-championships',
+            component: () => import('@/views/AdminChampionshipsView.vue'),
+          },
         ],
       },
       {
