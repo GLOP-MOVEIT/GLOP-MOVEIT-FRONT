@@ -18,7 +18,7 @@ export type Place = Record<string, never>
 
 export interface Competition {
   competitionId: string
-  competition: Competition[]
+  competition?: Competition[]
   competitionSport: string
   competitionName: string
   competitionStartDate: Date
