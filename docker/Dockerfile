@@ -24,7 +24,7 @@ ENV NODE_ENV=production
 
 # Crée un fichier .env.production avec la configuration correcte
 # Cela écrase tout fichier .env.production existant
-RUN echo "VITE_API_BASE_URL=" > .env.production
+RUN echo "VITE_API_BASE_URL=\nVITE_APP_NAME=CiblOrgaSport\n" > .env.production
 
 # Build l'application pour la production
 RUN npm run build

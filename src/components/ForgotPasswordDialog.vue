@@ -47,9 +47,7 @@ const props = defineProps<{
   initialEmail?: string
 }>()
 
-const emit = defineEmits<{
-  (event: 'update:modelValue', value: boolean): void
-}>()
+const emit = defineEmits<(event: 'update:modelValue', value: boolean) => void>()
 
 const { t } = useI18n()
 

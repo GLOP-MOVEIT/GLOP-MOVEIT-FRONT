@@ -26,10 +26,10 @@
     <v-table>
       <thead>
         <tr>
-          <th class="text-left">{{ t('admin.userName') }}</th>
-          <th class="text-left">{{ t('admin.userEmail') }}</th>
-          <th class="text-left">{{ t('admin.userRole') }}</th>
-          <th class="text-left">{{ t('admin.userActions') }}</th>
+          <th scope="col" class="text-left">{{ t('admin.userName') }}</th>
+          <th scope="col" class="text-left">{{ t('admin.userEmail') }}</th>
+          <th scope="col" class="text-left">{{ t('admin.userRole') }}</th>
+          <th scope="col" class="text-left">{{ t('admin.userActions') }}</th>
         </tr>
       </thead>
       <tbody>

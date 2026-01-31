@@ -1,14 +1,14 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+import {createApp, watch} from 'vue'
+import {createPinia} from 'pinia'
 import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
-import { loadAndApplyUiPreferences } from './services/uiSettings'
+import {loadAndApplyUiPreferences} from './services/uiSettings'
 
 // Vuetify
 import '@/styles/main.scss'
 import '@mdi/font/css/materialdesignicons.css'
-import { createVuetify } from 'vuetify'
+import {createVuetify} from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 
@@ -46,5 +46,24 @@ app.use(createPinia())
 app.use(router)
 app.use(vuetify)
 app.use(i18n)
+
+const setDocumentLang = (value: string) => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = value
+  }
+}
+
+const syncDocumentMeta = (value: string) => {
+  setDocumentLang(value)
+
+  if (typeof document !== 'undefined') {
+    document.title = import.meta.env.VITE_APP_NAME || document.title
+  }
+}
+
+syncDocumentMeta(i18n.global.locale.value)
+watch(i18n.global.locale, (value) => {
+  syncDocumentMeta(value)
+})
 
 app.mount('#app')
