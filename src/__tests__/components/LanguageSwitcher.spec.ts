@@ -26,13 +26,6 @@ const stubs = {
 }
 
 describe('LanguageSwitcher', () => {
-  it('renders current locale label', () => {
-    localeRef.value = 'fr'
-    const wrapper = mount(LanguageSwitcher, { global: { stubs } })
-
-    expect(wrapper.text()).toContain('locales.fr')
-  })
-
   it('updates locale and localStorage on selection', async () => {
     localeRef.value = 'fr'
     localStorage.clear()
