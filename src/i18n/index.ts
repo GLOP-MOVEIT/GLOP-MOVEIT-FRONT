@@ -514,7 +514,7 @@ const availableLocales = Object.keys(messages)
 const defaultLocale = 'fr'
 
 const getStartingLocale = () => {
-  if (typeof window === 'undefined') {
+  if (globalThis.window === undefined) {
     return defaultLocale
   }
 

@@ -47,7 +47,7 @@ const currentLocaleLabel = computed(() => {
 const setLocale = (value: string) => {
   locale.value = value
 
-  if (typeof window !== 'undefined') {
+  if (globalThis.window !== undefined) {
     localStorage.setItem('locale', value)
   }
 }

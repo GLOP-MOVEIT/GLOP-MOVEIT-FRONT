@@ -123,10 +123,10 @@ router.beforeEach((to, from, next) => {
     }
   } else if (to.meta.requiresRole) {
     const requiredRole = to.meta.requiresRole as UserRole
-    if (!userStore.hasRole(requiredRole)) {
-      next({ name: 'home' })
-    } else {
+    if (userStore.hasRole(requiredRole)) {
       next()
+    } else {
+      next({ name: 'home' })
     }
   } else if (to.name === 'login' && isAuthenticated) {
     next({ name: 'home' })

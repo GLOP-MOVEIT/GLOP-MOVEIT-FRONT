@@ -46,7 +46,6 @@ const logout = async () => {
       </template>
       <v-list>
         <v-list-item to="/profil">
-          <!-- TODO: Mon profil & paramètres : modification/ préférences etc-->
           <v-list-item-title>{{ t('nav.profile') }}</v-list-item-title>
         </v-list-item>
         <v-list-item v-if="isAdmin" to="/admin">

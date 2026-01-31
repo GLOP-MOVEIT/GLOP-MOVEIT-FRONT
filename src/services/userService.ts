@@ -1,10 +1,7 @@
 import axios from 'axios'
 import type { LoginRequest, RegisterRequest, AuthResponse, User } from '@/types/user'
 
-// Si VITE_API_BASE_URL est défini (même vide), l'utilise. Sinon utilise localhost pour le dev
-const API_URL = import.meta.env.VITE_API_BASE_URL !== undefined 
-  ? import.meta.env.VITE_API_BASE_URL 
-  : 'http://localhost:8080'
+const API_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
 export const userService = {
   /**

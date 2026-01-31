@@ -139,8 +139,8 @@ const route = useRoute()
 const { t } = useI18n()
 
 const requestedRole = computed(() => String(route.params.role || '').toUpperCase())
-const allowedRoles = ['SPORTIF', 'VOLONTAIRE']
-const isSupportedRole = computed(() => allowedRoles.includes(requestedRole.value))
+const allowedRoles = new Set(['SPORTIF', 'VOLONTAIRE'])
+const isSupportedRole = computed(() => allowedRoles.has(requestedRole.value))
 const isSportif = computed(() => requestedRole.value === 'SPORTIF')
 
 const roleLabel = computed(() => {
@@ -154,7 +154,9 @@ const roleLabel = computed(() => {
   return t(`roles.${requestedRole.value}`)
 })
 
-const requiredFile = (value: File[] | File | null) => {
+type FileInputValue = File[] | File | null
+
+const requiredFile = (value: FileInputValue) => {
   if (Array.isArray(value)) {
     return value.length > 0 || t('roleRequest.requiredDocument')
   }
@@ -168,18 +170,18 @@ const infoMessage = ref('')
 const sportifForm = ref()
 const validSportif = ref(false)
 const sportifDocs = ref({
-  passport: null as File[] | File | null,
-  medical: null as File[] | File | null,
-  antidoping: null as File[] | File | null,
-  identity: null as File[] | File | null,
+  passport: null as FileInputValue,
+  medical: null as FileInputValue,
+  antidoping: null as FileInputValue,
+  identity: null as FileInputValue,
   trackingConsent: false,
 })
 
 const volontaireForm = ref()
 const validVolontaire = ref(false)
 const volontaireDocs = ref({
-  identity: null as File[] | File | null,
-  motivation: null as File[] | File | null,
+  identity: null as FileInputValue,
+  motivation: null as FileInputValue,
 })
 
 const submitSportif = async () => {

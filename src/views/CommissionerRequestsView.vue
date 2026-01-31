@@ -26,10 +26,10 @@
     <v-table>
       <thead>
         <tr>
-          <th class="text-left">{{ t('commissioner.requestUser') }}</th>
-          <th class="text-left">{{ t('commissioner.requestRole') }}</th>
-          <th class="text-left">{{ t('commissioner.requestDocuments') }}</th>
-          <th class="text-left">{{ t('commissioner.requestActions') }}</th>
+          <th scope="col" class="text-left">{{ t('commissioner.requestUser') }}</th>
+          <th scope="col" class="text-left">{{ t('commissioner.requestRole') }}</th>
+          <th scope="col" class="text-left">{{ t('commissioner.requestDocuments') }}</th>
+          <th scope="col" class="text-left">{{ t('commissioner.requestActions') }}</th>
         </tr>
       </thead>
       <tbody>
