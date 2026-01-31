@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import axios from 'axios'
-import userService from '@/services/userService.ts'
+import userService from '@/services/userService'
 
 vi.mock('axios', () => ({
     default: {
