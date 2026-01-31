@@ -10,7 +10,7 @@ const defaultSettings: SettingsState = {
 }
 
 export const loadSettings = (): SettingsState => {
-  if (typeof globalThis.window === 'undefined') {
+  if (globalThis.window === undefined) {
     return defaultSettings
   }
 
@@ -24,7 +24,7 @@ export const loadSettings = (): SettingsState => {
 }
 
 export const saveSettings = (updates: Partial<SettingsState>) => {
-  if (typeof globalThis.window === 'undefined') {
+  if (globalThis.window === undefined) {
     return
   }
 
