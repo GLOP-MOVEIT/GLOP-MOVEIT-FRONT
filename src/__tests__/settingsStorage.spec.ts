@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { loadSettings, saveSettings } from '@/services/settingsStorage.ts'
+import { loadSettings, saveSettings } from '@/services/settingsStorage'
 
 const defaultSettings = {
   notifications: false,

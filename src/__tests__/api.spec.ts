@@ -34,7 +34,8 @@ describe('api client', () => {
         requestHandler = undefined
         responseErrorHandler = undefined
 
-    await import('@/services/api.ts')
+        vi.resetModules()
+        await import('@/services/api')
     })
 
     it('creates the axios client with expected defaults', () => {
@@ -53,5 +54,33 @@ describe('api client', () => {
         requestHandler?.(config)
 
         expect(config.headers.Authorization).toBeUndefined()
+    })
+
+    it('handles 401 response error', async () => {
+        localStorage.setItem('authToken', 'token-123')
+        localStorage.setItem('refreshToken', 'refresh-123')
+        const originalLocation = globalThis.window.location
+        Object.defineProperty(globalThis.window, 'location', {
+            value: {href: 'http://localhost:3000/'},
+            configurable: true,
+        })
+        const error = {response: {status: 401}}
+
+        expect(responseErrorHandler).toBeDefined()
+        try {
+            await responseErrorHandler?.(error as never)
+            throw new Error('Expected responseErrorHandler to reject')
+        } catch (caught) {
+            expect(caught).toEqual(error)
+        }
+
+        expect(localStorage.getItem('authToken')).toBeNull()
+        expect(localStorage.getItem('refreshToken')).toBeNull()
+        expect(globalThis.window.location.href).toBe('/login')
+
+        Object.defineProperty(globalThis.window, 'location', {
+            value: originalLocation,
+            configurable: true,
+        })
     })
 })

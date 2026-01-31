@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import * as settingsStorage from '@/services/settingsStorage.ts'
+import * as settingsStorage from '@/services/settingsStorage'
 import {
   applyDyslexiaMode,
   applyTextSize,
@@ -7,7 +7,7 @@ import {
   loadAndApplyUiPreferences,
   readUiPreferences,
   saveUiPreferences,
-} from '@/services/uiSettings.ts'
+} from '@/services/uiSettings'
 
 describe('uiSettings', () => {
   beforeEach(() => {
