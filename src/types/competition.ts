@@ -1,41 +1,37 @@
-export enum CompetitionStatus {
+export enum Status {
   PLANNED = 'PLANNED',
   ONGOING = 'ONGOING',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
 }
 
-export enum EventStatus {
-  SCHEDULED = 'SCHEDULED',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
-  POSTPONED = 'POSTPONED',
+export interface Championship {
+  id: number
+  name: string
+  description: string
+  startDate: Date
+  endDate: Date
+  status: Status
+  competitions: Competition[]
 }
 
-export type EventType = string
-export type Place = Record<string, never>
-
 export interface Competition {
-  competitionId: string
-  competition?: Competition[]
-  competitionSport: string
-  competitionName: string
-  competitionStartDate: Date
-  competitionEndDate: Date
-  competitionDescription: string
-  competitionStatus: CompetitionStatus
+  id: number
+  championship: Championship
+  name: string
+  description: string
+  startDate: Date
+  endDate: Date
+  status: Status
   events: Event[]
 }
 
 export interface Event {
-  eventId: string
+  id: number
   competition: Competition
-  place: Place
-  eventName: string
-  eventStartDate: Date
-  eventEndDate: Date
-  eventDescription: string
-  eventType: EventType
-  eventStatus: EventStatus
+  name: string
+  description: string
+  startDate: Date
+  endDate: Date
+  status: Status
 }

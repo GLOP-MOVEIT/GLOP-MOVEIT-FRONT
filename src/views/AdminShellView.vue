@@ -16,7 +16,8 @@ const { t } = useI18n()
 const menuItems = computed(() => [
   { title: t('admin.menuOverview'), icon: 'mdi-view-dashboard', to: '/admin' },
   { title: t('admin.menuUsers'), icon: 'mdi-account-group', to: '/admin/users' },
-  { title: t('admin.menuCompetitions'), icon: 'mdi-flag-checkered' },
   { title: t('admin.menuChampionships'), icon: 'mdi-trophy', to: '/admin/championships' },
+  { title: t('admin.menuCompetitions'), icon: 'mdi-medal', to: '/admin/competitions' },
+  { title: t('admin.menuEvents'), icon: 'mdi-flag', to: '/admin/events' },
 ])
 </script>
