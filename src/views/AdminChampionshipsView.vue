@@ -5,10 +5,6 @@
         <v-icon icon="mdi-trophy" size="32" color="primary" class="mr-2" />
         <h2 class="text-h5 font-weight-bold">{{ t('admin.championshipsSection') }}</h2>
       </div>
-      <v-btn variant="text" to="/admin" class="text-none">
-        <v-icon icon="mdi-arrow-left" class="mr-1" />
-        {{ t('admin.backToDashboard') }}
-      </v-btn>
     </div>
 
     <v-alert type="info" variant="tonal" class="mb-4">
@@ -23,11 +19,11 @@
             {{ t('admin.championshipsCreateSubtitle') }}
           </div>
 
-          <v-form ref="formRef" validate-on="submit" @submit.prevent="handleSubmit">
+          <v-form ref="championshipFormRef" validate-on="submit" @submit.prevent="handleChampionshipSubmit">
             <v-row dense>
               <v-col cols="12">
                 <v-text-field
-                  v-model="form.competitionName"
+                  v-model="championshipForm.name"
                   :label="t('admin.championshipNameLabel')"
                   variant="outlined"
                   density="comfortable"
@@ -37,17 +33,29 @@
               </v-col>
               <v-col cols="12" md="6">
                 <v-text-field
-                  v-model="form.competitionSport"
-                  :label="t('admin.championshipSportLabel')"
+                  v-model="championshipForm.startDate"
+                  type="date"
+                  :label="t('admin.championshipStartDateLabel')"
                   variant="outlined"
                   density="comfortable"
-                  :rules="[rules.required]"
+                  :rules="[rules.required, rules.startRecentEnough]"
+                  required
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="championshipForm.endDate"
+                  type="date"
+                  :label="t('admin.championshipEndDateLabel')"
+                  variant="outlined"
+                  density="comfortable"
+                  :rules="[rules.required, rules.dateOrder]"
                   required
                 />
               </v-col>
               <v-col cols="12" md="6">
                 <v-select
-                  v-model="form.competitionStatus"
+                  v-model="championshipForm.status"
                   :items="statusOptions"
                   item-title="title"
                   item-value="value"
@@ -59,45 +67,12 @@
                   chips
                 />
               </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.competitionStartDate"
-                  type="date"
-                  :label="t('admin.championshipStartDateLabel')"
-                  variant="outlined"
-                  density="comfortable"
-                  :rules="[rules.required, rules.startRecentEnough, rules.startWithinParent]"
-                  required
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.competitionEndDate"
-                  type="date"
-                  :label="t('admin.championshipEndDateLabel')"
-                  variant="outlined"
-                  density="comfortable"
-                  :rules="[rules.required, rules.dateOrder, rules.endWithinParent]"
-                  required
-                />
-              </v-col>
-              <v-col cols="12">
-                <v-select
-                  v-model="form.parentCompetitionId"
-                  :items="parentOptions"
-                  item-title="title"
-                  item-value="value"
-                  :label="t('admin.championshipParentLabel')"
-                  variant="outlined"
-                  density="comfortable"
-                />
-              </v-col>
               <v-col cols="12">
                 <v-textarea
-                  v-model="form.competitionDescription"
+                  v-model="championshipForm.description"
                   :label="t('admin.championshipDescriptionLabel')"
                   variant="outlined"
-                  rows="4"
+                  rows="3"
                   density="comfortable"
                   auto-grow
                 />
@@ -105,11 +80,11 @@
             </v-row>
 
             <div class="d-flex justify-end mt-2">
-              <v-btn color="primary" type="submit" :loading="isSubmitting" class="mr-2">
+              <v-btn color="primary" type="submit" :loading="isChampionshipSubmitting" class="mr-2">
                 <v-icon icon="mdi-content-save-outline" class="mr-1" />
-                {{ isEditing ? t('admin.championshipUpdate') : t('admin.championshipSubmit') }}
+                {{ editingChampionshipId ? t('admin.championshipUpdate') : t('admin.championshipSubmit') }}
               </v-btn>
-              <v-btn color="secondary" variant="tonal" @click="resetForm" :disabled="isSubmitting">
+              <v-btn color="secondary" variant="tonal" @click="resetChampionshipForm" :disabled="isChampionshipSubmitting">
                 <v-icon icon="mdi-backup-restore" class="mr-1" />
                 {{ t('admin.championshipReset') }}
               </v-btn>
@@ -134,39 +109,30 @@
             {{ t('admin.championshipNoData') }}
           </div>
 
-          <v-list v-else density="compact" lines="three">
+          <v-list v-else density="compact" lines="two">
             <v-list-item
-              v-for="item in orderedChampionships"
-              :key="item.node.id"
+              v-for="championship in championships"
+              :key="championship.id"
               class="rounded-lg mb-1"
-              :title="item.node.name"
-              :subtitle="item.node.sport"
-              :style="{ marginLeft: `${item.depth * 16}px` }"
+              :title="championship.name"
             >
               <template #append>
-                <div class="d-flex align-center">
-                  <v-btn icon size="small" variant="text" color="primary" @click="startEdit(item.node)" class="ma-0">
+                <div class="d-flex align-center gap-1">
+                  <v-btn icon size="small" variant="text" color="primary" @click="startChampionshipEdit(championship)" class="ma-0">
                     <v-icon icon="mdi-pencil" size="18" />
                   </v-btn>
-                  <v-btn icon size="small" variant="text" color="error" @click="confirmDelete(item.node)" class="ma-0">
+                  <v-btn icon size="small" variant="text" color="error" @click="confirmDeleteChampionship(championship)" class="ma-0">
                     <v-icon icon="mdi-delete-outline" size="18" />
                   </v-btn>
-                  <v-chip :color="statusColor(item.node.status)" variant="tonal" size="small" label class="ml-1">
-                    {{ t(`admin.competitionStatus.${item.node.status}`) }}
+                  <v-chip :color="statusColor(championship.status)" variant="tonal" size="small" label class="ml-1">
+                    {{ t(`admin.competitionStatus.${championship.status}`) }}
                   </v-chip>
                 </div>
               </template>
               <template #subtitle>
-                <div class="d-flex flex-column text-caption text-grey-darken-2">
-                  <span class="d-flex align-center" :class="{ 'ml-n1': item.depth > 0 }">
-                    <v-icon v-if="item.depth > 0" icon="mdi-subdirectory-arrow-right" size="14" class="mr-1" />
-                    <span>{{ item.node.sport }}</span>
-                  </span>
-                  <span>{{ t('admin.championshipDates') }}: {{ formatDateRange(item.node) }}</span>
-                  <span v-if="item.node.parentName">
-                    {{ t('admin.championshipParentDisplayLabel') }}: {{ item.node.parentName }}
-                  </span>
-                </div>
+                <span class="text-caption text-grey-darken-2">
+                  {{ formatDateRange(championship.startDate, championship.endDate) }}
+                </span>
               </template>
             </v-list-item>
           </v-list>
@@ -181,88 +147,45 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { CompetitionStatus } from '@/types/competition'
+import { Status } from '@/types/competition'
+import championshipService from '@/services/championshipService'
 
 type LocalChampionship = {
-  id: string
+  id: number
   name: string
-  sport: string
+  description: string
   startDate: string
   endDate: string
-  status: CompetitionStatus
-  description?: string
-  parentId?: string | null
-  parentName?: string
+  status: Status
 }
 
 const { t } = useI18n()
 
-const formRef = ref()
+const championshipFormRef = ref()
+const editingChampionshipId = ref<number | null>(null)
+const isChampionshipSubmitting = ref(false)
 const snackbar = ref(false)
 const snackbarMessage = ref('')
-const isSubmitting = ref(false)
-const editingId = ref<string | null>(null)
+const isLoading = ref(false)
 
-const championships = ref<LocalChampionship[]>([
-  {
-    id: 'champ-001',
-    name: 'Interclub Series',
-    sport: 'Cycling',
-    startDate: '2026-03-10',
-    endDate: '2026-05-20',
-    status: CompetitionStatus.PLANNED,
-    description: 'Regional road racing series.',
-  },
-  {
-    id: 'champ-002',
-    name: 'National Masters',
-    sport: 'Athletics',
-    startDate: '2026-06-02',
-    endDate: '2026-07-18',
-    status: CompetitionStatus.ONGOING,
-    description: 'Multi-discipline track championship.',
-  },
-  {
-    id: 'champ-003',
-    name: 'Regional Finals - Road Race',
-    sport: 'Cycling',
-    startDate: '2026-05-01',
-    endDate: '2026-05-15',
-    status: CompetitionStatus.PLANNED,
-    description: 'Final event of the Interclub Series.',
-    parentId: 'champ-001',
-    parentName: 'Interclub Series',
-  },
-])
+const championships = ref<LocalChampionship[]>([])
 
-const form = reactive({
-  competitionName: '',
-  competitionSport: '',
-  competitionStartDate: '',
-  competitionEndDate: '',
-  competitionDescription: '',
-  competitionStatus: CompetitionStatus.PLANNED,
-  parentCompetitionId: null as string | null,
+const championshipForm = reactive({
+  name: '',
+  description: '',
+  startDate: '',
+  endDate: '',
+  status: Status.PLANNED,
 })
 
-const isEditing = computed(() => Boolean(editingId.value))
-
 const statusOptions = computed(() =>
-  Object.values(CompetitionStatus).map((status) => ({
+  Object.values(Status).map((status) => ({
     title: t(`admin.competitionStatus.${status}`),
     value: status,
   })),
 )
-
-const parentOptions = computed(() => [
-  { title: t('admin.championshipParentNone'), value: null },
-  ...championships.value.map((champ) => ({
-    title: champ.name,
-    value: champ.id,
-  })),
-])
 
 const rules = {
   required: (value: unknown) => {
@@ -271,151 +194,134 @@ const rules = {
     return true
   },
   startRecentEnough: () => {
-    if (!form.competitionStartDate) return true
-    const start = new Date(form.competitionStartDate)
+    if (!championshipForm.startDate) return true
+    const start = new Date(championshipForm.startDate)
     const limit = new Date()
     limit.setHours(0, 0, 0, 0)
     limit.setMonth(limit.getMonth() - 6)
     return start >= limit || t('admin.championshipStartTooOld')
   },
   dateOrder: () => {
-    if (!form.competitionStartDate || !form.competitionEndDate) return true
-    const start = new Date(form.competitionStartDate)
-    const end = new Date(form.competitionEndDate)
+    if (!championshipForm.startDate || !championshipForm.endDate) return true
+    const start = new Date(championshipForm.startDate)
+    const end = new Date(championshipForm.endDate)
     return start <= end || t('admin.championshipDateOrderError')
-  },
-  startWithinParent: () => {
-    if (!form.parentCompetitionId || !form.competitionStartDate) return true
-    const parent = championships.value.find((c) => c.id === form.parentCompetitionId)
-    if (!parent) return true
-    const start = new Date(form.competitionStartDate)
-    const parentStart = new Date(parent.startDate)
-    return start >= parentStart || t('admin.championshipStartBeforeParent', { date: parent.startDate })
-  },
-  endWithinParent: () => {
-    if (!form.parentCompetitionId || !form.competitionEndDate) return true
-    const parent = championships.value.find((c) => c.id === form.parentCompetitionId)
-    if (!parent) return true
-    const end = new Date(form.competitionEndDate)
-    const parentEnd = new Date(parent.endDate)
-    return end <= parentEnd || t('admin.championshipEndAfterParent', { date: parent.endDate })
   },
 }
 
-const orderedChampionships = computed(() => {
-  const childrenMap: Record<string, LocalChampionship[]> = {}
-  championships.value.forEach((c) => {
-    const key = c.parentId ?? '__root__'
-    if (!childrenMap[key]) childrenMap[key] = []
-    childrenMap[key].push(c)
-  })
-
-  const result: { node: LocalChampionship; depth: number }[] = []
-
-  const walk = (nodes: LocalChampionship[] | undefined, depth: number) => {
-    if (!nodes) return
-    nodes
-      .slice()
-      .sort((a, b) => a.startDate.localeCompare(b.startDate))
-      .forEach((node) => {
-        result.push({ node, depth })
-        walk(childrenMap[node.id], depth + 1)
-      })
-  }
-
-  walk(childrenMap['__root__'], 0)
-  return result
-})
-
-const statusColor = (status: CompetitionStatus) => {
-  if (status === CompetitionStatus.PLANNED) return 'grey'
-  if (status === CompetitionStatus.ONGOING) return 'primary'
-  if (status === CompetitionStatus.COMPLETED) return 'success'
-  if (status === CompetitionStatus.CANCELLED) return 'error'
+const statusColor = (status: Status) => {
+  if (status === Status.PLANNED) return 'grey'
+  if (status === Status.ONGOING) return 'primary'
+  if (status === Status.COMPLETED) return 'success'
+  if (status === Status.CANCELLED) return 'error'
   return 'primary'
 }
 
-const formatDateRange = (championship: LocalChampionship) => {
-  return `${championship.startDate} → ${championship.endDate}`
+const formatDateRange = (startDate: string, endDate: string) => {
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return new Intl.DateTimeFormat('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(date)
+  }
+  return `${formatDate(startDate)} → ${formatDate(endDate)}`
 }
 
-const resetForm = () => {
-  form.competitionName = ''
-  form.competitionSport = ''
-  form.competitionStartDate = ''
-  form.competitionEndDate = ''
-  form.competitionDescription = ''
-  form.competitionStatus = CompetitionStatus.PLANNED
-  form.parentCompetitionId = null
-  editingId.value = null
-  nextTick(() => formRef.value?.resetValidation())
+// Load championships on mount
+onMounted(async () => {
+  console.log('AdminChampionshipsView mounted')
+  isLoading.value = true
+  try {
+    const data = await championshipService.getAllChampionships()
+    console.log('Championships loaded:', data)
+    championships.value = data
+  } catch (error) {
+    console.error('Error loading championships:', error)
+    snackbarMessage.value = 'Erreur lors du chargement des championnats'
+    snackbar.value = true
+  } finally {
+    isLoading.value = false
+  }
+})
+
+const resetChampionshipForm = () => {
+  championshipForm.name = ''
+  championshipForm.description = ''
+  championshipForm.startDate = ''
+  championshipForm.endDate = ''
+  championshipForm.status = Status.PLANNED
+  editingChampionshipId.value = null
+  nextTick(() => championshipFormRef.value?.resetValidation())
 }
 
-const handleSubmit = async () => {
-  const result = await formRef.value?.validate()
-  if (!result?.valid) return
-
-  isSubmitting.value = true
-  const parent = championships.value.find((c) => c.id === form.parentCompetitionId)
-
-  if (editingId.value) {
-    championships.value = championships.value.map((c) =>
-      c.id === editingId.value
-        ? {
-            ...c,
-            name: form.competitionName.trim(),
-            sport: form.competitionSport.trim(),
-            startDate: form.competitionStartDate,
-            endDate: form.competitionEndDate,
-            status: form.competitionStatus,
-            description: form.competitionDescription?.trim() || undefined,
-            parentId: form.parentCompetitionId,
-            parentName: parent?.name,
-          }
-        : c,
-    )
-    snackbarMessage.value = t('admin.championshipUpdateSuccess')
-  } else {
-    const id = `champ-${Date.now()}`
-    const newChampionship: LocalChampionship = {
-      id,
-      name: form.competitionName.trim(),
-      sport: form.competitionSport.trim(),
-      startDate: form.competitionStartDate,
-      endDate: form.competitionEndDate,
-      status: form.competitionStatus,
-      description: form.competitionDescription?.trim() || undefined,
-      parentId: form.parentCompetitionId,
-      parentName: parent?.name,
-    }
-
-    championships.value = [newChampionship, ...championships.value]
-    snackbarMessage.value = t('admin.championshipSuccess')
+const handleChampionshipSubmit = async () => {
+  console.log('handleChampionshipSubmit called')
+  const result = await championshipFormRef.value?.validate()
+  console.log('Validation result:', result)
+  if (!result?.valid) {
+    console.log('Validation failed')
+    return
   }
 
-  snackbar.value = true
-  resetForm()
-  isSubmitting.value = false
+  isChampionshipSubmitting.value = true
+  console.log('Form data:', championshipForm)
+
+  try {
+    if (editingChampionshipId.value) {
+      console.log('Updating championship:', editingChampionshipId.value)
+      await championshipService.updateChampionship(editingChampionshipId.value, {
+        name: championshipForm.name.trim(),
+        description: championshipForm.description?.trim() || '',
+        startDate: championshipForm.startDate,
+        endDate: championshipForm.endDate,
+        status: championshipForm.status,
+      } as any)
+      snackbarMessage.value = t('admin.championshipUpdateSuccess')
+    } else {
+      console.log('Creating championship')
+      await championshipService.createChampionship({
+        name: championshipForm.name.trim(),
+        description: championshipForm.description?.trim() || '',
+        startDate: championshipForm.startDate,
+        endDate: championshipForm.endDate,
+        status: championshipForm.status,
+      } as any)
+      snackbarMessage.value = t('admin.championshipSuccess')
+    }
+
+    // Reload championships
+    console.log('Reloading championships')
+    const data = await championshipService.getAllChampionships()
+    championships.value = data
+    snackbar.value = true
+    resetChampionshipForm()
+  } catch (error) {
+    console.error('Error saving championship:', error)
+    snackbarMessage.value = 'Erreur lors de l\'enregistrement'
+    snackbar.value = true
+  } finally {
+    isChampionshipSubmitting.value = false
+  }
 }
 
-const startEdit = (championship: LocalChampionship) => {
-  editingId.value = championship.id
-  form.competitionName = championship.name
-  form.competitionSport = championship.sport
-  form.competitionStartDate = championship.startDate
-  form.competitionEndDate = championship.endDate
-  form.competitionDescription = championship.description || ''
-  form.competitionStatus = championship.status
-  form.parentCompetitionId = championship.parentId ?? null
-  nextTick(() => formRef.value?.resetValidation())
+const startChampionshipEdit = (championship: LocalChampionship) => {
+  editingChampionshipId.value = championship.id
+  championshipForm.name = championship.name
+  championshipForm.description = championship.description
+  championshipForm.startDate = championship.startDate
+  championshipForm.endDate = championship.endDate
+  championshipForm.status = championship.status
+  nextTick(() => championshipFormRef.value?.resetValidation())
 }
 
-const confirmDelete = (championship: LocalChampionship) => {
+const confirmDeleteChampionship = (championship: LocalChampionship) => {
   const confirmed = window.confirm(t('admin.championshipDeleteConfirm', { name: championship.name }))
   if (!confirmed) return
   championships.value = championships.value.filter((c) => c.id !== championship.id)
-  if (editingId.value === championship.id) {
-    resetForm()
+  if (editingChampionshipId.value === championship.id) {
+    resetChampionshipForm()
   }
 }
 </script>
