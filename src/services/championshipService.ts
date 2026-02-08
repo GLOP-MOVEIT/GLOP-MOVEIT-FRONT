@@ -105,19 +105,19 @@ export const championshipService = {
 
   // --- Competition Methods ---
   /**
-   * Récupérer toutes les compétitions d'un championnat
+   * Récupérer toutes les compétitions
    */
-  async getCompetitionsByChampionship(championshipId: number): Promise<Competition[]> {
+  async getAllCompetitions(): Promise<Competition[]> {
     try {
       const response = await axios.get<Competition[]>(
-        `${API_URL}/championships/${championshipId}/competitions`,
+        `${API_URL}/championships/competitions`,
         {
           headers: this.getAuthHeaders(),
         }
       )
       return response.data
     } catch (error) {
-      console.error(`Get competitions for championship ${championshipId} error:`, error)
+      console.error('Get all competitions error:', error)
       throw error
     }
   },
@@ -127,7 +127,7 @@ export const championshipService = {
    */
   async getCompetitionById(id: number): Promise<Competition> {
     try {
-      const response = await axios.get<Competition>(`${API_URL}/competitions/${id}`, {
+      const response = await axios.get<Competition>(`${API_URL}/championships/competitions/${id}`, {
         headers: this.getAuthHeaders(),
       })
       return response.data
@@ -142,7 +142,7 @@ export const championshipService = {
    */
   async createCompetition(competition: Omit<Competition, 'id' | 'events'>): Promise<Competition> {
     try {
-      const response = await axios.post<Competition>(`${API_URL}/competitions`, competition, {
+      const response = await axios.post<Competition>(`${API_URL}/championships/competitions`, competition, {
         headers: {
           ...this.getAuthHeaders(),
           'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ export const championshipService = {
    */
   async updateCompetition(id: number, competition: Partial<Competition>): Promise<Competition> {
     try {
-      const response = await axios.put<Competition>(`${API_URL}/competitions/${id}`, competition, {
+      const response = await axios.put<Competition>(`${API_URL}/championships/competitions/${id}`, competition, {
         headers: {
           ...this.getAuthHeaders(),
           'Content-Type': 'application/json',
@@ -178,7 +178,7 @@ export const championshipService = {
    */
   async deleteCompetition(id: number): Promise<void> {
     try {
-      await axios.delete(`${API_URL}/competitions/${id}`, {
+      await axios.delete(`${API_URL}/championships/competitions/${id}`, {
         headers: this.getAuthHeaders(),
       })
     } catch (error) {
