@@ -117,6 +117,8 @@ const messages = {
         'Define the competition linked to a championship with its schedule and status.',
       competitionNameLabel: 'Competition name',
       competitionSportLabel: 'Sport / Discipline',
+      competitionFormatLabel: 'Competition format',
+      competitionMaxParticipantsLabel: 'Max participants per round',
       competitionNbManchesLabel: 'Number of rounds',
       competitionChampionshipLabel: 'Championship',
       competitionStartDateLabel: 'Start date',
@@ -161,6 +163,10 @@ const messages = {
         ONGOING: 'Ongoing',
         COMPLETED: 'Completed',
         CANCELLED: 'Cancelled',
+      },
+      competitionFormat: {
+        SOLO: 'Solo',
+        TEAM: 'Team',
       },
       sport: {
         ATHLETICS: 'Athletics',
@@ -494,6 +500,8 @@ const messages = {
         'Définir la compétition liée à un championnat avec son calendrier et son statut.',
       competitionNameLabel: 'Nom de la compétition',
       competitionSportLabel: 'Sport / Discipline',
+      competitionFormatLabel: 'Format de compétition',
+      competitionMaxParticipantsLabel: 'Max participants par manche',
       competitionNbManchesLabel: 'Nombre de manches',
       competitionChampionshipLabel: 'Championnat',
       competitionStartDateLabel: 'Date de début',
@@ -540,6 +548,10 @@ const messages = {
         ONGOING: 'En cours',
         COMPLETED: 'Terminé',
         CANCELLED: 'Annulé',
+      },
+      competitionFormat: {
+        SOLO: 'Solo',
+        TEAM: 'Équipe',
       },
       sport: {
         ATHLETICS: 'Athlétisme',

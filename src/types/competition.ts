@@ -23,6 +23,11 @@ export enum Sport {
   ARCHERY = 'ARCHERY',
 }
 
+export enum ParticipantType {
+  INDIVIDUAL = 'INDIVIDUAL',
+  TEAM = 'TEAM',
+}
+
 export interface Championship {
   id: number
   name: string
@@ -42,11 +47,25 @@ export interface Competition {
   competitionStartDate: string
   competitionEndDate: string
   competitionStatus: Status
+  participantType: ParticipantType
+  competitionType: string
+  maxPerHeat: number
   nbManches: number
   events?: Event[]
+  trials?: Trial[]
 }
 
 export interface Event {
+  id: number
+  competition: Competition
+  name: string
+  description: string
+  startDate: Date
+  endDate: Date
+  status: Status
+}
+
+export interface Trial {
   id: number
   competition: Competition
   name: string

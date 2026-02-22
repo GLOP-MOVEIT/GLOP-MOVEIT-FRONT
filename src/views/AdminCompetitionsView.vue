@@ -44,6 +44,45 @@
                 />
               </v-col>
               <v-col cols="12" md="6">
+                <v-select
+                  v-model="competitionForm.participantType"
+                  :items="participantTypeOptions"
+                  item-title="title"
+                  item-value="value"
+                  :label="t('admin.competitionParticipantTypeLabel')"
+                  variant="outlined"
+                  density="comfortable"
+                  :rules="[rules.required]"
+                  required
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="competitionForm.type"
+                  :items="typeOptions"
+                  item-title="title"
+                  item-value="value"
+                  :label="t('admin.competitionTypeLabel')"
+                  variant="outlined"
+                  density="comfortable"
+                  :rules="[rules.required]"
+                  required
+                />
+              </v-col>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model.number="competitionForm.maxPerHeat"
+                  type="number"
+                  :label="t('admin.competitionMaxPerHeatLabel')"
+                  variant="outlined"
+                  density="comfortable"
+                  :rules="[rules.required, rules.positiveNumber]"
+                  required
+                  min="1"
+                />
+              </v-col>
+              <v-col cols="12" md="6">
                 <v-text-field
                   v-model.number="competitionForm.nbManches"
                   type="number"
@@ -185,7 +224,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Status, Sport } from '@/types/competition'
+import { Status, Sport, ParticipantType } from '@/types/competition'
 import championshipService from '@/services/championshipService'
 
 type LocalChampionship = {
@@ -206,6 +245,8 @@ type LocalCompetition = {
   competitionStartDate: string
   competitionEndDate: string
   competitionStatus: Status
+  participantType: ParticipantType
+  maxPerHeat: number
   nbManches: number
 }
 
@@ -220,6 +261,7 @@ const isLoading = ref(false)
 
 const championships = ref<LocalChampionship[]>([])
 const competitions = ref<LocalCompetition[]>([])
+const competitionTypes = ref<string[]>([])
 
 const mapChampionship = (championship: { id: number; name: string; description: string; startDate: string | Date; endDate: string | Date; status: Status }): LocalChampionship => ({
   id: championship.id,
@@ -230,7 +272,7 @@ const mapChampionship = (championship: { id: number; name: string; description: 
   status: championship.status,
 })
 
-const mapCompetition = (competition: { competitionId: number; championship?: { id: number }; competitionSport: string; competitionName: string; competitionDescription: string; competitionStartDate: string; competitionEndDate: string; competitionStatus: Status; nbManches: number }): LocalCompetition => ({
+const mapCompetition = (competition: { competitionId: number; championship?: { id: number }; competitionSport: string; competitionName: string; competitionDescription: string; competitionStartDate: string; competitionEndDate: string; competitionStatus: Status; participantType: ParticipantType; maxPerHeat: number; nbManches: number }): LocalCompetition => ({
   competitionId: competition.competitionId,
   championshipId: competition.championship?.id ?? 0,
   competitionSport: competition.competitionSport,
@@ -239,12 +281,17 @@ const mapCompetition = (competition: { competitionId: number; championship?: { i
   competitionStartDate: competition.competitionStartDate,
   competitionEndDate: competition.competitionEndDate,
   competitionStatus: competition.competitionStatus,
+  participantType: competition.participantType,
+  maxPerHeat: competition.maxPerHeat,
   nbManches: competition.nbManches,
 })
 
 const competitionForm = reactive({
   championshipId: null as number | null,
   sport: '',
+  participantType: ParticipantType.INDIVIDUAL,
+  type: '',
+  maxPerHeat: 1,
   name: '',
   description: '',
   startDate: '',
@@ -257,6 +304,13 @@ const statusOptions = computed(() =>
   Object.values(Status).map((status) => ({
     title: t(`admin.competitionStatus.${status}`),
     value: status,
+  })),
+)
+
+const participantTypeOptions = computed(() =>
+  Object.values(ParticipantType).map((type) => ({
+    title: t(`admin.participantType.${type}`),
+    value: type,
   })),
 )
 
@@ -297,6 +351,13 @@ const championshipOptions = computed(() =>
   championships.value.map((champ) => ({
     title: champ.name,
     value: champ.id,
+  })),
+)
+
+const typeOptions = computed(() =>
+  competitionTypes.value.map((type) => ({
+    title: type,
+    value: type,
   })),
 )
 
@@ -364,14 +425,17 @@ onMounted(async () => {
   console.log('AdminCompetitionsView mounted')
   isLoading.value = true
   try {
-    const [champsData, compsData] = await Promise.all([
+    const [champsData, compsData, typesData] = await Promise.all([
       championshipService.getAllChampionships(),
-      championshipService.getAllCompetitions()
+      championshipService.getAllCompetitions(),
+      championshipService.getCompetitionTypes()
     ])
     console.log('Championships loaded:', champsData)
     console.log('Competitions loaded:', compsData)
+    console.log('Competition types loaded:', typesData)
     championships.value = champsData.map(mapChampionship)
     competitions.value = compsData.map(mapCompetition)
+    competitionTypes.value = typesData
   } catch (error) {
     console.error('Error loading data:', error)
     snackbarMessage.value = 'Erreur lors du chargement des données'
@@ -384,6 +448,9 @@ onMounted(async () => {
 const resetCompetitionForm = () => {
   competitionForm.championshipId = null
   competitionForm.sport = ''
+  competitionForm.participantType = ParticipantType.INDIVIDUAL
+  competitionForm.type = ''
+  competitionForm.maxPerHeat = 1
   competitionForm.name = ''
   competitionForm.description = ''
   competitionForm.startDate = ''
@@ -417,6 +484,9 @@ const handleCompetitionSubmit = async () => {
         competitionStartDate: competitionForm.startDate,
         competitionEndDate: competitionForm.endDate,
         competitionStatus: competitionForm.status,
+        participantType: competitionForm.participantType,
+        competitionType: competitionForm.type,
+        maxPerHeat: competitionForm.maxPerHeat,
         nbManches: competitionForm.nbManches,
       } as any)
       snackbarMessage.value = t('admin.competitionUpdateSuccess')
@@ -430,6 +500,9 @@ const handleCompetitionSubmit = async () => {
         competitionStartDate: competitionForm.startDate,
         competitionEndDate: competitionForm.endDate,
         competitionStatus: competitionForm.status,
+        participantType: competitionForm.participantType,
+        competitionType: competitionForm.type,
+        maxPerHeat: competitionForm.maxPerHeat,
         nbManches: competitionForm.nbManches,
       }
       // Ne pas inclure competitionId pour la création, Hibernate le génère
@@ -456,6 +529,8 @@ const startCompetitionEdit = (competition: LocalCompetition) => {
   editingCompetitionId.value = competition.competitionId
   competitionForm.championshipId = competition.championshipId
   competitionForm.sport = toApiSportValue(competition.competitionSport)
+  competitionForm.format = competition.competitionFormat
+  competitionForm.maxParticipantsPerRound = competition.maxParticipantsPerRound
   competitionForm.name = competition.competitionName
   competitionForm.description = competition.competitionDescription
   competitionForm.startDate = competition.competitionStartDate

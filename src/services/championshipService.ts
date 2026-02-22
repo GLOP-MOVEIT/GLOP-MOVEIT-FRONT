@@ -187,6 +187,21 @@ export const championshipService = {
     }
   },
 
+  /**
+   * Récupérer tous les types de compétition
+   */
+  async getCompetitionTypes(): Promise<string[]> {
+    try {
+      const response = await axios.get<string[]>(`${API_URL}/championships/competitions/types`, {
+        headers: this.getAuthHeaders(),
+      })
+      return response.data
+    } catch (error) {
+      console.error('Get competition types error:', error)
+      throw error
+    }
+  },
+
   // --- Event Methods ---
   /**
    * Récupérer toutes les épreuves d'une compétition
