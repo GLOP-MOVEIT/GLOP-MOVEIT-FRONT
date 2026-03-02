@@ -46,7 +46,7 @@
               </div>
               <div class="text-body-2 text-grey-darken-1">
                 <strong>{{ t('profile.locationLabel') }}</strong>
-                {{ user?.acceptsLocation ? t('profile.yes') : t('profile.no') }}
+                {{ (user?.acceptsLocationSharing ?? user?.acceptsLocation) ? t('profile.yes') : t('profile.no') }}
               </div>
             </v-col>
           </v-row>

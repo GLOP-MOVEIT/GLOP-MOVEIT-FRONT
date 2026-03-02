@@ -2,6 +2,7 @@ import axios from 'axios'
 import type { LoginRequest, RegisterRequest, AuthResponse, User } from '@/types/user'
 
 const API_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_BASE_URL ?? API_URL
 
 export const userService = {
   /**
@@ -9,7 +10,7 @@ export const userService = {
    */
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
-      const response = await axios.post<AuthResponse>(`${API_URL}/auth/login`, credentials, {
+      const response = await axios.post<AuthResponse>(`${AUTH_API_URL}/auth/login`, credentials, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -33,20 +34,23 @@ export const userService = {
   async register(userData: RegisterRequest): Promise<User> {
     try {
       const registerData = {
-        email: userData.email,
+        nickname: userData.nickname,
         password: userData.password,
         firstName: userData.firstName,
         surname: userData.surname,
+        email: userData.email,
         phoneNumber: userData.phoneNumber,
+        language: userData.language,
         acceptsNotifications: userData.acceptsNotifications,
-        acceptsLocation: userData.acceptsLocation
+        acceptsLocationSharing: userData.acceptsLocationSharing,
       }
-      
-      const response = await axios.post<User>(`${API_URL}/auth/signup`, registerData, {
+
+      const response = await axios.post<User>(`${AUTH_API_URL}/auth/signup`, registerData, {
         headers: {
           'Content-Type': 'application/json',
         },
       })
+
       return response.data
     } catch (error) {
       console.error('Register error:', error)
@@ -76,7 +80,7 @@ export const userService = {
   async getProfile(): Promise<User> {
     try {
       const token = this.getToken()
-      const response = await axios.get<User>(`${API_URL}/auth/users/me`, {
+      const response = await axios.get<User>(`${AUTH_API_URL}/auth/users/me`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
 
@@ -95,7 +99,7 @@ export const userService = {
   async getUsers(): Promise<User[]> {
     try {
       const token = this.getToken()
-      const response = await axios.get<User[]>(`${API_URL}/auth/users`, {
+      const response = await axios.get<User[]>(`${AUTH_API_URL}/auth/users`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
 
