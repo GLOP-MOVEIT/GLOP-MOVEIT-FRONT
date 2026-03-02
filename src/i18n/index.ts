@@ -130,6 +130,7 @@ const messages = {
     login: {
       subtitleRegister: 'Create your account',
       subtitleLogin: 'Sign in to your account',
+      nicknameLabel: 'Nickname',
       emailLabel: 'Email address',
       passwordLabel: 'Password',
       rememberMe: 'Remember me',
@@ -151,7 +152,7 @@ const messages = {
       secureLogin: 'Secure login',
       competitionsManagement: 'Competition management',
       sportEvents: 'Sport events',
-      invalidCredentials: 'Incorrect email or password',
+      invalidCredentials: 'Incorrect nickname or password',
       registerError: 'An error occurred during registration',
       registerSuccess:
         'Registration successful! You can now sign in.',
@@ -237,6 +238,7 @@ const messages = {
       ADMIN: 'Admin',
     },
     validation: {
+      nicknameRequired: 'Nickname is required',
       emailRequired: 'Email is required',
       emailInvalid: 'Email must be valid',
       passwordRequired: 'Password is required',
@@ -383,6 +385,7 @@ const messages = {
     login: {
       subtitleRegister: 'Créez votre compte',
       subtitleLogin: 'Connectez-vous à votre espace',
+      nicknameLabel: 'Pseudo',
       emailLabel: 'Adresse email',
       passwordLabel: 'Mot de passe',
       rememberMe: 'Se souvenir de moi',
@@ -404,7 +407,7 @@ const messages = {
       secureLogin: 'Connexion sécurisée',
       competitionsManagement: 'Gestion des compétitions',
       sportEvents: 'Événements sportifs',
-      invalidCredentials: 'Email ou mot de passe incorrect',
+      invalidCredentials: 'Pseudo ou mot de passe incorrect',
       registerError: 'Une erreur est survenue lors de l\'inscription',
       registerSuccess:
         'Inscription réussie ! Vous pouvez maintenant vous connecter.',
@@ -491,6 +494,7 @@ const messages = {
       ADMIN: 'Admin',
     },
     validation: {
+      nicknameRequired: 'Le pseudo est requis',
       emailRequired: 'L\'email est requis',
       emailInvalid: 'L\'email doit être valide',
       passwordRequired: 'Le mot de passe est requis',

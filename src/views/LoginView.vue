@@ -35,14 +35,14 @@
                 v-model="valid"
                 @submit.prevent="handleLogin"
               >
-                <!-- Champ email -->
+                <!-- Champ pseudo -->
                 <v-text-field
-                  v-model="email"
-                  :rules="emailRules"
-                  :label="t('login.emailLabel')"
-                  prepend-inner-icon="mdi-email"
+                  v-model="nickname"
+                  :rules="[(v) => !!v || t('validation.nicknameRequired')]"
+                  :label="t('login.nicknameLabel')"
+                  prepend-inner-icon="mdi-account-circle"
                   variant="outlined"
-                  type="email"
+                  type="text"
                   required
                   class="mb-3"
                   :error-messages="errorMessage"
@@ -112,7 +112,7 @@
 
               <ForgotPasswordDialog
                 v-model="showForgotPassword"
-                :initial-email="email"
+                :initial-email="''"
               />
             </template>
 
@@ -156,6 +156,17 @@
                 prepend-inner-icon="mdi-phone"
                 variant="outlined"
                 type="tel"
+                required
+                class="mb-3"
+              ></v-text-field>
+
+              <!-- Pseudo -->
+              <v-text-field
+                v-model="registerData.nickname"
+                :rules="[(v) => !!v || t('validation.nicknameRequired')]"
+                :label="t('login.nicknameLabel')"
+                prepend-inner-icon="mdi-account-circle"
+                variant="outlined"
                 required
                 class="mb-3"
               ></v-text-field>
@@ -218,7 +229,7 @@
               </v-checkbox>
 
               <v-checkbox
-                v-model="registerData.acceptsLocation"
+                v-model="registerData.acceptsLocationSharing"
                 color="primary"
                 hide-details
                 class="mb-2"
@@ -322,14 +333,14 @@ import ForgotPasswordDialog from '@/components/ForgotPasswordDialog.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // États du formulaire
 const form = ref()
 const registerForm = ref()
 const valid = ref(false)
 const validRegister = ref(false)
-const email = ref('')
+const nickname = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const showPassword = ref(false)
@@ -343,12 +354,13 @@ const registerData = ref({
   firstName: '',
   surname: '',
   phoneNumber: '',
+  nickname: '',
   email: '',
   password: '',
   confirmPassword: '',
   acceptTerms: false,
   acceptsNotifications: false,
-  acceptsLocation: false,
+  acceptsLocationSharing: false,
 })
 
 // Règles de validation
@@ -381,7 +393,7 @@ const handleLogin = async () => {
 
   try {
     const credentials: LoginRequest = {
-      email: email.value,
+      nickname: nickname.value,
       password: password.value,
     }
 
@@ -406,18 +418,19 @@ const forgotPassword = () => {
 const toggleForm = () => {
   showRegisterForm.value = !showRegisterForm.value
   errorMessage.value = ''
-  email.value = ''
+  nickname.value = ''
   password.value = ''
   registerData.value = {
     firstName: '',
     surname: '',
     phoneNumber: '',
+    nickname: '',
     email: '',
     password: '',
     confirmPassword: '',
     acceptTerms: false,
     acceptsNotifications: false,
-    acceptsLocation: false,
+    acceptsLocationSharing: false,
   }
 }
 
@@ -436,10 +449,12 @@ const handleRegister = async () => {
       firstName: registerData.value.firstName,
       surname: registerData.value.surname,
       phoneNumber: registerData.value.phoneNumber,
+      nickname: registerData.value.nickname,
       email: registerData.value.email,
       password: registerData.value.password,
+      language: locale.value,
       acceptsNotifications: registerData.value.acceptsNotifications,
-      acceptsLocation: registerData.value.acceptsLocation,
+      acceptsLocationSharing: registerData.value.acceptsLocationSharing,
       confirmPassword: registerData.value.confirmPassword,
       acceptTerms: registerData.value.acceptTerms,
     }
@@ -449,7 +464,7 @@ const handleRegister = async () => {
     // Après inscription réussie, basculer vers le formulaire de connexion
     alert(t('login.registerSuccess'))
     showRegisterForm.value = false
-    email.value = registerData.value.email // Pré-remplir l'email
+    nickname.value = registerData.value.nickname
   } catch (error: unknown) {
     errorMessage.value = getErrorMessage(error, t('login.registerError'))
     console.error('Register error:', error)

@@ -27,29 +27,34 @@ export interface User {
   firstName: string
   surname: string
   phoneNumber?: string
+  language?: string
   role?: Role
   createdAt?: string
   updatedAt?: string
   acceptsNotifications?: boolean
+  acceptsLocationSharing?: boolean
   acceptsLocation?: boolean
   authorities?: Authority[]
   username?: string
+  nickname?: string
 }
 
 // Types pour les requêtes d'authentification (correspond aux DTOs du backend)
 export interface LoginRequest {
-  email: string
+  nickname: string
   password: string
 }
 
 export interface RegisterRequest {
+  nickname: string
+  language: string
   email: string
   password: string
   firstName: string
   surname: string
   phoneNumber: string
   acceptsNotifications: boolean
-  acceptsLocation: boolean
+  acceptsLocationSharing: boolean
   confirmPassword?: string
   acceptTerms?: boolean
 }
