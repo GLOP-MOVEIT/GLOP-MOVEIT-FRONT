@@ -51,6 +51,10 @@ export const useUserStore = defineStore('user', () => {
     try {
       const response = await userService.login(credentials)
       user.value = response.user
+      
+      // Récupérer immédiatement le profil complet avec le rôle depuis users/id
+      await fetchCurrentUser()
+      
       return response
     } catch (err: unknown) {
       error.value = getErrorMessage(err, 'Erreur lors de la connexion')
@@ -89,7 +93,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      const userData = await userService.getProfile()
+      const userData = await userService.getCurrentUserProfile()
       user.value = userData
     } catch (err: unknown) {
       error.value = getErrorMessage(err, 'Erreur lors de la récupération du profil')

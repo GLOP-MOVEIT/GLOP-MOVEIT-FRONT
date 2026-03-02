@@ -7,6 +7,25 @@ const API_URL = import.meta.env.VITE_API_BASE_URL !== undefined
   : 'http://localhost:8080'
 
 /**
+ * Convertit une date string YYYY-MM-DD en LocalDateTime pour le backend
+ * Ajoute l'heure 00:00:00.000 par défaut
+ */
+function formatDateForBackend(dateString: string | Date): string {
+  if (dateString instanceof Date) {
+    return dateString.toISOString()
+  }
+  if (typeof dateString === 'string') {
+    // Si c'est déjà au format ISO complet, on le retourne tel quel
+    if (dateString.includes('T')) {
+      return dateString
+    }
+    // Sinon on ajoute l'heure 00:00:00.000
+    return `${dateString}T00:00:00.000Z`
+  }
+  return dateString
+}
+
+/**
  * Service pour gérer les championnats, compétitions et épreuves
  */
 export const championshipService = {
@@ -58,7 +77,14 @@ export const championshipService = {
    */
   async createChampionship(championship: Omit<Championship, 'id' | 'competitions'>): Promise<Championship> {
     try {
-      const response = await axios.post<Championship>(`${API_URL}/championships`, championship, {
+      // Formater les dates pour le backend
+      const formattedChampionship = {
+        ...championship,
+        startDate: formatDateForBackend(championship.startDate),
+        endDate: formatDateForBackend(championship.endDate),
+      }
+      
+      const response = await axios.post<Championship>(`${API_URL}/championships`, formattedChampionship, {
         headers: {
           ...this.getAuthHeaders(),
           'Content-Type': 'application/json',
@@ -76,7 +102,16 @@ export const championshipService = {
    */
   async updateChampionship(id: number, championship: Partial<Championship>): Promise<Championship> {
     try {
-      const response = await axios.put<Championship>(`${API_URL}/championships/${id}`, championship, {
+      // Formater les dates pour le backend si elles sont présentes
+      const formattedChampionship = { ...championship }
+      if (championship.startDate) {
+        formattedChampionship.startDate = formatDateForBackend(championship.startDate)
+      }
+      if (championship.endDate) {
+        formattedChampionship.endDate = formatDateForBackend(championship.endDate)
+      }
+      
+      const response = await axios.put<Championship>(`${API_URL}/championships/${id}`, formattedChampionship, {
         headers: {
           ...this.getAuthHeaders(),
           'Content-Type': 'application/json',
@@ -142,7 +177,14 @@ export const championshipService = {
    */
   async createCompetition(competition: Omit<Competition, 'id' | 'events'>): Promise<Competition> {
     try {
-      const response = await axios.post<Competition>(`${API_URL}/championships/competitions`, competition, {
+      // Formater les dates pour le backend
+      const formattedCompetition = {
+        ...competition,
+        competitionStartDate: competition.competitionStartDate ? formatDateForBackend(competition.competitionStartDate) : competition.competitionStartDate,
+        competitionEndDate: competition.competitionEndDate ? formatDateForBackend(competition.competitionEndDate) : competition.competitionEndDate,
+      }
+      
+      const response = await axios.post<Competition>(`${API_URL}/championships/competitions`, formattedCompetition, {
         headers: {
           ...this.getAuthHeaders(),
           'Content-Type': 'application/json',
@@ -160,7 +202,16 @@ export const championshipService = {
    */
   async updateCompetition(id: number, competition: Partial<Competition>): Promise<Competition> {
     try {
-      const response = await axios.put<Competition>(`${API_URL}/championships/competitions/${id}`, competition, {
+      // Formater les dates pour le backend si elles sont présentes
+      const formattedCompetition = { ...competition }
+      if (competition.competitionStartDate) {
+        formattedCompetition.competitionStartDate = formatDateForBackend(competition.competitionStartDate)
+      }
+      if (competition.competitionEndDate) {
+        formattedCompetition.competitionEndDate = formatDateForBackend(competition.competitionEndDate)
+      }
+      
+      const response = await axios.put<Competition>(`${API_URL}/championships/competitions/${id}`, formattedCompetition, {
         headers: {
           ...this.getAuthHeaders(),
           'Content-Type': 'application/json',
@@ -241,7 +292,13 @@ export const championshipService = {
    */
   async createEvent(event: Omit<Event, 'id'>): Promise<Event> {
     try {
-      const response = await axios.post<Event>(`${API_URL}/events`, event, {
+      // Formater les dates pour le backend
+      const formattedEvent = {
+        ...event,
+        eventDate: event.eventDate ? formatDateForBackend(event.eventDate) : event.eventDate,
+      }
+      
+      const response = await axios.post<Event>(`${API_URL}/events`, formattedEvent, {
         headers: {
           ...this.getAuthHeaders(),
           'Content-Type': 'application/json',
@@ -258,8 +315,12 @@ export const championshipService = {
    * Mettre à jour une épreuve
    */
   async updateEvent(id: number, event: Partial<Event>): Promise<Event> {
-    try {
-      const response = await axios.put<Event>(`${API_URL}/events/${id}`, event, {
+    try {      // Formater les dates pour le backend si elles sont présentes
+      const formattedEvent = { ...event }
+      if (event.eventDate) {
+        formattedEvent.eventDate = formatDateForBackend(event.eventDate)
+      }
+            const response = await axios.put<Event>(`${API_URL}/events/${id}`, event, {
         headers: {
           ...this.getAuthHeaders(),
           'Content-Type': 'application/json',

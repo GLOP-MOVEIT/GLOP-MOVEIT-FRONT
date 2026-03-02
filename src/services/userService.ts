@@ -1,8 +1,9 @@
 import axios from 'axios'
-import type { LoginRequest, RegisterRequest, AuthResponse, User } from '@/types/user'
+import type { LoginRequest, RegisterRequest, AuthResponse, User, UserProfile } from '@/types/user'
 
 const API_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_BASE_URL ?? API_URL
+const USER_API_URL = import.meta.env.VITE_USER_API_BASE_URL ?? API_URL
 
 export const userService = {
   /**
@@ -75,7 +76,7 @@ export const userService = {
   },
 
   /**
-   * Récupérer le profil de l'utilisateur depuis l'API
+   * Récupérer le profil de l'utilisateur depuis l'API (ancienne méthode - deprecated)
    */
   async getProfile(): Promise<User> {
     try {
@@ -94,12 +95,68 @@ export const userService = {
   },
 
   /**
-   * Récupérer la liste des utilisateurs (ADMIN)
+   * Récupérer le profil utilisateur par ID depuis le user-service
+   */
+  async getUserProfile(userId: number): Promise<UserProfile> {
+    try {
+      const token = this.getToken()
+      const response = await axios.get<UserProfile>(`${USER_API_URL}/users/${userId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+
+      return response.data
+    } catch (error) {
+      console.error('Get user profile error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer le profil de l'utilisateur connecté depuis le user-service
+   */
+  async getCurrentUserProfile(): Promise<User> {
+    try {
+      const currentUser = this.getCurrentUser()
+      if (!currentUser?.id && !currentUser?.userId) {
+        throw new Error('Aucun utilisateur connecté')
+      }
+
+      const userId = currentUser.userId ?? currentUser.id
+      if (!userId) {
+        throw new Error('ID utilisateur introuvable')
+      }
+
+      const userProfile = await this.getUserProfile(userId)
+      
+      // Convertir UserProfile vers User pour compatibilité
+      const user: User = {
+        id: userProfile.userId,
+        userId: userProfile.userId,
+        firstName: userProfile.firstName,
+        surname: userProfile.surname,
+        email: userProfile.email,
+        phoneNumber: userProfile.phoneNumber,
+        language: userProfile.language,
+        role: userProfile.role,
+        acceptsNotifications: userProfile.acceptsNotifications,
+        acceptsLocationSharing: userProfile.acceptsLocationSharing,
+      }
+
+      localStorage.setItem('user', JSON.stringify(user))
+      return user
+    } catch (error) {
+      console.error('Get current user profile error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer la liste des utilisateurs (ADMIN) - via user-service
    */
   async getUsers(): Promise<User[]> {
     try {
       const token = this.getToken()
-      const response = await axios.get<User[]>(`${AUTH_API_URL}/auth/users`, {
+      const response = await axios.get<User[]>(`${USER_API_URL}/users`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
 
