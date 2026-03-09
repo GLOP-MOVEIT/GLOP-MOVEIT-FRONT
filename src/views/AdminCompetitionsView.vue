@@ -236,36 +236,12 @@
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Status, Sport, ParticipantType } from '@/types/competition'
+import type { Championship, Competition } from '@/types/competition'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import type { User } from '@/types/user'
 import { UserRole } from '@/types/user'
 import { formatDateRange } from '@/utils/date'
-
-type LocalChampionship = {
-  id: number
-  name: string
-  description: string
-  startDate: string
-  endDate: string
-  status: Status
-}
-
-type LocalCompetition = {
-  competitionId: number
-  championshipId: number
-  competitionSport: string
-  competitionName: string
-  competitionDescription: string
-  competitionStartDate: string
-  competitionEndDate: string
-  competitionStatus: Status
-  participantType: ParticipantType
-  competitionType: string
-  maxPerHeat: number
-  nbManches: number
-  assignedCommissaireId: number | null
-}
 
 const { t } = useI18n()
 
@@ -276,13 +252,13 @@ const snackbar = ref(false)
 const snackbarMessage = ref('')
 const isLoading = ref(false)
 
-const championships = ref<LocalChampionship[]>([])
-const competitions = ref<LocalCompetition[]>([])
+const championships = ref<Championship[]>([])
+const competitions = ref<Competition[]>([])
 const competitionTypes = ref<string[]>([])
 // TODO: filtrer uniquement les commissaires quand il y en aura dans la base
 const commissaireUsers = ref<User[]>([])
 
-const mapChampionship = (championship: { id: number; name: string; description: string; startDate: string | Date; endDate: string | Date; status: Status }): LocalChampionship => ({
+const mapChampionship = (championship: Championship): Championship => ({
   id: championship.id,
   name: championship.name,
   description: championship.description,
@@ -291,9 +267,9 @@ const mapChampionship = (championship: { id: number; name: string; description: 
   status: championship.status,
 })
 
-const mapCompetition = (competition: { competitionId: number; championship?: { id: number }; competitionSport: string; competitionName: string; competitionDescription: string; competitionStartDate: string; competitionEndDate: string; competitionStatus: Status; participantType: ParticipantType; competitionType: string; maxPerHeat: number; nbManches: number; assignedCommissaireId?: number | null }): LocalCompetition => ({
+const mapCompetition = (competition: Competition): Competition => ({
   competitionId: competition.competitionId,
-  championshipId: competition.championship?.id ?? 0,
+  championshipId: competition.championship?.id ?? competition.championshipId ?? 0,
   competitionSport: competition.competitionSport,
   competitionName: competition.competitionName,
   competitionDescription: competition.competitionDescription,
@@ -553,9 +529,9 @@ const handleCompetitionSubmit = async () => {
   }
 }
 
-const startCompetitionEdit = (competition: LocalCompetition) => {
+const startCompetitionEdit = (competition: Competition) => {
   editingCompetitionId.value = competition.competitionId
-  competitionForm.championshipId = competition.championshipId
+  competitionForm.championshipId = competition.championshipId ?? competition.championship?.id ?? null
   competitionForm.sport = toApiSportValue(competition.competitionSport)
   competitionForm.participantType = competition.participantType
   competitionForm.type = competition.competitionType ?? ''
@@ -570,7 +546,7 @@ const startCompetitionEdit = (competition: LocalCompetition) => {
   nextTick(() => competitionFormRef.value?.resetValidation())
 }
 
-const confirmDeleteCompetition = async (competition: LocalCompetition) => {
+const confirmDeleteCompetition = async (competition: Competition) => {
   const confirmed = window.confirm(t('admin.competitionDeleteConfirm', { name: competition.competitionName }))
   if (!confirmed) return
 

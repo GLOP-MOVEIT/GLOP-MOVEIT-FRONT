@@ -154,15 +154,6 @@ import type { Championship } from '@/types/competition'
 import championshipService from '@/services/championshipService'
 import { formatDateRange } from '@/utils/date'
 
-type LocalChampionship = {
-  id: number
-  name: string
-  description: string
-  startDate: string
-  endDate: string
-  status: Status
-}
-
 const { t } = useI18n()
 
 const championshipFormRef = ref()
@@ -172,7 +163,7 @@ const snackbar = ref(false)
 const snackbarMessage = ref('')
 const isLoading = ref(false)
 
-const championships = ref<LocalChampionship[]>([])
+const championships = ref<Championship[]>([])
 
 const toDateInput = (value: string | Date): string => {
   if (!value) return ''
@@ -182,7 +173,7 @@ const toDateInput = (value: string | Date): string => {
   return value.includes('T') ? value.split('T')[0] : value
 }
 
-const mapChampionship = (championship: Championship): LocalChampionship => ({
+const mapChampionship = (championship: Championship): Championship => ({
   id: championship.id,
   name: championship.name,
   description: championship.description ?? '',
@@ -314,17 +305,17 @@ const handleChampionshipSubmit = async () => {
   }
 }
 
-const startChampionshipEdit = (championship: LocalChampionship) => {
+const startChampionshipEdit = (championship: Championship) => {
   editingChampionshipId.value = championship.id
   championshipForm.name = championship.name
   championshipForm.description = championship.description
-  championshipForm.startDate = championship.startDate
-  championshipForm.endDate = championship.endDate
+  championshipForm.startDate = String(championship.startDate).split('T')[0] ?? ''
+  championshipForm.endDate = String(championship.endDate).split('T')[0] ?? ''
   championshipForm.status = championship.status
   nextTick(() => championshipFormRef.value?.resetValidation())
 }
 
-const confirmDeleteChampionship = (championship: LocalChampionship) => {
+const confirmDeleteChampionship = (championship: Championship) => {
   const confirmed = window.confirm(t('admin.championshipDeleteConfirm', { name: championship.name }))
   if (!confirmed) return
   championships.value = championships.value.filter((c) => c.id !== championship.id)

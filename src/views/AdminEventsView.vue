@@ -160,27 +160,8 @@
 import { computed, nextTick, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Status } from '@/types/competition'
+import type { Competition, Event } from '@/types/competition'
 import { formatDateRange } from '@/utils/date'
-
-type LocalCompetition = {
-  id: number
-  championshipId: number
-  name: string
-  description: string
-  startDate: string
-  endDate: string
-  status: Status
-}
-
-type LocalEvent = {
-  id: number
-  competitionId: number
-  name: string
-  description: string
-  startDate: string
-  endDate: string
-  status: Status
-}
 
 const { t } = useI18n()
 
@@ -190,28 +171,38 @@ const isEventSubmitting = ref(false)
 const snackbar = ref(false)
 const snackbarMessage = ref('')
 
-const competitions = ref<LocalCompetition[]>([
+const competitions = ref<Competition[]>([
   {
-    id: 1,
+    competitionId: 1,
     championshipId: 1,
-    name: 'Athlétisme - JO 2026',
-    description: 'Épreuves athlétisme',
-    startDate: '2026-02-06',
-    endDate: '2026-02-12',
-    status: Status.PLANNED,
+    competitionName: 'Athlétisme - JO 2026',
+    competitionDescription: 'Épreuves athlétisme',
+    competitionSport: 'ATHLETICS',
+    competitionStartDate: '2026-02-06',
+    competitionEndDate: '2026-02-12',
+    competitionStatus: Status.PLANNED,
+    participantType: 'INDIVIDUAL' as const,
+    competitionType: 'HEATS',
+    maxPerHeat: 8,
+    nbManches: 3,
   },
   {
-    id: 2,
+    competitionId: 2,
     championshipId: 1,
-    name: 'Natation - JO 2026',
-    description: 'Épreuves natation',
-    startDate: '2026-02-13',
-    endDate: '2026-02-22',
-    status: Status.PLANNED,
+    competitionName: 'Natation - JO 2026',
+    competitionDescription: 'Épreuves natation',
+    competitionSport: 'SWIMMING',
+    competitionStartDate: '2026-02-13',
+    competitionEndDate: '2026-02-22',
+    competitionStatus: Status.PLANNED,
+    participantType: 'INDIVIDUAL' as const,
+    competitionType: 'HEATS',
+    maxPerHeat: 8,
+    nbManches: 3,
   },
 ])
 
-const events = ref<LocalEvent[]>([
+const events = ref<Event[]>([
   {
     id: 1,
     competitionId: 1,
@@ -250,10 +241,15 @@ const statusOptions = computed(() =>
 
 const competitionOptions = computed(() =>
   competitions.value.map((comp) => ({
-    title: comp.name,
-    value: comp.id,
+    title: comp.competitionName,
+    value: comp.competitionId,
   })),
 )
+
+const getCompetitionName = (competitionId: number | undefined) => {
+  if (!competitionId) return 'N/A'
+  return competitions.value.find((c) => c.competitionId === competitionId)?.competitionName || 'N/A'
+}
 
 const rules = {
   required: (value: unknown) => {
@@ -269,19 +265,19 @@ const rules = {
   },
   startWithinCompetition: () => {
     if (!eventForm.competitionId || !eventForm.startDate) return true
-    const competition = competitions.value.find((c) => c.id === eventForm.competitionId)
+    const competition = competitions.value.find((c) => c.competitionId === eventForm.competitionId)
     if (!competition) return true
     const start = new Date(eventForm.startDate)
-    const compStart = new Date(competition.startDate)
-    return start >= compStart || t('admin.eventStartBeforeCompetition', { date: competition.startDate })
+    const compStart = new Date(competition.competitionStartDate)
+    return start >= compStart || t('admin.eventStartBeforeCompetition', { date: competition.competitionStartDate })
   },
   endWithinCompetition: () => {
     if (!eventForm.competitionId || !eventForm.endDate) return true
-    const competition = competitions.value.find((c) => c.id === eventForm.competitionId)
+    const competition = competitions.value.find((c) => c.competitionId === eventForm.competitionId)
     if (!competition) return true
     const end = new Date(eventForm.endDate)
-    const compEnd = new Date(competition.endDate)
-    return end <= compEnd || t('admin.eventEndAfterCompetition', { date: competition.endDate })
+    const compEnd = new Date(competition.competitionEndDate)
+    return end <= compEnd || t('admin.eventEndAfterCompetition', { date: competition.competitionEndDate })
   },
 }
 
@@ -293,10 +289,6 @@ const statusColor = (status: Status) => {
   return 'primary'
 }
 
-
-const getCompetitionName = (competitionId: number) => {
-  return competitions.value.find((c) => c.id === competitionId)?.name || 'N/A'
-}
 
 const resetEventForm = () => {
   eventForm.competitionId = null
@@ -332,7 +324,7 @@ const handleEventSubmit = async () => {
     snackbarMessage.value = t('admin.eventUpdateSuccess')
   } else {
     const id = Math.max(...events.value.map((e) => e.id), 0) + 1
-    const newEvent: LocalEvent = {
+    const newEvent: Event = {
       id,
       competitionId: eventForm.competitionId!,
       name: eventForm.name.trim(),
@@ -350,18 +342,18 @@ const handleEventSubmit = async () => {
   isEventSubmitting.value = false
 }
 
-const startEventEdit = (event: LocalEvent) => {
+const startEventEdit = (event: Event) => {
   editingEventId.value = event.id
   eventForm.competitionId = event.competitionId
   eventForm.name = event.name
   eventForm.description = event.description
-  eventForm.startDate = event.startDate
-  eventForm.endDate = event.endDate
+  eventForm.startDate = String(event.startDate)
+  eventForm.endDate = String(event.endDate)
   eventForm.status = event.status
   nextTick(() => eventFormRef.value?.resetValidation())
 }
 
-const confirmDeleteEvent = (event: LocalEvent) => {
+const confirmDeleteEvent = (event: Event) => {
   const confirmed = window.confirm(t('admin.eventDeleteConfirm', { name: event.name }))
   if (!confirmed) return
   events.value = events.value.filter((e) => e.id !== event.id)
