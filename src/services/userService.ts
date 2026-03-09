@@ -76,25 +76,6 @@ export const userService = {
   },
 
   /**
-   * Récupérer le profil de l'utilisateur depuis l'API (ancienne méthode - deprecated)
-   */
-  async getProfile(): Promise<User> {
-    try {
-      const token = this.getToken()
-      const response = await axios.get<User>(`${AUTH_API_URL}/auth/users/me`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
-
-      localStorage.setItem('user', JSON.stringify(response.data))
-
-      return response.data
-    } catch (error) {
-      console.error('Get profile error:', error)
-      throw error
-    }
-  },
-
-  /**
    * Récupérer le profil utilisateur par ID depuis le user-service
    */
   async getUserProfile(userId: number): Promise<UserProfile> {

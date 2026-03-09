@@ -104,23 +104,6 @@ describe('userService', () => {
         expect(userService.getCurrentUser()).toBeNull()
     })
 
-    it('fetches profile with auth token and stores it', async () => {
-        localStorage.setItem('authToken', 'token-123')
-        const profile = {id: 1, email: 'john@example.com'}
-        mockedAxios.get.mockResolvedValueOnce({data: profile})
-
-        const result = await userService.getProfile()
-
-        expect(mockedAxios.get).toHaveBeenCalledWith(
-            `${apiBaseUrl}/auth/users/me`,
-            expect.objectContaining({
-                headers: {Authorization: 'Bearer token-123'},
-            }),
-        )
-        expect(result).toEqual(profile)
-        expect(localStorage.getItem('user')).toBe(JSON.stringify(profile))
-    })
-
     it('fetches users with auth token', async () => {
         localStorage.setItem('authToken', 'token-123')
         const pagedResponse = {
