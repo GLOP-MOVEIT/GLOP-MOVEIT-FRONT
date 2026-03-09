@@ -32,8 +32,8 @@ export interface Championship {
   id: number
   name: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate: string | Date
+  endDate: string | Date
   status: Status
   competitions: Competition[]
 }
@@ -61,8 +61,8 @@ export interface Event {
   competition: Competition
   name: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate: string | Date
+  endDate: string | Date
   status: Status
 }
 
@@ -71,7 +71,7 @@ export interface Trial {
   competition: Competition
   name: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate: string | Date
+  endDate: string | Date
   status: Status
 }

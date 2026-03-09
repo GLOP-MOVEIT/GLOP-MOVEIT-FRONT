@@ -150,6 +150,7 @@
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Status } from '@/types/competition'
+import type { Championship } from '@/types/competition'
 import championshipService from '@/services/championshipService'
 
 type LocalChampionship = {
@@ -171,6 +172,23 @@ const snackbarMessage = ref('')
 const isLoading = ref(false)
 
 const championships = ref<LocalChampionship[]>([])
+
+const toDateInput = (value: string | Date): string => {
+  if (!value) return ''
+  if (value instanceof Date) {
+    return value.toISOString().split('T')[0]
+  }
+  return value.includes('T') ? value.split('T')[0] : value
+}
+
+const mapChampionship = (championship: Championship): LocalChampionship => ({
+  id: championship.id,
+  name: championship.name,
+  description: championship.description ?? '',
+  startDate: toDateInput(championship.startDate),
+  endDate: toDateInput(championship.endDate),
+  status: championship.status,
+})
 
 const championshipForm = reactive({
   name: '',
@@ -236,7 +254,7 @@ onMounted(async () => {
   try {
     const data = await championshipService.getAllChampionships()
     console.log('Championships loaded:', data)
-    championships.value = data
+    championships.value = data.map(mapChampionship)
   } catch (error) {
     console.error('Error loading championships:', error)
     snackbarMessage.value = 'Erreur lors du chargement des championnats'
@@ -294,7 +312,7 @@ const handleChampionshipSubmit = async () => {
     // Reload championships
     console.log('Reloading championships')
     const data = await championshipService.getAllChampionships()
-    championships.value = data
+    championships.value = data.map(mapChampionship)
     snackbar.value = true
     resetChampionshipForm()
   } catch (error) {

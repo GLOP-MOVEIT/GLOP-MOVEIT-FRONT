@@ -260,6 +260,7 @@ type LocalCompetition = {
   competitionEndDate: string
   competitionStatus: Status
   participantType: ParticipantType
+  competitionType: string
   maxPerHeat: number
   nbManches: number
   assignedCommissaireId: number | null
@@ -289,7 +290,7 @@ const mapChampionship = (championship: { id: number; name: string; description: 
   status: championship.status,
 })
 
-const mapCompetition = (competition: { competitionId: number; championship?: { id: number }; competitionSport: string; competitionName: string; competitionDescription: string; competitionStartDate: string; competitionEndDate: string; competitionStatus: Status; participantType: ParticipantType; maxPerHeat: number; nbManches: number; assignedCommissaireId?: number | null }): LocalCompetition => ({
+const mapCompetition = (competition: { competitionId: number; championship?: { id: number }; competitionSport: string; competitionName: string; competitionDescription: string; competitionStartDate: string; competitionEndDate: string; competitionStatus: Status; participantType: ParticipantType; competitionType: string; maxPerHeat: number; nbManches: number; assignedCommissaireId?: number | null }): LocalCompetition => ({
   competitionId: competition.competitionId,
   championshipId: competition.championship?.id ?? 0,
   competitionSport: competition.competitionSport,
@@ -299,6 +300,7 @@ const mapCompetition = (competition: { competitionId: number; championship?: { i
   competitionEndDate: competition.competitionEndDate,
   competitionStatus: competition.competitionStatus,
   participantType: competition.participantType,
+  competitionType: competition.competitionType,
   maxPerHeat: competition.maxPerHeat,
   nbManches: competition.nbManches,
   assignedCommissaireId: competition.assignedCommissaireId ?? null,

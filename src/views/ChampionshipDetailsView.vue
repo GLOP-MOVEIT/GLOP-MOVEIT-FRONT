@@ -114,9 +114,7 @@
                   mdi-shield-account-outline
                 </v-icon>
                 <span :class="competition.assignedCommissaireId ? 'text-success' : 'text-grey'">
-                  {{ competition.assignedCommissaireId
-                    ? (commissaireNames[competition.assignedCommissaireId] ?? t('championshipDetails.commissaireLoading'))
-                    : t('championshipDetails.noCommissaire') }}
+                  {{ getCommissaireLabel(competition.assignedCommissaireId) }}
                 </span>
               </div>
             </v-card>
@@ -177,6 +175,13 @@ const filteredCompetitions = computed(() => {
   if (!selectedSport.value) return competitions.value
   return competitions.value.filter((c) => c.competitionSport === selectedSport.value)
 })
+
+const getCommissaireLabel = (id: number | null | undefined) => {
+  if (!id) {
+    return t('championshipDetails.noCommissaire')
+  }
+  return commissaireNames.value[id] ?? t('championshipDetails.commissaireLoading')
+}
 
 const loadCommissaireNames = async () => {
   // Récupère les IDs uniques des commissaires assignés
