@@ -128,19 +128,15 @@ const router = createRouter({
   routes,
 })
 
-// Navigation guard pour l'authentification
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   const isAuthenticated = userStore.isAuthenticated
 
-  // Si l'utilisateur est authentifié mais n'a pas encore récupéré son profil complet,
-  // on le récupère depuis l'API users/id pour avoir son rôle
   if (isAuthenticated && !userStore.user?.role && !userStore.isLoading) {
     try {
       await userStore.fetchCurrentUser()
     } catch (error) {
       console.warn('Impossible de récupérer le profil utilisateur:', error)
-      // On ne bloque pas la navigation en cas d'erreur
     }
   }
 
