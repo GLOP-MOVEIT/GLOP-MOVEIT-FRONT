@@ -158,9 +158,8 @@ export const championshipService = {
   /**
    * Créer une nouvelle compétition
    */
-  async createCompetition(competition: Omit<Competition, 'id' | 'events'>): Promise<Competition> {
+  async createCompetition(competition: Omit<Competition, 'competitionId' | 'events' | 'trials'>): Promise<Competition> {
     try {
-      // Formater les dates pour le backend
       const formattedCompetition = {
         ...competition,
         competitionStartDate: competition.competitionStartDate ? formatDateForBackend(competition.competitionStartDate) : competition.competitionStartDate,
