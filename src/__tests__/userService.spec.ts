@@ -23,7 +23,7 @@ describe('userService', () => {
     })
 
     it('logs in and stores token and user when token is provided', async () => {
-        const credentials = {email: 'john@example.com', password: 'secret'}
+        const credentials = {nickname: 'john', password: 'secret'}
         const responseData = {
             token: 'token-123',
             user: {id: 1, email: 'john@example.com', firstName: 'John', surname: 'Doe'},
@@ -47,13 +47,15 @@ describe('userService', () => {
 
     it('registers a user with the expected payload', async () => {
         const userData = {
+            nickname: 'jane-doe',
+            language: 'fr',
             email: 'jane@example.com',
             password: 'secret',
             firstName: 'Jane',
             surname: 'Doe',
             phoneNumber: '123456789',
             acceptsNotifications: true,
-            acceptsLocation: false,
+            acceptsLocationSharing: false,
         }
         const responseUser = {id: 2, email: 'jane@example.com', firstName: 'Jane', surname: 'Doe'}
 
@@ -64,17 +66,19 @@ describe('userService', () => {
         expect(mockedAxios.post).toHaveBeenCalledWith(
             `${apiBaseUrl}/auth/signup`,
             {
+                nickname: userData.nickname,
                 email: userData.email,
                 password: userData.password,
                 firstName: userData.firstName,
                 surname: userData.surname,
                 phoneNumber: userData.phoneNumber,
+                language: userData.language,
                 acceptsNotifications: userData.acceptsNotifications,
-                acceptsLocation: userData.acceptsLocation,
+                acceptsLocationSharing: userData.acceptsLocationSharing,
             },
-            expect.objectContaining({
+            {
                 headers: {'Content-Type': 'application/json'},
-            }),
+            },
         )
         expect(result).toEqual(responseUser)
     })

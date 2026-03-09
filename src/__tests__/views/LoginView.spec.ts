@@ -26,6 +26,7 @@ vi.mock('axios', () => ({
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
     t: (key: string) => key,
+    locale: { value: 'fr' },
   }),
 }))
 
@@ -61,20 +62,20 @@ describe('LoginView', () => {
     const wrapper = mount(LoginView, { global: { stubs } })
     const vm = wrapper.vm as unknown as {
       form: { validate: () => Promise<{ valid: boolean }> }
-      email: string
+      nickname: string
       password: string
       handleLogin: () => Promise<void>
       loading: boolean
     }
 
     vm.form = { validate: vi.fn().mockResolvedValue({ valid: true }) }
-    vm.email = 'john@example.com'
+    vm.nickname = 'john'
     vm.password = 'secret'
 
     await vm.handleLogin()
 
     expect(userStoreMock.login).toHaveBeenCalledWith({
-      email: 'john@example.com',
+      nickname: 'john',
       password: 'secret',
     })
     expect(pushMock).toHaveBeenCalledWith('/')
@@ -87,14 +88,14 @@ describe('LoginView', () => {
     const wrapper = mount(LoginView, { global: { stubs } })
     const vm = wrapper.vm as unknown as {
       form: { validate: () => Promise<{ valid: boolean }> }
-      email: string
+      nickname: string
       password: string
       handleLogin: () => Promise<void>
       errorMessage: string
     }
 
     vm.form = { validate: vi.fn().mockResolvedValue({ valid: true }) }
-    vm.email = 'john@example.com'
+    vm.nickname = 'john'
     vm.password = 'secret'
 
     await vm.handleLogin()
@@ -123,16 +124,17 @@ describe('LoginView', () => {
         firstName: string
         surname: string
         phoneNumber: string
+        nickname: string
         email: string
         password: string
         confirmPassword: string
         acceptTerms: boolean
         acceptsNotifications: boolean
-        acceptsLocation: boolean
+        acceptsLocationSharing: boolean
       }
       showRegisterForm: boolean
       handleRegister: () => Promise<void>
-      email: string
+      nickname: string
     }
 
     vm.showRegisterForm = true
@@ -140,6 +142,7 @@ describe('LoginView', () => {
     vm.registerData.firstName = 'John'
     vm.registerData.surname = 'Doe'
     vm.registerData.phoneNumber = '0123456789'
+    vm.registerData.nickname = 'johnny'
     vm.registerData.email = 'john@example.com'
     vm.registerData.password = 'secret'
     vm.registerData.confirmPassword = 'secret'
@@ -149,6 +152,6 @@ describe('LoginView', () => {
 
     expect(userStoreMock.register).toHaveBeenCalled()
     expect(vm.showRegisterForm).toBe(false)
-    expect(vm.email).toBe('john@example.com')
+    expect(vm.nickname).toBe('johnny')
   })
 })
