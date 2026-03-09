@@ -27,7 +27,10 @@ const isVolunteer = computed(
     !userStore.hasRole(UserRole.REFEREE),
 )
 
-const menuItems = computed(() => [{ title: t('nav.home'), icon: 'mdi-home', to: '/' }])
+const menuItems = computed(() => [
+  { title: t('nav.home'), icon: 'mdi-home', to: '/' },
+  { title: t('nav.ticketing'), icon: 'mdi-ticket', to: '/billetterie' },
+])
 
 const logout = async () => {
   await userStore.logout()
@@ -50,6 +53,15 @@ const logout = async () => {
     </v-toolbar-title>
     <v-spacer></v-spacer>
     <div class="d-none d-md-flex app-nav-spacer"></div>
+    <v-btn
+      class="d-none d-md-inline-flex"
+      variant="text"
+      color="white"
+      to="/billetterie"
+    >
+      <v-icon icon="mdi-ticket" class="mr-2"></v-icon>
+      {{ t('nav.ticketing') }}
+    </v-btn>
     <v-btn
       v-if="userStore.isAuthenticated && isAthlete"
       to="/mes-convocations"
