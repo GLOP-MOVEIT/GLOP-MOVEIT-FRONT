@@ -128,41 +128,58 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach(async (to, from, next) => {
-  const userStore = useUserStore()
-  const isAuthenticated = userStore.isAuthenticated
-
-  if (isAuthenticated && !userStore.user?.role && !userStore.isLoading) {
+const ensureUserProfile = async (userStore: ReturnType<typeof useUserStore>) => {
+  if (userStore.isAuthenticated && !userStore.user?.role && !userStore.isLoading) {
     try {
       await userStore.fetchCurrentUser()
     } catch (error) {
       console.warn('Impossible de récupérer le profil utilisateur:', error)
     }
   }
+}
+
+const handleDisallowedRoles = (
+  to: { meta: { disallowRoles?: UserRole[] } },
+  userStore: ReturnType<typeof useUserStore>,
+): { name: string } | null => {
+  const disallowed = to.meta.disallowRoles as UserRole[]
+  const hasDisallowedRole = disallowed.some((role) => userStore.hasRole(role))
+  return hasDisallowedRole ? { name: 'profile' } : null
+}
+
+const handleRequiredRole = (
+  to: { meta: { requiresRole?: UserRole } },
+  userStore: ReturnType<typeof useUserStore>,
+): { name: string } | null => {
+  const requiredRole = to.meta.requiresRole as UserRole
+  return userStore.hasRole(requiredRole) ? null : { name: 'home' }
+}
+
+router.beforeEach(async (to, from, next) => {
+  const userStore = useUserStore()
+  await ensureUserProfile(userStore)
+
+  const isAuthenticated = userStore.isAuthenticated
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: 'login' })
-  } else if (to.meta.disallowRoles) {
-    const disallowed = to.meta.disallowRoles as UserRole[]
-    const hasDisallowedRole = disallowed.some((role) => userStore.hasRole(role))
-
-    if (hasDisallowedRole) {
-      next({ name: 'profile' })
-    } else {
-      next()
-    }
-  } else if (to.meta.requiresRole) {
-    const requiredRole = to.meta.requiresRole as UserRole
-    if (userStore.hasRole(requiredRole)) {
-      next()
-    } else {
-      next({ name: 'home' })
-    }
-  } else if (to.name === 'login' && isAuthenticated) {
-    next({ name: 'home' })
-  } else {
-    next()
+    return next({ name: 'login' })
   }
+
+  if (to.meta.disallowRoles) {
+    const redirect = handleDisallowedRoles(to, userStore)
+    return redirect ? next(redirect) : next()
+  }
+
+  if (to.meta.requiresRole) {
+    const redirect = handleRequiredRole(to, userStore)
+    return redirect ? next(redirect) : next()
+  }
+
+  if (to.name === 'login' && isAuthenticated) {
+    return next({ name: 'home' })
+  }
+
+  next()
 })
 
 export default router

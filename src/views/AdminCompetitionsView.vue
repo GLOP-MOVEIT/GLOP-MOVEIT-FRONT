@@ -548,7 +548,7 @@ const startCompetitionEdit = (competition: Competition) => {
 }
 
 const confirmDeleteCompetition = async (competition: Competition) => {
-  const confirmed = window.confirm(t('admin.competitionDeleteConfirm', { name: competition.competitionName }))
+  const confirmed = globalThis.confirm(t('admin.competitionDeleteConfirm', { name: competition.competitionName }))
   if (!confirmed) return
 
   try {

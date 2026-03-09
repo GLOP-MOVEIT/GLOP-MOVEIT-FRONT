@@ -320,7 +320,7 @@ const startChampionshipEdit = (championship: Championship) => {
 }
 
 const confirmDeleteChampionship = (championship: Championship) => {
-  const confirmed = window.confirm(t('admin.championshipDeleteConfirm', { name: championship.name }))
+  const confirmed = globalThis.confirm(t('admin.championshipDeleteConfirm', { name: championship.name }))
   if (!confirmed) return
   championships.value = championships.value.filter((c) => c.id !== championship.id)
   if (editingChampionshipId.value === championship.id) {

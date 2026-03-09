@@ -354,7 +354,7 @@ const startEventEdit = (event: Event) => {
 }
 
 const confirmDeleteEvent = (event: Event) => {
-  const confirmed = window.confirm(t('admin.eventDeleteConfirm', { name: event.name }))
+  const confirmed = globalThis.confirm(t('admin.eventDeleteConfirm', { name: event.name }))
   if (!confirmed) return
   events.value = events.value.filter((e) => e.id !== event.id)
   if (editingEventId.value === event.id) {
