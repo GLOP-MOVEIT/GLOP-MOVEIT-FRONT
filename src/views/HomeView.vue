@@ -191,7 +191,7 @@ import { Status } from '@/types/competition'
 import { formatDateRange } from '@/utils/date'
 
 const userStore = useUserStore()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const isAdmin = computed(() => userStore.hasRole(UserRole.ADMIN))
 const isCommissaire = computed(() => userStore.hasRole(UserRole.COMMISSIONER))
 
@@ -255,7 +255,7 @@ const loadChampionships = async () => {
   errorMessage.value = ''
   try {
     championships.value = await championshipService.getAllChampionships()
-  } catch (error) {
+  } catch {
     errorMessage.value = t('home.loadError')
   } finally {
     isLoading.value = false

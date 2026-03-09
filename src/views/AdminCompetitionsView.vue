@@ -492,7 +492,7 @@ const handleCompetitionSubmit = async () => {
         maxPerHeat: competitionForm.maxPerHeat,
         nbManches: competitionForm.nbManches,
         assignedCommissaireId: competitionForm.assignedCommissaireId,
-      } as any)
+      })
       snackbarMessage.value = t('admin.competitionUpdateSuccess')
     } else {
       console.log('Creating competition')
@@ -511,7 +511,7 @@ const handleCompetitionSubmit = async () => {
         assignedCommissaireId: competitionForm.assignedCommissaireId,
       }
       // Ne pas inclure competitionId pour la création, Hibernate le génère
-      await championshipService.createCompetition(payload as any)
+      await championshipService.createCompetition(payload)
       snackbarMessage.value = t('admin.competitionSuccess')
     }
 

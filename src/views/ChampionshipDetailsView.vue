@@ -137,7 +137,7 @@ import { formatDateRange } from '@/utils/date'
 
 const route = useRoute()
 const router = useRouter()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 
 const championship = ref<Championship | null>(null)
 const competitions = ref<Competition[]>([])
@@ -220,7 +220,7 @@ const loadChampionship = async () => {
     championship.value = await championshipService.getChampionshipById(championshipId.value)
     await loadCompetitions()
     await loadCommissaireNames()
-  } catch (error) {
+  } catch {
     errorMessage.value = t('championshipDetails.loadError')
   } finally {
     isLoading.value = false

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Championship, Competition, Event, Status } from '@/types/competition'
+import type { Championship, Competition, Event } from '@/types/competition'
 import { formatDateForBackend } from '@/utils/date'
 
 // Si VITE_API_BASE_URL est défini (même vide), l'utilise. Sinon utilise localhost pour le dev

@@ -280,7 +280,7 @@ const handleChampionshipSubmit = async () => {
         startDate: championshipForm.startDate,
         endDate: championshipForm.endDate,
         status: championshipForm.status,
-      } as any)
+      })
       snackbarMessage.value = t('admin.championshipUpdateSuccess')
     } else {
       console.log('Creating championship')
@@ -290,7 +290,7 @@ const handleChampionshipSubmit = async () => {
         startDate: championshipForm.startDate,
         endDate: championshipForm.endDate,
         status: championshipForm.status,
-      } as any)
+      })
       snackbarMessage.value = t('admin.championshipSuccess')
     }
 

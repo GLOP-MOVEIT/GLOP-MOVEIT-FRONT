@@ -24,12 +24,25 @@ describe('userService', () => {
 
     it('logs in and stores token and user when token is provided', async () => {
         const credentials = {nickname: 'john', password: 'secret'}
-        const responseData = {
+        const loginResponseData = {
             token: 'token-123',
-            user: {userId: 1, email: 'john@example.com', firstName: 'John', surname: 'Doe'},
+            expiresIn: 3600,
+            user: {userId: 1, nickname: 'john'},
+        }
+        const userProfileData = {
+            userId: 1,
+            email: 'john@example.com',
+            firstName: 'John',
+            surname: 'Doe',
+            phoneNumber: '123456789',
+            language: 'en',
+            role: { name: 'SPECTATOR' },
+            acceptsNotifications: true,
+            acceptsLocationSharing: false,
         }
 
-        mockedAxios.post.mockResolvedValueOnce({data: responseData})
+        mockedAxios.post.mockResolvedValueOnce({data: loginResponseData})
+        mockedAxios.get.mockResolvedValueOnce({data: userProfileData})
 
         const result = await userService.login(credentials)
 
@@ -40,9 +53,9 @@ describe('userService', () => {
                 headers: {'Content-Type': 'application/json'},
             }),
         )
-        expect(result).toEqual(responseData)
+        expect(result.token).toBe('token-123')
+        expect(result.user.userId).toBe(1)
         expect(localStorage.getItem('authToken')).toBe('token-123')
-        expect(localStorage.getItem('user')).toBe(JSON.stringify(responseData.user))
     })
 
     it('registers a user with the expected payload', async () => {
