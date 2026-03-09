@@ -9,12 +9,32 @@ const mockLogin = async (page: Parameters<typeof test>[0]['page'], role: string)
   await page.route('**/auth/login', async (route) => {
     const payload = {
       token: 'token-123',
+      expiresIn: 3600,
       user: {
+        userId: 1,
         id: 1,
-        email: 'test@example.com',
-        role: { name: role },
-        authorities: [],
+        nickname: 'test-user',
       },
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(payload),
+    })
+  })
+
+  // Mock getUserProfile endpoint (called after login)
+  await page.route('**/users/*', async (route) => {
+    const payload = {
+      userId: 1,
+      firstName: 'Test',
+      surname: 'User',
+      email: 'test@example.com',
+      phoneNumber: '0123456789',
+      language: 'fr',
+      role: { name: role },
+      acceptsNotifications: true,
+      acceptsLocationSharing: false,
     }
     await route.fulfill({
       status: 200,
@@ -42,6 +62,10 @@ test('login as spectator shows no dashboard', async ({ page }) => {
 
   await login(page)
 
+  // Ouvrir le menu utilisateur
+  await page.locator('button:has(.mdi-account-circle)').click()
+  await page.waitForSelector('.v-list')
+
   await expect(page.locator('a[href="/admin"]')).toHaveCount(0)
   await expect(page.locator('a[href="/commissaire"]')).toHaveCount(0)
   await expect(page.evaluate(() => localStorage.getItem('authToken'))).resolves.toBe('token-123')
@@ -58,6 +82,9 @@ test('login as commissioner shows commissioner dashboard link', async ({ page })
 
   await login(page)
 
+  await page.locator('button:has(.mdi-account-circle)').click()
+  await page.waitForSelector('.v-list')
+
   await expect(page.locator('a[href="/commissaire"]')).toHaveCount(1)
 
   await page.goto('/admin')
@@ -68,6 +95,9 @@ test('login as admin shows admin dashboard link', async ({ page }) => {
   await mockLogin(page, 'ADMIN')
 
   await login(page)
+
+  await page.locator('button:has(.mdi-account-circle)').click()
+  await page.waitForSelector('.v-list')
 
   await expect(page.locator('a[href="/admin"]')).toHaveCount(1)
 
