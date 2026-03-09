@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 const credentials = {
-  email: 'test@example.com',
+  nickname: 'test-user',
   password: 'secret123',
 }
 
@@ -11,7 +11,7 @@ const mockLogin = async (page: Parameters<typeof test>[0]['page'], role: string)
       token: 'token-123',
       user: {
         id: 1,
-        email: credentials.email,
+        email: 'test@example.com',
         role: { name: role },
         authorities: [],
       },
@@ -26,7 +26,7 @@ const mockLogin = async (page: Parameters<typeof test>[0]['page'], role: string)
 
 const login = async (page: Parameters<typeof test>[0]['page']) => {
   const loginForm = page.locator('form').first()
-  await loginForm.locator('input[type="email"]').fill(credentials.email)
+  await loginForm.locator('input[type="text"]').fill(credentials.nickname)
   await loginForm.locator('input[type="password"]').fill(credentials.password)
   await loginForm.locator('button[type="submit"]').click()
   await page.waitForURL('**/')
@@ -85,7 +85,7 @@ test('login fails and stays on login page', async ({ page }) => {
   })
 
   const loginForm = page.locator('form').first()
-  await loginForm.locator('input[type="email"]').fill(credentials.email)
+  await loginForm.locator('input[type="text"]').fill(credentials.nickname)
   await loginForm.locator('input[type="password"]').fill(credentials.password)
   await loginForm.locator('button[type="submit"]').click()
 
