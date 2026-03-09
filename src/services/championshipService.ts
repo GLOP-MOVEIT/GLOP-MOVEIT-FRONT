@@ -1,29 +1,12 @@
 import axios from 'axios'
 import type { Championship, Competition, Event, Status } from '@/types/competition'
+import { formatDateForBackend } from '@/utils/date'
 
 // Si VITE_API_BASE_URL est défini (même vide), l'utilise. Sinon utilise localhost pour le dev
 const API_URL = import.meta.env.VITE_API_BASE_URL !== undefined
   ? import.meta.env.VITE_API_BASE_URL
   : 'http://localhost:8080'
 
-/**
- * Convertit une date string YYYY-MM-DD en LocalDateTime pour le backend
- * Ajoute l'heure 00:00:00.000 par défaut
- */
-function formatDateForBackend(dateString: string | Date): string {
-  if (dateString instanceof Date) {
-    return dateString.toISOString()
-  }
-  if (typeof dateString === 'string') {
-    // Si c'est déjà au format ISO complet, on le retourne tel quel
-    if (dateString.includes('T')) {
-      return dateString
-    }
-    // Sinon on ajoute l'heure 00:00:00.000
-    return `${dateString}T00:00:00.000Z`
-  }
-  return dateString
-}
 
 /**
  * Service pour gérer les championnats, compétitions et épreuves
