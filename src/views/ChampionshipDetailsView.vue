@@ -40,32 +40,88 @@
               {{ t('championshipDetails.competitionsSubtitle') }}
             </div>
           </div>
-          <v-chip size="small" variant="tonal" color="primary" label>{{ competitions.length }}</v-chip>
+          <v-chip size="small" variant="tonal" color="primary" label>{{ filteredCompetitions.length }} / {{ competitions.length }}</v-chip>
         </div>
 
-        <div v-if="competitions.length === 0" class="text-body-2 text-grey-darken-1">
-          {{ t('championshipDetails.noCompetitions') }}
+        <v-select
+          v-model="selectedSport"
+          :items="sportFilterOptions"
+          item-title="title"
+          item-value="value"
+          :label="t('championshipDetails.filterBySport')"
+          variant="outlined"
+          density="compact"
+          clearable
+          hide-details
+          class="mb-4"
+          style="max-width: 280px"
+          prepend-inner-icon="mdi-filter-outline"
+        />
+
+        <div v-if="filteredCompetitions.length === 0" class="text-body-2 text-grey-darken-1 py-4 text-center">
+          {{ competitions.length === 0 ? t('championshipDetails.noCompetitions') : t('championshipDetails.noCompetitionsFilter') }}
         </div>
 
-        <v-list v-else density="compact" lines="two">
-          <v-list-item
-            v-for="competition in competitions"
+        <v-row v-else dense>
+          <v-col
+            v-for="competition in filteredCompetitions"
             :key="competition.competitionId"
-            class="rounded-lg mb-1"
-            :title="competition.competitionName"
+            cols="12"
+            md="6"
           >
-            <template #append>
-              <v-chip :color="statusColor(competition.competitionStatus)" variant="tonal" size="small" label>
-                {{ t(`admin.competitionStatus.${competition.competitionStatus}`) }}
-              </v-chip>
-            </template>
-            <template #subtitle>
-              <span class="text-caption text-grey-darken-2">
+            <v-card variant="tonal" class="pa-3 h-100" rounded="lg">
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="text-subtitle-2 font-weight-bold">{{ competition.competitionName }}</div>
+                <v-chip :color="statusColor(competition.competitionStatus)" variant="tonal" size="x-small" label>
+                  {{ t(`admin.competitionStatus.${competition.competitionStatus}`) }}
+                </v-chip>
+              </div>
+
+              <div class="d-flex align-center gap-2 mb-2 flex-wrap">
+                <v-chip size="x-small" color="primary" variant="outlined" prepend-icon="mdi-trophy-outline">
+                  {{ competition.competitionSport }}
+                </v-chip>
+                <v-chip size="x-small" color="secondary" variant="outlined" prepend-icon="mdi-tournament">
+                  {{ competition.competitionType }}
+                </v-chip>
+                <v-chip size="x-small" color="info" variant="outlined" prepend-icon="mdi-account-group-outline">
+                  {{ t(`admin.participantType.${competition.participantType}`) }}
+                </v-chip>
+              </div>
+
+              <div class="d-flex align-center text-caption text-grey-darken-2 mb-2">
+                <v-icon size="14" class="mr-1">mdi-calendar-range</v-icon>
                 {{ formatDateRange(competition.competitionStartDate, competition.competitionEndDate) }}
-              </span>
-            </template>
-          </v-list-item>
-        </v-list>
+              </div>
+
+              <div class="d-flex align-center gap-3 text-caption text-grey-darken-2 mb-2">
+                <span>
+                  <v-icon size="14" class="mr-1">mdi-repeat</v-icon>
+                  {{ competition.nbManches }} {{ t('championshipDetails.rounds') }}
+                </span>
+                <span>
+                  <v-icon size="14" class="mr-1">mdi-account-multiple</v-icon>
+                  {{ competition.maxPerHeat }} {{ t('championshipDetails.perHeat') }}
+                </span>
+              </div>
+
+              <div v-if="competition.competitionDescription" class="text-caption text-grey-darken-1 mb-2">
+                {{ competition.competitionDescription }}
+              </div>
+
+              <div class="d-flex align-center text-caption mt-1">
+                <v-icon size="14" class="mr-1" :color="competition.assignedCommissaireId ? 'success' : 'grey'">
+                  mdi-shield-account-outline
+                </v-icon>
+                <span :class="competition.assignedCommissaireId ? 'text-success' : 'text-grey'">
+                  {{ competition.assignedCommissaireId
+                    ? (commissaireNames[competition.assignedCommissaireId] ?? t('championshipDetails.commissaireLoading'))
+                    : t('championshipDetails.noCommissaire') }}
+                </span>
+              </div>
+            </v-card>
+          </v-col>
+        </v-row>
       </v-card>
     </div>
   </v-container>
@@ -76,6 +132,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import championshipService from '@/services/championshipService'
+import userService from '@/services/userService'
 import type { Championship, Competition } from '@/types/competition'
 import { Status } from '@/types/competition'
 
@@ -87,6 +144,10 @@ const championship = ref<Championship | null>(null)
 const competitions = ref<Competition[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
+const selectedSport = ref<string | null>(null)
+
+// Map id → nom complet du commissaire
+const commissaireNames = ref<Record<number, string>>({})
 
 const championshipId = computed(() => Number(route.params.id))
 
@@ -105,10 +166,42 @@ const formatDateRange = (startDate: string | Date, endDate: string | Date) => {
   return `${start.toLocaleDateString(locale.value, options)} • ${end.toLocaleDateString(locale.value, options)}`
 }
 
+// Options du filtre sport (sports uniques présents dans les compétitions)
+const sportFilterOptions = computed(() => {
+  const sports = [...new Set(competitions.value.map((c) => c.competitionSport).filter(Boolean))]
+  return sports.map((sport) => ({ title: sport, value: sport }))
+})
+
+// Compétitions filtrées par sport
+const filteredCompetitions = computed(() => {
+  if (!selectedSport.value) return competitions.value
+  return competitions.value.filter((c) => c.competitionSport === selectedSport.value)
+})
+
+const loadCommissaireNames = async () => {
+  // Récupère les IDs uniques des commissaires assignés
+  const ids = [
+    ...new Set(
+      competitions.value
+        .map((c) => c.assignedCommissaireId)
+        .filter((id): id is number => id != null),
+    ),
+  ]
+  // Appel en parallèle pour chaque ID
+  const results = await Promise.allSettled(ids.map((id) => userService.getUserProfile(id)))
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      const profile = result.value
+      const fullName = `${profile.firstName ?? ''} ${profile.surname ?? ''}`.trim() || profile.email
+      commissaireNames.value[ids[index]] = fullName
+    }
+  })
+}
+
 const loadCompetitions = async () => {
   if (!championship.value) return
   if (championship.value.competitions && championship.value.competitions.length > 0) {
-    competitions.value = [...championship.value.competitions]
+    competitions.value = [...championship.value.competitions] as Competition[]
     return
   }
   const allCompetitions = await championshipService.getAllCompetitions()
@@ -123,6 +216,7 @@ const loadChampionship = async () => {
   try {
     championship.value = await championshipService.getChampionshipById(championshipId.value)
     await loadCompetitions()
+    await loadCommissaireNames()
   } catch (error) {
     errorMessage.value = t('championshipDetails.loadError')
   } finally {

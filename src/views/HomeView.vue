@@ -111,9 +111,6 @@
                 <v-chip :color="statusColor(championship.status)" variant="tonal" size="small" label>
                   {{ t(`admin.competitionStatus.${championship.status}`) }}
                 </v-chip>
-                <div class="text-caption text-grey-darken-1">
-                  {{ t('home.competitionsCount', { count: championship.competitions?.length ?? 0 }) }}
-                </div>
               </div>
               <div class="d-flex justify-end">
                 <v-btn variant="text" color="primary">
@@ -164,9 +161,6 @@
                 <v-chip :color="statusColor(championship.status)" variant="tonal" size="small" label>
                   {{ t(`admin.competitionStatus.${championship.status}`) }}
                 </v-chip>
-                <div class="text-caption text-grey-darken-1">
-                  {{ t('home.competitionsCount', { count: championship.competitions?.length ?? 0 }) }}
-                </div>
               </div>
               <div class="d-flex justify-end">
                 <v-btn variant="text" color="primary">

@@ -139,6 +139,18 @@
                   chips
                 />
               </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="competitionForm.assignedCommissaireId"
+                  :items="commissaireOptions"
+                  item-title="title"
+                  item-value="value"
+                  :label="t('admin.competitionCommissaireLabel')"
+                  variant="outlined"
+                  density="comfortable"
+                  clearable
+                />
+              </v-col>
               <v-col cols="12">
                 <v-textarea
                   v-model="competitionForm.description"
@@ -225,6 +237,9 @@ import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Status, Sport, ParticipantType } from '@/types/competition'
 import championshipService from '@/services/championshipService'
+import userService from '@/services/userService'
+import type { User } from '@/types/user'
+import { UserRole } from '@/types/user'
 
 type LocalChampionship = {
   id: number
@@ -247,6 +262,7 @@ type LocalCompetition = {
   participantType: ParticipantType
   maxPerHeat: number
   nbManches: number
+  assignedCommissaireId: number | null
 }
 
 const { t } = useI18n()
@@ -261,6 +277,8 @@ const isLoading = ref(false)
 const championships = ref<LocalChampionship[]>([])
 const competitions = ref<LocalCompetition[]>([])
 const competitionTypes = ref<string[]>([])
+// TODO: filtrer uniquement les commissaires quand il y en aura dans la base
+const commissaireUsers = ref<User[]>([])
 
 const mapChampionship = (championship: { id: number; name: string; description: string; startDate: string | Date; endDate: string | Date; status: Status }): LocalChampionship => ({
   id: championship.id,
@@ -271,7 +289,7 @@ const mapChampionship = (championship: { id: number; name: string; description: 
   status: championship.status,
 })
 
-const mapCompetition = (competition: { competitionId: number; championship?: { id: number }; competitionSport: string; competitionName: string; competitionDescription: string; competitionStartDate: string; competitionEndDate: string; competitionStatus: Status; participantType: ParticipantType; maxPerHeat: number; nbManches: number }): LocalCompetition => ({
+const mapCompetition = (competition: { competitionId: number; championship?: { id: number }; competitionSport: string; competitionName: string; competitionDescription: string; competitionStartDate: string; competitionEndDate: string; competitionStatus: Status; participantType: ParticipantType; maxPerHeat: number; nbManches: number; assignedCommissaireId?: number | null }): LocalCompetition => ({
   competitionId: competition.competitionId,
   championshipId: competition.championship?.id ?? 0,
   competitionSport: competition.competitionSport,
@@ -283,6 +301,7 @@ const mapCompetition = (competition: { competitionId: number; championship?: { i
   participantType: competition.participantType,
   maxPerHeat: competition.maxPerHeat,
   nbManches: competition.nbManches,
+  assignedCommissaireId: competition.assignedCommissaireId ?? null,
 })
 
 const competitionForm = reactive({
@@ -297,6 +316,7 @@ const competitionForm = reactive({
   endDate: '',
   status: Status.PLANNED,
   nbManches: 1,
+  assignedCommissaireId: null as number | null,
 })
 
 const statusOptions = computed(() =>
@@ -357,6 +377,13 @@ const typeOptions = computed(() =>
   competitionTypes.value.map((type) => ({
     title: type,
     value: type,
+  })),
+)
+
+const commissaireOptions = computed(() =>
+  commissaireUsers.value.map((user) => ({
+    title: `${user.firstName ?? ''} ${user.surname ?? ''}`.trim() || user.email,
+    value: user.userId ?? user.id ?? null,
   })),
 )
 
@@ -424,10 +451,11 @@ onMounted(async () => {
   console.log('AdminCompetitionsView mounted')
   isLoading.value = true
   try {
-    const [champsData, compsData, typesData] = await Promise.all([
+    const [champsData, compsData, typesData, usersData] = await Promise.all([
       championshipService.getAllChampionships(),
       championshipService.getAllCompetitions(),
-      championshipService.getCompetitionTypes()
+      championshipService.getCompetitionTypes(),
+      userService.getUsers(),
     ])
     console.log('Championships loaded:', champsData)
     console.log('Competitions loaded:', compsData)
@@ -435,6 +463,12 @@ onMounted(async () => {
     championships.value = champsData.map(mapChampionship)
     competitions.value = compsData.map(mapCompetition)
     competitionTypes.value = typesData
+    // TODO: filtrer uniquement les COMMISSIONER quand il y en aura dans la base
+    // Pour l'instant on affiche ADMIN et COMMISSIONER
+    commissaireUsers.value = usersData.filter((u) => {
+      const roleName = u.role?.name ?? ''
+      return roleName === UserRole.COMMISSIONER || roleName === UserRole.ADMIN
+    })
   } catch (error) {
     console.error('Error loading data:', error)
     snackbarMessage.value = 'Erreur lors du chargement des données'
@@ -456,6 +490,7 @@ const resetCompetitionForm = () => {
   competitionForm.endDate = ''
   competitionForm.status = Status.PLANNED
   competitionForm.nbManches = 1
+  competitionForm.assignedCommissaireId = null
   editingCompetitionId.value = null
   nextTick(() => competitionFormRef.value?.resetValidation())
 }
@@ -487,6 +522,7 @@ const handleCompetitionSubmit = async () => {
         competitionType: competitionForm.type,
         maxPerHeat: competitionForm.maxPerHeat,
         nbManches: competitionForm.nbManches,
+        assignedCommissaireId: competitionForm.assignedCommissaireId,
       } as any)
       snackbarMessage.value = t('admin.competitionUpdateSuccess')
     } else {
@@ -503,6 +539,7 @@ const handleCompetitionSubmit = async () => {
         competitionType: competitionForm.type,
         maxPerHeat: competitionForm.maxPerHeat,
         nbManches: competitionForm.nbManches,
+        assignedCommissaireId: competitionForm.assignedCommissaireId,
       }
       // Ne pas inclure competitionId pour la création, Hibernate le génère
       await championshipService.createCompetition(payload as any)
@@ -528,14 +565,16 @@ const startCompetitionEdit = (competition: LocalCompetition) => {
   editingCompetitionId.value = competition.competitionId
   competitionForm.championshipId = competition.championshipId
   competitionForm.sport = toApiSportValue(competition.competitionSport)
-  competitionForm.format = competition.competitionFormat
-  competitionForm.maxParticipantsPerRound = competition.maxParticipantsPerRound
+  competitionForm.participantType = competition.participantType
+  competitionForm.type = competition.competitionType ?? ''
+  competitionForm.maxPerHeat = competition.maxPerHeat
   competitionForm.name = competition.competitionName
   competitionForm.description = competition.competitionDescription
   competitionForm.startDate = competition.competitionStartDate
   competitionForm.endDate = competition.competitionEndDate
   competitionForm.status = competition.competitionStatus
   competitionForm.nbManches = competition.nbManches
+  competitionForm.assignedCommissaireId = competition.assignedCommissaireId ?? null
   nextTick(() => competitionFormRef.value?.resetValidation())
 }
 

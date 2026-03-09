@@ -51,6 +51,7 @@ export interface Competition {
   competitionType: string
   maxPerHeat: number
   nbManches: number
+  assignedCommissaireId?: number | null
   events?: Event[]
   trials?: Trial[]
 }
