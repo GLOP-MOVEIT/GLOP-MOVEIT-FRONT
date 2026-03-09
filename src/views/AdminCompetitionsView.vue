@@ -385,7 +385,7 @@ const typeOptions = computed(() =>
 const commissaireOptions = computed(() =>
   commissaireUsers.value.map((user) => ({
     title: `${user.firstName ?? ''} ${user.surname ?? ''}`.trim() || user.email,
-    value: user.userId ?? user.id ?? null,
+    value: user.userId,
   })),
 )
 

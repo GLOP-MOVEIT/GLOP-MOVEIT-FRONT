@@ -8,8 +8,10 @@ const USER_API_URL = import.meta.env.VITE_USER_API_BASE_URL ?? API_URL
 export const userService = {
   /**
    * Connexion d'un utilisateur
+   * 1. Appelle /auth/login pour obtenir le token et l'AuthUser (id, nickname, lastConnectionDate)
+   * 2. Utilise l'id pour récupérer le profil complet depuis /users/{id}
    */
-  async login(credentials: LoginRequest): Promise<AuthResponse> {
+  async login(credentials: LoginRequest): Promise<{ token: string; expiresIn: number; user: User }> {
     try {
       const response = await axios.post<AuthResponse>(`${AUTH_API_URL}/auth/login`, credentials, {
         headers: {
@@ -19,10 +21,18 @@ export const userService = {
 
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
+        const userId = response.data.user.userId ?? response.data.user.id
+        const userProfile = await this.getUserProfile(userId)
+        localStorage.setItem('user', JSON.stringify(userProfile))
+
+        return {
+          token: response.data.token,
+          expiresIn: response.data.expiresIn,
+          user: userProfile,
+        }
       }
 
-      return response.data
+      throw new Error('Token non reçu')
     } catch (error) {
       console.error('Login error:', error)
       throw error
@@ -93,38 +103,20 @@ export const userService = {
   },
 
   /**
-   * Récupérer le profil de l'utilisateur connecté depuis le user-service
+   * Récupérer/rafraîchir le profil de l'utilisateur connecté depuis le user-service
    */
   async getCurrentUserProfile(): Promise<User> {
     try {
       const currentUser = this.getCurrentUser()
-      if (!currentUser?.id && !currentUser?.userId) {
+      if (!currentUser?.userId) {
         throw new Error('Aucun utilisateur connecté')
       }
 
-      const userId = currentUser.userId ?? currentUser.id
-      if (!userId) {
-        throw new Error('ID utilisateur introuvable')
-      }
+      // Rafraîchir le profil depuis l'API
+      const userProfile = await this.getUserProfile(currentUser.userId)
+      localStorage.setItem('user', JSON.stringify(userProfile))
 
-      const userProfile = await this.getUserProfile(userId)
-
-      // Convertir UserProfile vers User pour compatibilité
-      const user: User = {
-        id: userProfile.userId,
-        userId: userProfile.userId,
-        firstName: userProfile.firstName,
-        surname: userProfile.surname,
-        email: userProfile.email,
-        phoneNumber: userProfile.phoneNumber,
-        language: userProfile.language,
-        role: userProfile.role,
-        acceptsNotifications: userProfile.acceptsNotifications,
-        acceptsLocationSharing: userProfile.acceptsLocationSharing,
-      }
-
-      localStorage.setItem('user', JSON.stringify(user))
-      return user
+      return userProfile
     } catch (error) {
       console.error('Get current user profile error:', error)
       throw error
@@ -146,7 +138,6 @@ export const userService = {
 
       if (data?.content && Array.isArray(data.content)) {
         return data.content.map((profile) => ({
-          id: profile.userId,
           userId: profile.userId,
           firstName: profile.firstName,
           surname: profile.surname,

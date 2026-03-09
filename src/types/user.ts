@@ -7,55 +7,36 @@ export enum UserRole {
   COMMISSIONER = 'COMMISSIONER',
 }
 
-// Interface pour l'objet role complet du backend
+// Interface pour l'objet Role (API user-service)
 export interface Role {
-  id?: number
-  name: UserRole | string
-  description?: string
-  createdAt?: string
-  updatedAt?: string
+  name: string
 }
 
-// Interface pour le profil utilisateur retourné par l'API user-service
-export interface UserProfile {
+// Interface User complète (API user-service /users/{id})
+export interface User {
   userId: number
   firstName: string
   surname: string
   email: string
   phoneNumber: string
   language: string
-  role: {
-    name: string
-  }
+  role: Role
   acceptsNotifications: boolean
   acceptsLocationSharing: boolean
 }
 
-export interface Authority {
-  authority: string
+// Alias pour la réponse du user-service
+export type UserProfile = User
+
+// Interface pour le user retourné par /auth/login (structure différente)
+export interface AuthUser {
+  id: number
+  userId: number
+  nickname: string
+  lastConnectionDate: string
 }
 
-// Types pour l'utilisateur - compatible avec l'ancienne structure et la nouvelle
-export interface User {
-  id?: number
-  userId?: number  // Nouveau champ de l'API user-service
-  email: string
-  firstName: string
-  surname: string
-  phoneNumber?: string
-  language?: string
-  role?: Role
-  createdAt?: string
-  updatedAt?: string
-  acceptsNotifications?: boolean
-  acceptsLocationSharing?: boolean
-  acceptsLocation?: boolean
-  authorities?: Authority[]
-  username?: string
-  nickname?: string
-}
-
-// Types pour les requêtes d'authentification (correspond aux DTOs du backend)
+// Types pour les requêtes d'authentification
 export interface LoginRequest {
   nickname: string
   password: string
@@ -75,11 +56,11 @@ export interface RegisterRequest {
   acceptTerms?: boolean
 }
 
-// Types pour les réponses d'authentification (correspond à LoginResponse du backend)
+// Réponse de /auth/login
 export interface AuthResponse {
-  user: User
   token: string
   expiresIn: number
+  user: AuthUser
 }
 
 export interface ApiError {
@@ -88,7 +69,6 @@ export interface ApiError {
   status?: number
 }
 
-// Interface pour les réponses paginées de l'API
 export interface Pageable {
   offset: number
   pageNumber: number

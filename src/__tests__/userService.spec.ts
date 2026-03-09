@@ -26,7 +26,7 @@ describe('userService', () => {
         const credentials = {nickname: 'john', password: 'secret'}
         const responseData = {
             token: 'token-123',
-            user: {id: 1, email: 'john@example.com', firstName: 'John', surname: 'Doe'},
+            user: {userId: 1, email: 'john@example.com', firstName: 'John', surname: 'Doe'},
         }
 
         mockedAxios.post.mockResolvedValueOnce({data: responseData})
@@ -57,7 +57,7 @@ describe('userService', () => {
             acceptsNotifications: true,
             acceptsLocationSharing: false,
         }
-        const responseUser = {id: 2, email: 'jane@example.com', firstName: 'Jane', surname: 'Doe'}
+        const responseUser = {userId: 2, email: 'jane@example.com', firstName: 'Jane', surname: 'Doe'}
 
         mockedAxios.post.mockResolvedValueOnce({data: responseUser})
 
@@ -85,7 +85,7 @@ describe('userService', () => {
 
     it('logs out and clears local storage', () => {
         localStorage.setItem('authToken', 'token-123')
-        localStorage.setItem('user', JSON.stringify({id: 1}))
+        localStorage.setItem('user', JSON.stringify({userId: 1}))
 
         userService.logout()
 
@@ -94,7 +94,7 @@ describe('userService', () => {
     })
 
     it('returns the current user from local storage', () => {
-        const user = {id: 1, email: 'john@example.com'}
+        const user = {userId: 1, email: 'john@example.com'}
         localStorage.setItem('user', JSON.stringify(user))
 
         expect(userService.getCurrentUser()).toEqual(user)
@@ -133,7 +133,7 @@ describe('userService', () => {
         )
         expect(result).toEqual([
             expect.objectContaining({
-                id: 1,
+                userId: 1,
                 email: 'john@example.com',
                 role: { name: 'ADMIN' },
             }),

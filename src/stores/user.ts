@@ -23,9 +23,6 @@ export const useUserStore = defineStore('user', () => {
       list.add(user.value.role.name)
     }
 
-    user.value?.authorities?.forEach((authority) => {
-      list.add(authority.authority.replace(/^ROLE_/, ''))
-    })
 
     if (list.size === 0) {
       list.add(UserRole.SPECTATOR)
@@ -51,10 +48,10 @@ export const useUserStore = defineStore('user', () => {
     try {
       const response = await userService.login(credentials)
       user.value = response.user
-      
+
       // Récupérer immédiatement le profil complet avec le rôle depuis users/id
       await fetchCurrentUser()
-      
+
       return response
     } catch (err: unknown) {
       error.value = getErrorMessage(err, 'Erreur lors de la connexion')

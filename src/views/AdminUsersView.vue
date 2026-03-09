@@ -43,7 +43,7 @@
             {{ t('admin.noUsers') }}
           </td>
         </tr>
-        <tr v-for="user in filteredUsers" :key="user.id">
+        <tr v-for="user in filteredUsers" :key="user.userId">
           <td>{{ formatName(user) }}</td>
           <td>{{ user.email }}</td>
           <td>{{ formatRoleLabel(user) }}</td>
