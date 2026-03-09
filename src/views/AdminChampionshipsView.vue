@@ -165,12 +165,16 @@ const isLoading = ref(false)
 
 const championships = ref<Championship[]>([])
 
-const toDateInput = (value: string | Date): string => {
+const toDateInput = (value: string | Date | null | undefined): string => {
   if (!value) return ''
   if (value instanceof Date) {
-    return value.toISOString().split('T')[0]
+    const iso = value.toISOString()
+    return iso.split('T')[0] ?? ''
   }
-  return value.includes('T') ? value.split('T')[0] : value
+  if (typeof value === 'string') {
+    return value.includes('T') ? (value.split('T')[0] ?? value) : value
+  }
+  return ''
 }
 
 const mapChampionship = (championship: Championship): Championship => ({

@@ -91,7 +91,7 @@ const normalizeRoleKey = (role: string) => {
 }
 
 const formatRoleValue = (user: User) => {
-  const raw = user.role?.name || user.authorities?.[0]?.authority || ''
+  const raw = user.role?.name || ''
   return raw ? normalizeRoleKey(raw) : ''
 }
 

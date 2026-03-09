@@ -37,10 +37,6 @@
             <v-col cols="12" md="6">
               <div class="text-overline mb-2">{{ t('profile.accountSection') }}</div>
               <div class="text-body-2 text-grey-darken-1">
-                <strong>{{ t('profile.joinedLabel') }}</strong>
-                {{ formatDate(user?.createdAt) }}
-              </div>
-              <div class="text-body-2 text-grey-darken-1">
                 <strong>{{ t('profile.notificationsLabel') }}</strong>
                 {{ user?.acceptsNotifications ? t('profile.yes') : t('profile.no') }}
               </div>

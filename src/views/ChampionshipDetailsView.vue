@@ -191,9 +191,12 @@ const loadCommissaireNames = async () => {
   const results = await Promise.allSettled(ids.map((id) => userService.getUserProfile(id)))
   results.forEach((result, index) => {
     if (result.status === 'fulfilled') {
-      const profile = result.value
-      const fullName = `${profile.firstName ?? ''} ${profile.surname ?? ''}`.trim() || profile.email
-      commissaireNames.value[ids[index]] = fullName
+      const commissaireId = ids[index]
+      if (commissaireId !== undefined) {
+        const profile = result.value
+        const fullName = `${profile.firstName ?? ''} ${profile.surname ?? ''}`.trim() || profile.email
+        commissaireNames.value[commissaireId] = fullName
+      }
     }
   })
 }

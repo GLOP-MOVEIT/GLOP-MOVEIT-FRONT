@@ -159,7 +159,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Status } from '@/types/competition'
+import { Status, ParticipantType } from '@/types/competition'
 import type { Competition, Event } from '@/types/competition'
 import { formatDateRange } from '@/utils/date'
 
@@ -181,7 +181,7 @@ const competitions = ref<Competition[]>([
     competitionStartDate: '2026-02-06',
     competitionEndDate: '2026-02-12',
     competitionStatus: Status.PLANNED,
-    participantType: 'INDIVIDUAL' as const,
+    participantType: ParticipantType.INDIVIDUAL,
     competitionType: 'HEATS',
     maxPerHeat: 8,
     nbManches: 3,
@@ -195,7 +195,7 @@ const competitions = ref<Competition[]>([
     competitionStartDate: '2026-02-13',
     competitionEndDate: '2026-02-22',
     competitionStatus: Status.PLANNED,
-    participantType: 'INDIVIDUAL' as const,
+    participantType: ParticipantType.INDIVIDUAL,
     competitionType: 'HEATS',
     maxPerHeat: 8,
     nbManches: 3,
@@ -344,7 +344,7 @@ const handleEventSubmit = async () => {
 
 const startEventEdit = (event: Event) => {
   editingEventId.value = event.id
-  eventForm.competitionId = event.competitionId
+  eventForm.competitionId = event.competitionId ?? null
   eventForm.name = event.name
   eventForm.description = event.description
   eventForm.startDate = String(event.startDate)

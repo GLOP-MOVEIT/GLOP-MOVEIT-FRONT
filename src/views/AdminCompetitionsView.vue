@@ -410,7 +410,8 @@ const statusColor = (status: Status) => {
 }
 
 
-const getChampionshipName = (championshipId: number) => {
+const getChampionshipName = (championshipId: number | undefined) => {
+  if (!championshipId) return 'N/A'
   return championships.value.find((c) => c.id === championshipId)?.name || 'N/A'
 }
 
