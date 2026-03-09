@@ -7,7 +7,7 @@ const userServiceMock = {
   login: vi.fn(),
   register: vi.fn(),
   logout: vi.fn(),
-  getProfile: vi.fn(),
+  getCurrentUserProfile: vi.fn(),
 }
 
 const isAxiosErrorMock = vi.fn()
@@ -41,12 +41,15 @@ describe('user store', () => {
     userServiceMock.login.mockResolvedValue({
       user: { id: 2, role: { name: 'ADMIN' } },
     })
+    userServiceMock.isAuthenticated.mockReturnValue(true)
+    userServiceMock.getCurrentUserProfile.mockResolvedValue({ id: 2, role: { name: 'ADMIN' } })
     const { useUserStore } = await import('@/stores/user')
 
     const store = useUserStore()
     const result = await store.login({ email: 'a@b.com', password: 'secret' })
 
     expect(result.user.id).toBe(2)
+    expect(userServiceMock.getCurrentUserProfile).toHaveBeenCalled()
     expect(store.user?.id).toBe(2)
     expect(store.isLoading).toBe(false)
     expect(store.error).toBeNull()
@@ -103,13 +106,13 @@ describe('user store', () => {
     const store = useUserStore()
     await store.fetchCurrentUser()
 
-    expect(userServiceMock.getProfile).not.toHaveBeenCalled()
+    expect(userServiceMock.getCurrentUserProfile).not.toHaveBeenCalled()
   })
 
   it('clears user on 401 during profile fetch', async () => {
     const error = { response: { status: 401 } }
     userServiceMock.isAuthenticated.mockReturnValue(true)
-    userServiceMock.getProfile.mockRejectedValue(error)
+    userServiceMock.getCurrentUserProfile.mockRejectedValue(error)
     isAxiosErrorMock.mockReturnValue(true)
     const { useUserStore } = await import('@/stores/user')
 
