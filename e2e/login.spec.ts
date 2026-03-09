@@ -90,5 +90,6 @@ test('login fails and stays on login page', async ({ page }) => {
   await loginForm.locator('button[type="submit"]').click()
 
   await expect(page).toHaveURL('/login')
-  await expect(page.locator('.v-messages__message, .v-alert')).toBeVisible()
+  const visibleErrors = page.locator('.v-messages__message:visible, .v-alert:visible')
+  await expect.poll(async () => visibleErrors.count()).toBeGreaterThan(0)
 })
