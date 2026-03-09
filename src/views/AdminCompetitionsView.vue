@@ -240,6 +240,7 @@ import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import type { User } from '@/types/user'
 import { UserRole } from '@/types/user'
+import { formatDateRange } from '@/utils/date'
 
 type LocalChampionship = {
   id: number
@@ -432,17 +433,6 @@ const statusColor = (status: Status) => {
   return 'primary'
 }
 
-const formatDateRange = (startDate: string, endDate: string) => {
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return new Intl.DateTimeFormat('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date)
-  }
-  return `${formatDate(startDate)} → ${formatDate(endDate)}`
-}
 
 const getChampionshipName = (championshipId: number) => {
   return championships.value.find((c) => c.id === championshipId)?.name || 'N/A'

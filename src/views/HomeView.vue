@@ -188,6 +188,7 @@ import { UserRole } from '@/types/user'
 import championshipService from '@/services/championshipService'
 import type { Championship } from '@/types/competition'
 import { Status } from '@/types/competition'
+import { formatDateRange } from '@/utils/date'
 
 const userStore = useUserStore()
 const { t, locale } = useI18n()
@@ -248,12 +249,6 @@ const statusColor = (status: Status) => {
   return 'primary'
 }
 
-const formatDateRange = (startDate: string | Date, endDate: string | Date) => {
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' }
-  return `${start.toLocaleDateString(locale.value, options)} • ${end.toLocaleDateString(locale.value, options)}`
-}
 
 const loadChampionships = async () => {
   isLoading.value = true

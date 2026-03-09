@@ -133,6 +133,7 @@ import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import type { Championship, Competition } from '@/types/competition'
 import { Status } from '@/types/competition'
+import { formatDateRange } from '@/utils/date'
 
 const route = useRoute()
 const router = useRouter()
@@ -157,12 +158,6 @@ const statusColor = (status: Status) => {
   return 'primary'
 }
 
-const formatDateRange = (startDate: string | Date, endDate: string | Date) => {
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' }
-  return `${start.toLocaleDateString(locale.value, options)} • ${end.toLocaleDateString(locale.value, options)}`
-}
 
 // Options du filtre sport (sports uniques présents dans les compétitions)
 const sportFilterOptions = computed(() => {

@@ -152,6 +152,7 @@ import { useI18n } from 'vue-i18n'
 import { Status } from '@/types/competition'
 import type { Championship } from '@/types/competition'
 import championshipService from '@/services/championshipService'
+import { formatDateRange } from '@/utils/date'
 
 type LocalChampionship = {
   id: number
@@ -235,17 +236,6 @@ const statusColor = (status: Status) => {
   return 'primary'
 }
 
-const formatDateRange = (startDate: string, endDate: string) => {
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return new Intl.DateTimeFormat('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date)
-  }
-  return `${formatDate(startDate)} → ${formatDate(endDate)}`
-}
 
 // Load championships on mount
 onMounted(async () => {

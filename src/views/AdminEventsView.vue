@@ -160,6 +160,7 @@
 import { computed, nextTick, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Status } from '@/types/competition'
+import { formatDateRange } from '@/utils/date'
 
 type LocalCompetition = {
   id: number
@@ -292,9 +293,6 @@ const statusColor = (status: Status) => {
   return 'primary'
 }
 
-const formatDateRange = (startDate: string, endDate: string) => {
-  return `${startDate} → ${endDate}`
-}
 
 const getCompetitionName = (competitionId: number) => {
   return competitions.value.find((c) => c.id === competitionId)?.name || 'N/A'
