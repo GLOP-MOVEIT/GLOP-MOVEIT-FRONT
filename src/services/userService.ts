@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { LoginRequest, RegisterRequest, AuthResponse, User, UserProfile } from '@/types/user'
+import type { LoginRequest, RegisterRequest, AuthResponse, User, UserProfile, PagedResponse } from '@/types/user'
 
 const API_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_BASE_URL ?? API_URL
@@ -16,12 +16,12 @@ export const userService = {
           'Content-Type': 'application/json',
         },
       })
-      
+
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token)
         localStorage.setItem('user', JSON.stringify(response.data.user))
       }
-      
+
       return response.data
     } catch (error) {
       console.error('Login error:', error)
@@ -127,7 +127,7 @@ export const userService = {
       }
 
       const userProfile = await this.getUserProfile(userId)
-      
+
       // Convertir UserProfile vers User pour compatibilité
       const user: User = {
         id: userProfile.userId,
@@ -152,15 +152,34 @@ export const userService = {
 
   /**
    * Récupérer la liste des utilisateurs (ADMIN) - via user-service
+   * L'API retourne une réponse paginée avec la structure: { content: User[], pageable: {...}, ... }
    */
   async getUsers(): Promise<User[]> {
     try {
       const token = this.getToken()
-      const response = await axios.get<User[]>(`${USER_API_URL}/users`, {
+      const response = await axios.get<PagedResponse<UserProfile>>(`${USER_API_URL}/users`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
 
-      return response.data
+      const data = response.data
+
+      if (data?.content && Array.isArray(data.content)) {
+        return data.content.map((profile) => ({
+          id: profile.userId,
+          userId: profile.userId,
+          firstName: profile.firstName,
+          surname: profile.surname,
+          email: profile.email,
+          phoneNumber: profile.phoneNumber,
+          language: profile.language,
+          role: profile.role,
+          acceptsNotifications: profile.acceptsNotifications,
+          acceptsLocationSharing: profile.acceptsLocationSharing,
+        }))
+      }
+
+      console.error('Format de réponse inattendu, content non trouvé:', data)
+      return []
     } catch (error) {
       console.error('Get users error:', error)
       throw error
