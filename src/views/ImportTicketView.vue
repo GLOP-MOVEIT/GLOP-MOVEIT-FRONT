@@ -12,6 +12,7 @@ import type { TicketImportPayload } from '@/types/ticket'
 const { t } = useI18n()
 const router = useRouter()
 const userStore = useUserStore()
+const currentUserId = computed(() => userStore.user?.userId)
 
 const formRef = ref<VForm | null>(null)
 const isImporting = ref(false)
@@ -55,7 +56,7 @@ const triggerColorize = () => {
 const handleImport = async () => {
   resetMessages()
 
-  if (!userStore.user?.id) {
+  if (!currentUserId.value) {
     errorMessage.value = t('ticketing.authRequired')
     isFailed.value = true
     return
@@ -79,7 +80,7 @@ const handleImport = async () => {
 
   try {
     const [newTicket] = await Promise.all([
-      importTicket(userStore.user.id, { ...formState.value }, userEmail.value),
+      importTicket(currentUserId.value, { ...formState.value }, userEmail.value),
       minimumDelay,
     ])
 
@@ -130,7 +131,7 @@ const formatTicketDate = (value?: string | null) => {
 }
 
 onMounted(async () => {
-  if (!userStore.user?.id) {
+  if (!currentUserId.value) {
     await userStore.fetchCurrentUser()
   }
 

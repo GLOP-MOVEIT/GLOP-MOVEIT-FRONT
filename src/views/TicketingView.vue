@@ -10,6 +10,7 @@ import { useUserStore } from '@/stores/user'
 const { t } = useI18n()
 const router = useRouter()
 const userStore = useUserStore()
+const currentUserId = computed(() => userStore.user?.userId)
 
 const tickets = ref<Ticket[]>([])
 const filter = ref<'all' | 'upcoming' | 'past'>('all')
@@ -56,17 +57,17 @@ const loadTickets = async () => {
   errorMessage.value = ''
 
   try {
-    if (!userStore.user?.id) {
+    if (!currentUserId.value) {
       await userStore.fetchCurrentUser()
     }
 
-    if (!userStore.user?.id) {
+    if (!currentUserId.value) {
       tickets.value = []
       errorMessage.value = t('ticketing.authRequired')
       return
     }
 
-    tickets.value = await getUserTickets(userStore.user.id, userStore.user.email)
+    tickets.value = await getUserTickets(currentUserId.value, userStore.user?.email)
   } catch {
     tickets.value = []
     errorMessage.value = t('ticketing.loadError')
