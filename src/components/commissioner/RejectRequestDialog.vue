@@ -13,7 +13,7 @@
           <v-col cols="12" sm="6">
             <div class="text-caption text-grey-darken-1">{{ t('commissioner.rejectUser') }}</div>
             <div class="text-body-2 font-weight-medium">
-              {{ request?.user || '-' }}
+              {{ request?.reference || '-' }}
             </div>
           </v-col>
           <v-col cols="12" sm="6">
@@ -49,11 +49,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { CommissionerRequest } from '@/data/commissionerRequests'
+import type { RoleRequestViewModel } from '@/types/request'
 
 const props = defineProps<{
   modelValue: boolean
-  request: CommissionerRequest | null
+  request: RoleRequestViewModel | null
 }>()
 
 const emit = defineEmits<{

@@ -10,9 +10,8 @@
         {{ t('admin.backToDashboard') }}
       </v-btn>
     </div>
-
-    <v-alert type="info" variant="tonal" class="mb-4">
-      {{ t('admin.usersInfo') }}
+    <v-alert v-if="successMessage" type="success" variant="tonal" class="mb-4" closable @click:close="successMessage = ''">
+      {{ successMessage }}
     </v-alert>
 
     <UserFilterBar
@@ -48,7 +47,14 @@
           <td>{{ user.email }}</td>
           <td>{{ formatRoleLabel(user) }}</td>
           <td>
-            <v-btn size="small" color="primary" variant="outlined" disabled>
+            <v-btn
+              size="small"
+              color="primary"
+              variant="outlined"
+              :disabled="isPromoteDisabled(user)"
+              :loading="promotingUserId === user.userId"
+              @click="promoteUser(user)"
+            >
               {{ t('admin.promoteCommissaire') }}
             </v-btn>
           </td>
@@ -76,8 +82,10 @@ const { t } = useI18n()
 const users = ref<User[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
+const successMessage = ref('')
 const searchQuery = ref('')
 const selectedRole = ref<string | null>(null)
+const promotingUserId = ref<number | null>(null)
 
 const formatName = (user: User) => {
   return `${user.firstName ?? ''} ${user.surname ?? ''}`.trim() || '-'
@@ -86,7 +94,7 @@ const formatName = (user: User) => {
 const normalizeRoleKey = (role: string) => {
   const normalized = role.replace(/^ROLE_/, '').trim().toUpperCase()
   if (normalized === 'VOLONTAIRE') return 'VOLUNTEER'
-  if (normalized === 'COMMISSAIRE') return 'COMMISSIONER'
+  if (normalized === 'COMMISSAIRE' || normalized === 'COMMISSIONER') return 'REFEREE'
   return normalized
 }
 
@@ -122,6 +130,39 @@ const fetchUsers = async () => {
   }
 }
 
+const isPromoteDisabled = (user: User) => {
+  const role = formatRoleValue(user)
+  return promotingUserId.value === user.userId ||
+    role === UserRole.ADMIN ||
+    role === UserRole.REFEREE
+}
+
+const promoteUser = async (user: User) => {
+  if (isPromoteDisabled(user)) {
+    return
+  }
+
+  promotingUserId.value = user.userId
+  errorMessage.value = ''
+  successMessage.value = ''
+
+  try {
+    await userService.promoteToCommissioner(user.userId)
+    successMessage.value = t('admin.promoteCommissaireSuccess', {
+      name: formatName(user),
+    })
+    await fetchUsers()
+  } catch (error: unknown) {
+    if (isAxiosError<{ message?: string }>(error)) {
+      errorMessage.value = error.response?.data?.message || t('admin.promoteCommissaireError')
+    } else {
+      errorMessage.value = t('admin.promoteCommissaireError')
+    }
+  } finally {
+    promotingUserId.value = null
+  }
+}
+
 onMounted(() => {
   fetchUsers()
 })
@@ -130,7 +171,7 @@ const roleOptions = computed(() => [
   { title: t('roles.SPECTATOR'), value: UserRole.SPECTATOR },
   { title: t('roles.SPORTIF'), value: UserRole.SPORTIF },
   { title: t('roles.VOLUNTEER'), value: UserRole.VOLUNTEER },
-  { title: t('roles.COMMISSIONER'), value: UserRole.COMMISSIONER },
+  { title: t('roles.REFEREE'), value: UserRole.REFEREE },
   { title: t('roles.ADMIN'), value: UserRole.ADMIN },
 ])
 

@@ -33,6 +33,6 @@ describe('HomeView', () => {
     const vm = wrapper.vm as unknown as { isAdmin: boolean; isCommissaire: boolean }
 
     expect(vm.isAdmin).toBe(true)
-    expect(vm.isCommissaire).toBe(false)
+    expect(vm.isReferee).toBe(false)
   })
 })

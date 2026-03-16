@@ -20,7 +20,7 @@ describe('CommissionerShellView', () => {
     const vm = wrapper.vm as unknown as { menuItems: Array<{ to?: string }> }
 
     expect(vm.menuItems).toHaveLength(2)
-    expect(vm.menuItems[0].to).toBe('/commissaire')
-    expect(vm.menuItems[1].to).toBe('/commissaire/demandes')
+    expect(vm.menuItems[0].to).toBe('/referee')
+    expect(vm.menuItems[1].to).toBe('/referee/demandes')
   })
 })

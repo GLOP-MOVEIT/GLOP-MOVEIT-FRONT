@@ -255,7 +255,7 @@ const isLoading = ref(false)
 const championships = ref<Championship[]>([])
 const competitions = ref<Competition[]>([])
 const competitionTypes = ref<string[]>([])
-// TODO: filtrer uniquement les commissaires quand il y en aura dans la base
+// TODO: filtrer uniquement les referees quand il y en aura dans la base
 const commissaireUsers = ref<User[]>([])
 
 const mapChampionship = (championship: Championship): Championship => ({
@@ -432,11 +432,11 @@ onMounted(async () => {
     championships.value = champsData.map(mapChampionship)
     competitions.value = compsData.map(mapCompetition)
     competitionTypes.value = typesData
-    // TODO: filtrer uniquement les COMMISSIONER quand il y en aura dans la base
-    // Pour l'instant on affiche ADMIN et COMMISSIONER
+    // TODO: filtrer uniquement les REFEREE quand il y en aura dans la base
+    // Pour l'instant on affiche ADMIN et REFEREE
     commissaireUsers.value = usersData.filter((u) => {
       const roleName = u.role?.name ?? ''
-      return roleName === UserRole.COMMISSIONER || roleName === UserRole.ADMIN
+      return roleName === UserRole.REFEREE || roleName === UserRole.ADMIN
     })
   } catch (error) {
     console.error('Error loading data:', error)

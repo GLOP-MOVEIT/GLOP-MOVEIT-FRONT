@@ -44,8 +44,8 @@
           {{ t('home.dashboard') }}
         </v-btn>
         <v-btn
-          v-else-if="isCommissaire"
-          to="/commissaire"
+          v-else-if="isReferee"
+          to="/referee"
           color="primary"
           size="large"
           variant="outlined"
@@ -193,7 +193,7 @@ import { formatDateRange } from '@/utils/date'
 const userStore = useUserStore()
 const { t } = useI18n()
 const isAdmin = computed(() => userStore.hasRole(UserRole.ADMIN))
-const isCommissaire = computed(() => userStore.hasRole(UserRole.COMMISSIONER))
+const isReferee = computed(() => userStore.hasRole(UserRole.REFEREE))
 
 const championships = ref<Championship[]>([])
 const isLoading = ref(false)

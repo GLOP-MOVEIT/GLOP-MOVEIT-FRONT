@@ -67,25 +67,25 @@ test('login as spectator shows no dashboard', async ({ page }) => {
   await page.waitForSelector('.v-list')
 
   await expect(page.locator('a[href="/admin"]')).toHaveCount(0)
-  await expect(page.locator('a[href="/commissaire"]')).toHaveCount(0)
+  await expect(page.locator('a[href="/referee"]')).toHaveCount(0)
   await expect(page.evaluate(() => localStorage.getItem('authToken'))).resolves.toBe('token-123')
 
   await page.goto('/admin')
   await expect(page).toHaveURL('/')
 
-  await page.goto('/commissaire')
+  await page.goto('/referee')
   await expect(page).toHaveURL('/')
 })
 
 test('login as commissioner shows commissioner dashboard link', async ({ page }) => {
-  await mockLogin(page, 'COMMISSIONER')
+  await mockLogin(page, 'REFEREE')
 
   await login(page)
 
   await page.locator('button:has(.mdi-account-circle)').click()
   await page.waitForSelector('.v-list')
 
-  await expect(page.locator('a[href="/commissaire"]')).toHaveCount(1)
+  await expect(page.locator('a[href="/referee"]')).toHaveCount(1)
 
   await page.goto('/admin')
   await expect(page).toHaveURL('/')
@@ -101,7 +101,7 @@ test('login as admin shows admin dashboard link', async ({ page }) => {
 
   await expect(page.locator('a[href="/admin"]')).toHaveCount(1)
 
-  await page.goto('/commissaire')
+  await page.goto('/referee')
   await expect(page).toHaveURL('/')
 })
 

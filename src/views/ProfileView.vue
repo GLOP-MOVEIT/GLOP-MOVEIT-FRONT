@@ -69,8 +69,19 @@
             <p class="text-body-2 text-grey-darken-1 mb-4">
               {{ t('profile.roleRequestInfo') }}
             </p>
-            <div class="d-flex flex-wrap">
+            <div v-if="activeRequestRole" class="d-flex flex-wrap">
               <v-btn
+                color="primary"
+                variant="outlined"
+                class="mb-2"
+                :to="activeRequestLink"
+              >
+                {{ t('profile.trackRoleRequest', { role: formatRoleLabel(activeRequestRole) }) }}
+              </v-btn>
+            </div>
+            <div v-else class="d-flex flex-wrap">
+              <v-btn
+                v-if="canRequestSportif"
                 color="primary"
                 variant="outlined"
                 class="mr-3 mb-2"
@@ -79,6 +90,7 @@
                 {{ t('profile.requestSportif') }}
               </v-btn>
               <v-btn
+                v-if="canRequestVolontaire"
                 color="primary"
                 variant="outlined"
                 class="mb-2"
@@ -87,6 +99,14 @@
                 {{ t('profile.requestVolontaire') }}
               </v-btn>
             </div>
+            <v-alert
+              v-if="!activeRequestRole && !canRequestSportif && !canRequestVolontaire"
+              type="info"
+              variant="tonal"
+              class="mt-4"
+            >
+              {{ t('profile.noAvailableRoleRequests') }}
+            </v-alert>
           </template>
 
           <v-alert
@@ -114,6 +134,7 @@ import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { UserRole } from '@/types/user'
+import { getRoleRequestState, getSubmittedRoleRequest } from '@/services/roleRequestState'
 
 const userStore = useUserStore()
 const { t } = useI18n()
@@ -136,7 +157,7 @@ const primaryRole = computed(() => {
 const normalizeRoleKey = (role: string) => {
   const normalized = role.replace(/^ROLE_/, '').trim().toUpperCase()
   if (normalized === 'VOLONTAIRE') return 'VOLUNTEER'
-  if (normalized === 'COMMISSAIRE') return 'COMMISSIONER'
+  if (normalized === 'COMMISSAIRE' || normalized === 'COMMISSIONER') return 'REFEREE'
   return normalized
 }
 
@@ -154,7 +175,46 @@ const formatRoleLabel = (role?: string) => {
 }
 
 const showRoleRequests = computed(() => {
-  return !userStore.hasRole(UserRole.ADMIN) && !userStore.hasRole(UserRole.COMMISSIONER)
+  return !userStore.hasRole(UserRole.ADMIN) && !userStore.hasRole(UserRole.REFEREE)
+})
+
+const currentUserId = computed(() => user.value?.userId ?? null)
+const submittedRoleRequest = computed(() => {
+  if (!currentUserId.value) {
+    return null
+  }
+
+  return getSubmittedRoleRequest(currentUserId.value)
+})
+const activeRequestRole = computed(() => submittedRoleRequest.value?.role ?? null)
+const activeRequestLink = computed(() =>
+  activeRequestRole.value ? `/demande-role/${activeRequestRole.value.toLowerCase()}` : '/profil'
+)
+
+const normalizedRoleNames = computed(() =>
+  roles.value.map((role) => normalizeRoleKey(role))
+)
+
+const hasSubmittedRequest = (role: 'SPORTIF' | 'VOLONTAIRE') => {
+  if (!currentUserId.value) {
+    return false
+  }
+
+  return !!getRoleRequestState(currentUserId.value, role)
+}
+
+const canRequestSportif = computed(() => {
+  return !activeRequestRole.value &&
+    !normalizedRoleNames.value.includes('ATHLETE') &&
+    !normalizedRoleNames.value.includes('SPORTIF') &&
+    !hasSubmittedRequest('SPORTIF')
+})
+
+const canRequestVolontaire = computed(() => {
+  return !activeRequestRole.value &&
+    !normalizedRoleNames.value.includes('VOLUNTEER') &&
+    !normalizedRoleNames.value.includes('VOLONTAIRE') &&
+    !hasSubmittedRequest('VOLONTAIRE')
 })
 
 
