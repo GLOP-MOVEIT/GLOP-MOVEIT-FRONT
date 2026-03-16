@@ -1,7 +1,5 @@
 import axios from 'axios'
-import { findMockUserById, mockAthletes } from '@/data/mockUsers'
 import {
-  type AthleteCandidate,
   type LoginRequest,
   type RegisterRequest,
   type AuthResponse,
@@ -118,10 +116,6 @@ export const userService = {
    * Récupérer le profil utilisateur par ID depuis le user-service
    */
   async getUserProfile(userId: number): Promise<UserProfile> {
-    const mockUser = findMockUserById(userId)
-    if (mockUser) {
-      return mockUser
-    }
 
     try {
       const token = this.getToken()
@@ -203,20 +197,12 @@ export const userService = {
 
   /**
    * Récupérer les utilisateurs par rôle
+   * Fait un GET /users et filtre par rôle côté front
+   * TODO: utiliser un filtre serveur quand l'API le supportera
    */
-  async getUsersByRole(role: UserRole | string): Promise<AthleteCandidate[]> {
+  async getUsersByRole(role: UserRole | string): Promise<User[]> {
     const users = await this.getUsers()
-    const filteredUsers = users.filter((user) => matchesUserRole(user.role?.name, role))
-
-    if (filteredUsers.length > 0) {
-      return filteredUsers
-    }
-
-    if (matchesUserRole(String(role), UserRole.ATHLETE)) {
-      return [...mockAthletes]
-    }
-
-    return []
+    return users.filter((user) => matchesUserRole(user.role?.name, role))
   },
 
   /**

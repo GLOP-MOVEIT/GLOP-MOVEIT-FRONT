@@ -16,7 +16,7 @@ export const useUserStore = defineStore('user', () => {
   const userRole = computed(() => user.value?.role?.name || null)
   const isAdmin = computed(() => hasRole(UserRole.ADMIN))
   const isSpectator = computed(() => hasRole(UserRole.SPECTATOR))
-  const isCommissioner = computed(() => hasRole(UserRole.COMMISSIONER))
+  const isReferee = computed(() => hasRole(UserRole.REFEREE))
   const roles = computed(() => {
     const list = new Set<string>()
 
@@ -116,7 +116,7 @@ export const useUserStore = defineStore('user', () => {
     userRole,
     isAdmin,
     isSpectator,
-    isCommissioner,
+    isReferee,
     roles,
     hasRole,
     // Actions

@@ -162,7 +162,7 @@ const handleRequiredRole = (
 ): { name: string } | null => {
   const requiredRole = to.meta.requiresRole as UserRole
 
-  if (requiredRole === UserRole.COMMISSIONER && userStore.hasRole(UserRole.ADMIN)) {
+  if (requiredRole === UserRole.REFEREE && userStore.hasRole(UserRole.ADMIN)) {
     return null
   }
 

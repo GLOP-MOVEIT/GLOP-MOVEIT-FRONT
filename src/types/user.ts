@@ -26,15 +26,12 @@ export interface User {
   acceptsLocationSharing: boolean
 }
 
-export interface AthleteCandidate extends User {
-  isMock?: boolean
-}
-
 export const normalizeUserRoleName = (role?: string): string => {
   const normalized = role?.replace(/^ROLE_/, '').trim().toUpperCase() ?? ''
 
   if (normalized === 'VOLONTAIRE') return UserRole.VOLUNTEER
-  if (normalized === 'COMMISSAIRE') return UserRole.COMMISSIONER
+  if (normalized === 'COMMISSAIRE') return UserRole.REFEREE
+  if (normalized === 'COMMISSIONER') return UserRole.REFEREE
 
   return normalized
 }

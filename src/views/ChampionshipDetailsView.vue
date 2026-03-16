@@ -118,7 +118,7 @@
                 </span>
               </div>
 
-              <div v-if="canManageCompetition" class="d-flex justify-end mt-3">
+              <div v-if="canManageCompetition(competition)" class="d-flex justify-end mt-3">
                 <v-btn
                   color="primary"
                   variant="outlined"
@@ -164,9 +164,14 @@ const selectedSport = ref<string | null>(null)
 const commissaireNames = ref<Record<number, string>>({})
 
 const championshipId = computed(() => Number(route.params.id))
-const canManageCompetition = computed(() =>
-  userStore.hasRole(UserRole.COMMISSIONER) || userStore.hasRole(UserRole.ADMIN),
-)
+const currentUserId = computed(() => userStore.user?.userId ?? null)
+
+const canManageCompetition = (competition: Competition) => {
+  if (!userStore.hasRole(UserRole.REFEREE) || currentUserId.value == null) {
+    return false
+  }
+  return competition.assignedCommissaireId === currentUserId.value
+}
 
 const statusColor = (status: Status) => {
   if (status === Status.PLANNED) return 'grey'
@@ -183,10 +188,22 @@ const sportFilterOptions = computed(() => {
   return sports.map((sport) => ({ title: sport, value: sport }))
 })
 
-// Compétitions filtrées par sport
+// Compétitions filtrées par sport + priorisation des compétitions assignées au referee connecté
 const filteredCompetitions = computed(() => {
-  if (!selectedSport.value) return competitions.value
-  return competitions.value.filter((c) => c.competitionSport === selectedSport.value)
+  const base = selectedSport.value
+    ? competitions.value.filter((c) => c.competitionSport === selectedSport.value)
+    : competitions.value
+
+  const userId = currentUserId.value
+  if (userId == null) {
+    return base
+  }
+
+  return [...base].sort((a, b) => {
+    const aAssignedToCurrent = a.assignedCommissaireId === userId ? 1 : 0
+    const bAssignedToCurrent = b.assignedCommissaireId === userId ? 1 : 0
+    return bAssignedToCurrent - aAssignedToCurrent
+  })
 })
 
 const getCommissaireLabel = (id: number | null | undefined) => {

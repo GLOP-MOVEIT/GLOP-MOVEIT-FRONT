@@ -149,7 +149,7 @@
               {{ t('commissionerCompetition.selectionCount', { count: selectedAthleteIds.length }) }}
             </div>
             <div class="text-body-2 text-grey-darken-1">
-              {{ usesMockAthletes ? t('commissionerCompetition.mockAthletesNotice') : t('commissionerCompetition.realAthletesNotice') }}
+              {{ t('commissionerCompetition.realAthletesNotice') }}
             </div>
           </v-card>
         </v-col>
@@ -193,9 +193,6 @@
 
                 <template #subtitle>
                   <span>{{ athlete.email }}</span>
-                  <v-chip v-if="athlete.isMock" size="x-small" color="secondary" variant="tonal" class="ml-2">
-                    {{ t('commissionerCompetition.mockBadge') }}
-                  </v-chip>
                 </template>
               </v-list-item>
             </v-list>
@@ -217,15 +214,16 @@ import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import type { CompetitionTreeResult, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
-import type { AthleteCandidate } from '@/types/user'
+import type { User } from '@/types/user'
 import { getUserDisplayName, UserRole } from '@/types/user'
 import { formatDateRange } from '@/utils/date'
+import { isAxiosError } from 'axios'
 
 const route = useRoute()
 const { t } = useI18n()
 
 const competition = ref<CompetitionTreeResult | null>(null)
-const athletes = ref<AthleteCandidate[]>([])
+const athletes = ref<User[]>([])
 const trials = ref<Trial[]>([])
 const selectedAthleteIds = ref<number[]>([])
 const athleteSearch = ref('')
@@ -250,7 +248,6 @@ const filteredAthletes = computed(() => {
   })
 })
 const selectedAthletes = computed(() => athletes.value.filter((athlete) => selectedAthleteIds.value.includes(athlete.userId)))
-const usesMockAthletes = computed(() => selectedAthletes.value.some((athlete) => athlete.isMock || athlete.userId < 0))
 
 const statusColor = (status: Status) => {
   if (status === Status.PLANNED) return 'grey'
@@ -260,6 +257,26 @@ const statusColor = (status: Status) => {
   return 'primary'
 }
 
+const extractApiErrorMessage = (err: unknown, fallback: string) => {
+  if (!isAxiosError(err)) {
+    return fallback
+  }
+
+  const data = err.response?.data as unknown
+
+  if (typeof data === 'string' && data.trim().length > 0) {
+    return data
+  }
+
+  if (data && typeof data === 'object' && 'message' in data) {
+    const message = (data as { message?: unknown }).message
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return message
+    }
+  }
+
+  return fallback
+}
 
 const toggleAthleteSelection = (athleteId: number) => {
   if (selectedAthleteIds.value.includes(athleteId)) {
@@ -310,18 +327,16 @@ const generateTree = async () => {
   errorMessage.value = ''
   infoMessage.value = ''
 
-  if (usesMockAthletes.value) {
-    infoMessage.value = t('commissionerCompetition.mockAthletesNotice')
-  }
-
   try {
     competition.value = await championshipService.generateCompetitionTree(
       competition.value.competitionId,
       selectedAthleteIds.value,
     )
     await loadTrials()
-  } catch {
-    errorMessage.value = t('commissionerCompetition.generateError')
+  } catch (err) {
+    const fallback = t('commissionerCompetition.generateError')
+    const apiMessage = extractApiErrorMessage(err, fallback)
+    errorMessage.value = apiMessage
   } finally {
     isGeneratingTree.value = false
   }
@@ -341,4 +356,3 @@ onMounted(async () => {
   }
 })
 </script>
-

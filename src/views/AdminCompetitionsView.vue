@@ -69,7 +69,7 @@
                   required
                 />
               </v-col>
-              <v-col cols="12" md="6">
+              <v-col v-if="competitionForm.type === 'HEATS'" cols="12" md="6">
                 <v-text-field
                   v-model.number="competitionForm.maxPerHeat"
                   type="number"
@@ -81,7 +81,7 @@
                   min="1"
                 />
               </v-col>
-              <v-col cols="12" md="6">
+              <v-col v-if="competitionForm.type !== 'ROUND_ROBIN'" cols="12" md="6">
                 <v-text-field
                   v-model.number="competitionForm.nbManches"
                   type="number"
@@ -432,11 +432,9 @@ onMounted(async () => {
     championships.value = champsData.map(mapChampionship)
     competitions.value = compsData.map(mapCompetition)
     competitionTypes.value = typesData
-    // TODO: filtrer uniquement les REFEREE quand il y en aura dans la base
-    // Pour l'instant on affiche ADMIN et REFEREE
     commissaireUsers.value = usersData.filter((u) => {
       const roleName = u.role?.name ?? ''
-      return roleName === UserRole.REFEREE || roleName === UserRole.ADMIN
+      return roleName === UserRole.REFEREE
     })
   } catch (error) {
     console.error('Error loading data:', error)
@@ -452,13 +450,13 @@ const resetCompetitionForm = () => {
   competitionForm.sport = ''
   competitionForm.participantType = ParticipantType.INDIVIDUAL
   competitionForm.type = ''
-  competitionForm.maxPerHeat = 1
+  competitionForm.maxPerHeat = 0
   competitionForm.name = ''
   competitionForm.description = ''
   competitionForm.startDate = ''
   competitionForm.endDate = ''
   competitionForm.status = Status.PLANNED
-  competitionForm.nbManches = 1
+  competitionForm.nbManches = 0
   competitionForm.assignedCommissaireId = null
   editingCompetitionId.value = null
   nextTick(() => competitionFormRef.value?.resetValidation())
@@ -510,12 +508,10 @@ const handleCompetitionSubmit = async () => {
         nbManches: competitionForm.nbManches,
         assignedCommissaireId: competitionForm.assignedCommissaireId,
       }
-      // Ne pas inclure competitionId pour la création, Hibernate le génère
       await championshipService.createCompetition(payload)
       snackbarMessage.value = t('admin.competitionSuccess')
     }
 
-    // Reload competitions
     console.log('Reloading competitions')
     const data = await championshipService.getAllCompetitions()
     competitions.value = data.map(mapCompetition)
