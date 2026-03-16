@@ -1,12 +1,17 @@
 import axios from 'axios'
-import type { Championship, Competition, Event } from '@/types/competition'
+import type { Championship, Competition, CompetitionPayload, CompetitionTreeResult, Event, Trial } from '@/types/competition'
 import { formatDateForBackend } from '@/utils/date'
 
-// Si VITE_API_BASE_URL est défini (même vide), l'utilise. Sinon utilise localhost pour le dev
-const API_URL = import.meta.env.VITE_API_BASE_URL === undefined
-  ? 'http://localhost:8080'
-  : import.meta.env.VITE_API_BASE_URL
+const configuredApiUrl = import.meta.env.VITE_API_BASE_URL
+const API_URL = configuredApiUrl === undefined ? 'http://localhost:8080' : configuredApiUrl
 
+const ensureArray = <T>(value: T | T[] | undefined): T[] => {
+  if (Array.isArray(value)) {
+    return value
+  }
+
+  return value ? [value] : []
+}
 
 /**
  * Service pour gérer les championnats, compétitions et épreuves
@@ -158,7 +163,7 @@ export const championshipService = {
   /**
    * Créer une nouvelle compétition
    */
-  async createCompetition(competition: Omit<Competition, 'competitionId' | 'events' | 'trials'>): Promise<Competition> {
+  async createCompetition(competition: CompetitionPayload): Promise<Competition> {
     try {
       const formattedCompetition = {
         ...competition,
@@ -231,6 +236,45 @@ export const championshipService = {
       return response.data
     } catch (error) {
       console.error('Get competition types error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Générer l'arbre de la compétition
+   */
+  async generateCompetitionTree(competitionId: number, participantIds: number[]): Promise<CompetitionTreeResult> {
+    try {
+      const response = await axios.post<CompetitionTreeResult>(
+        `${API_URL}/championships/competitions/${competitionId}/generate-tree`,
+        participantIds,
+        {
+          headers: {
+            ...this.getAuthHeaders(),
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+
+      return response.data
+    } catch (error) {
+      console.error(`Generate competition tree ${competitionId} error:`, error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer toutes les manches d'une compétition
+   */
+  async getTrialsByCompetition(competitionId: number): Promise<Trial[]> {
+    try {
+      const response = await axios.get<Trial | Trial[]>(
+        `${API_URL}/trials/competition/${competitionId}`,
+        { headers: this.getAuthHeaders() },
+      )
+      return Array.isArray(response.data) ? response.data : [response.data]
+    } catch (error) {
+      console.error(`Get trials for competition ${competitionId} error:`, error)
       throw error
     }
   },

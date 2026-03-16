@@ -3,6 +3,7 @@ export enum UserRole {
   ADMIN = 'ADMIN',
   SPECTATOR = 'SPECTATOR',
   SPORTIF = 'SPORTIF',
+  ATHLETE = 'ATHLETE',
   VOLUNTEER = 'VOLUNTEER',
   REFEREE = 'REFEREE',
 }
@@ -23,6 +24,35 @@ export interface User {
   role: Role
   acceptsNotifications: boolean
   acceptsLocationSharing: boolean
+}
+
+export interface AthleteCandidate extends User {
+  isMock?: boolean
+}
+
+export const normalizeUserRoleName = (role?: string): string => {
+  const normalized = role?.replace(/^ROLE_/, '').trim().toUpperCase() ?? ''
+
+  if (normalized === 'VOLONTAIRE') return UserRole.VOLUNTEER
+  if (normalized === 'COMMISSAIRE') return UserRole.COMMISSIONER
+
+  return normalized
+}
+
+export const matchesUserRole = (roleName: string | undefined, expectedRole: UserRole | string): boolean => {
+  const normalizedRoleName = normalizeUserRoleName(roleName)
+  const normalizedExpectedRole = normalizeUserRoleName(expectedRole)
+
+  if (normalizedRoleName === normalizedExpectedRole) {
+    return true
+  }
+
+  const athleteAliases = new Set([UserRole.ATHLETE, UserRole.SPORTIF])
+  return athleteAliases.has(normalizedRoleName as UserRole) && athleteAliases.has(normalizedExpectedRole as UserRole)
+}
+
+export const getUserDisplayName = (user: Pick<User, 'firstName' | 'surname' | 'email'>): string => {
+  return `${user.firstName} ${user.surname}`.trim() || user.email
 }
 
 // Alias pour la réponse du user-service

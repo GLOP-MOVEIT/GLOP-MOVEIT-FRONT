@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { isAxiosError } from 'axios'
 import userService from '@/services/userService'
 import type { User, LoginRequest, RegisterRequest } from '@/types/user'
-import { UserRole } from '@/types/user'
+import { UserRole, matchesUserRole, normalizeUserRoleName } from '@/types/user'
 
 export const useUserStore = defineStore('user', () => {
   // État - Initialiser depuis le localStorage
@@ -14,15 +14,15 @@ export const useUserStore = defineStore('user', () => {
   // Getters
   const isAuthenticated = computed(() => !!user.value && userService.isAuthenticated())
   const userRole = computed(() => user.value?.role?.name || null)
-  const isAdmin = computed(() => user.value?.role?.name === UserRole.ADMIN)
-  const isSpectator = computed(() => user.value?.role?.name === UserRole.SPECTATOR)
+  const isAdmin = computed(() => hasRole(UserRole.ADMIN))
+  const isSpectator = computed(() => hasRole(UserRole.SPECTATOR))
+  const isCommissioner = computed(() => hasRole(UserRole.COMMISSIONER))
   const roles = computed(() => {
     const list = new Set<string>()
 
     if (user.value?.role?.name) {
-      list.add(user.value.role.name)
+      list.add(normalizeUserRoleName(user.value.role.name))
     }
-
 
     if (list.size === 0) {
       list.add(UserRole.SPECTATOR)
@@ -31,7 +31,7 @@ export const useUserStore = defineStore('user', () => {
     return Array.from(list)
   })
 
-  const hasRole = (role: UserRole) => roles.value.includes(role)
+  const hasRole = (role: UserRole) => roles.value.some((currentRole) => matchesUserRole(currentRole, role))
 
   const getErrorMessage = (err: unknown, fallback: string) => {
     if (isAxiosError<{ message?: string }>(err)) {
@@ -116,6 +116,7 @@ export const useUserStore = defineStore('user', () => {
     userRole,
     isAdmin,
     isSpectator,
+    isCommissioner,
     roles,
     hasRole,
     // Actions

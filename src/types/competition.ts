@@ -53,28 +53,50 @@ export interface Competition {
   maxPerHeat: number
   nbManches: number
   assignedCommissaireId?: number | null
-  events?: Event[]
+  events?: CompetitionTreeEvent[]
   trials?: Trial[]
 }
 
-export interface Event {
-  id: number
-  competitionId?: number
-  competition?: Competition
+export type CompetitionPayload = Omit<Competition, 'competitionId' | 'events' | 'trials'>
+
+export interface CompetitionFormValues {
+  championshipId: number | null
+  sport: string
+  participantType: ParticipantType
+  type: string
+  maxPerHeat: number
   name: string
   description: string
-  startDate: string | Date
-  endDate: string | Date
+  startDate: string
+  endDate: string
   status: Status
+  nbManches: number
+  assignedCommissaireId: number | null
+}
+
+export interface CompetitionTreeEvent {
+  eventId: string
+  eventName: string
+  eventDate: string
+  eventDescription: string
 }
 
 export interface Trial {
-  id: number
-  competition?: Competition
-  name: string
-  description: string
-  startDate: string | Date
-  endDate: string | Date
-  status: Status
+  trialId: number
+  trialName: string
+  trialStartDate: string
+  trialEndDate: string
+  trialDescription: string
+  trialStatus: Status
+  locationId: number | null
+  roundNumber: number
+  position: number
+  nextTrialId: number | null
+  competitionId: number
+  participantIds: number[]
 }
 
+export interface CompetitionTreeResult extends Competition {
+  events?: CompetitionTreeEvent[]
+  trials?: Trial[]
+}

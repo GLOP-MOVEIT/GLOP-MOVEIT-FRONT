@@ -117,6 +117,18 @@
                   {{ getCommissaireLabel(competition.assignedCommissaireId) }}
                 </span>
               </div>
+
+              <div v-if="canManageCompetition" class="d-flex justify-end mt-3">
+                <v-btn
+                  color="primary"
+                  variant="outlined"
+                  size="small"
+                  :to="{ name: 'commissioner-competition-management', params: { id: competition.competitionId } }"
+                >
+                  <v-icon size="18" class="mr-1">mdi-cog</v-icon>
+                  {{ t('championshipDetails.manageTrials') }}
+                </v-btn>
+              </div>
             </v-card>
           </v-col>
         </v-row>
@@ -131,12 +143,15 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
+import { useUserStore } from '@/stores/user'
 import type { Championship, Competition } from '@/types/competition'
 import { Status } from '@/types/competition'
+import { getUserDisplayName, UserRole } from '@/types/user'
 import { formatDateRange } from '@/utils/date'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 const { t } = useI18n()
 
 const championship = ref<Championship | null>(null)
@@ -149,6 +164,9 @@ const selectedSport = ref<string | null>(null)
 const commissaireNames = ref<Record<number, string>>({})
 
 const championshipId = computed(() => Number(route.params.id))
+const canManageCompetition = computed(() =>
+  userStore.hasRole(UserRole.COMMISSIONER) || userStore.hasRole(UserRole.ADMIN),
+)
 
 const statusColor = (status: Status) => {
   if (status === Status.PLANNED) return 'grey'
@@ -193,9 +211,7 @@ const loadCommissaireNames = async () => {
     if (result.status === 'fulfilled') {
       const commissaireId = ids[index]
       if (commissaireId !== undefined) {
-        const profile = result.value
-        const fullName = `${profile.firstName ?? ''} ${profile.surname ?? ''}`.trim() || profile.email
-        commissaireNames.value[commissaireId] = fullName
+        commissaireNames.value[commissaireId] = getUserDisplayName(result.value)
       }
     }
   })

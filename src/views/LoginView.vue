@@ -5,16 +5,16 @@
         <div class="d-flex justify-end mb-4">
           <LanguageSwitcher button-color="white" />
         </div>
-        <v-card 
-          elevation="8" 
+        <v-card
+          elevation="8"
           rounded="lg"
           class="mx-auto"
         >
           <!-- En-tête de la carte -->
           <v-card-item class="text-center pa-6 bg-primary">
-            <v-icon 
-              icon="mdi-medal" 
-              size="x-large" 
+            <v-icon
+              icon="mdi-medal"
+              size="x-large"
               color="white"
               class="mb-3"
             ></v-icon>
@@ -30,8 +30,8 @@
           <v-card-text class="pa-6">
             <!-- FORMULAIRE DE CONNEXION -->
             <template v-if="!showRegisterForm">
-              <v-form 
-                ref="form" 
+              <v-form
+                ref="form"
                 v-model="valid"
                 @submit.prevent="handleLogin"
               >
@@ -117,9 +117,9 @@
             </template>
 
             <!-- FORMULAIRE D'INSCRIPTION -->
-            <v-form 
+            <v-form
               v-else
-              ref="registerForm" 
+              ref="registerForm"
               v-model="validRegister"
               @submit.prevent="handleRegister"
             >
@@ -250,7 +250,7 @@
                 <template v-slot:label>
                   <div class="text-caption">
                     {{ t('login.acceptTermsText') }}
-                    
+
                     <a href="#" @click.stop>{{ t('login.termsLink') }}</a>
                   </div>
                 </template>
@@ -384,9 +384,9 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 // Gestion de la connexion
 const handleLogin = async () => {
   errorMessage.value = ''
-  
+
   const { valid } = await form.value.validate()
-  
+
   if (!valid) return
 
   loading.value = true
@@ -398,7 +398,7 @@ const handleLogin = async () => {
     }
 
     await userStore.login(credentials)
-    
+
     // Redirection après connexion réussie
     router.push('/')
   } catch (error: unknown) {
@@ -437,9 +437,9 @@ const toggleForm = () => {
 // Gestion de l'inscription
 const handleRegister = async () => {
   errorMessage.value = ''
-  
+
   const { valid } = await registerForm.value.validate()
-  
+
   if (!valid) return
 
   loading.value = true
@@ -460,7 +460,7 @@ const handleRegister = async () => {
     }
 
     await userStore.register(userData)
-    
+
     // Après inscription réussie, basculer vers le formulaire de connexion
     alert(t('login.registerSuccess'))
     showRegisterForm.value = false

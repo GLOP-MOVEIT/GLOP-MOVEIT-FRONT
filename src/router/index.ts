@@ -109,6 +109,11 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/CommissionerOverviewView.vue'),
           },
           {
+            path: 'competitions/:id/gestion',
+            name: 'commissioner-competition-management',
+            component: () => import('@/views/CommissionerCompetitionManagementView.vue'),
+          },
+          {
             path: 'demandes',
             name: 'commissioner-requests',
             component: () => import('@/views/CommissionerRequestsView.vue'),
@@ -156,6 +161,11 @@ const handleRequiredRole = (
   userStore: ReturnType<typeof useUserStore>,
 ): { name: string } | null => {
   const requiredRole = to.meta.requiresRole as UserRole
+
+  if (requiredRole === UserRole.COMMISSIONER && userStore.hasRole(UserRole.ADMIN)) {
+    return null
+  }
+
   return userStore.hasRole(requiredRole) ? null : { name: 'home' }
 }
 
