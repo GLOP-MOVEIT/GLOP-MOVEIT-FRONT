@@ -4,7 +4,7 @@ import ProfileView from '@/views/ProfileView.vue'
 
 const userStoreMock = {
   user: {
-    id: 1,
+    userId: 1,
     firstName: 'John',
     surname: 'Doe',
     role: { name: 'SPECTATOR' },

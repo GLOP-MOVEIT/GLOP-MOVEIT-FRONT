@@ -7,39 +7,36 @@ export enum UserRole {
   COMMISSIONER = 'COMMISSIONER',
 }
 
-// Interface pour l'objet role complet du backend
+// Interface pour l'objet Role (API user-service)
 export interface Role {
-  id: number
-  name: UserRole
-  description?: string
-  createdAt?: string
-  updatedAt?: string
+  name: string
 }
 
-export interface Authority {
-  authority: string
-}
-
-// Types pour l'utilisateur 
+// Interface User complète (API user-service /users/{id})
 export interface User {
-  id: number
-  email: string
+  userId: number
   firstName: string
   surname: string
-  phoneNumber?: string
-  language?: string
-  role?: Role
-  createdAt?: string
-  updatedAt?: string
-  acceptsNotifications?: boolean
-  acceptsLocationSharing?: boolean
-  acceptsLocation?: boolean
-  authorities?: Authority[]
-  username?: string
-  nickname?: string
+  email: string
+  phoneNumber: string
+  language: string
+  role: Role
+  acceptsNotifications: boolean
+  acceptsLocationSharing: boolean
 }
 
-// Types pour les requêtes d'authentification (correspond aux DTOs du backend)
+// Alias pour la réponse du user-service
+export type UserProfile = User
+
+// Interface pour le user retourné par /auth/login (structure différente)
+export interface AuthUser {
+  id: number
+  userId: number
+  nickname: string
+  lastConnectionDate: string
+}
+
+// Types pour les requêtes d'authentification
 export interface LoginRequest {
   nickname: string
   password: string
@@ -59,11 +56,11 @@ export interface RegisterRequest {
   acceptTerms?: boolean
 }
 
-// Types pour les réponses d'authentification (correspond à LoginResponse du backend)
+// Réponse de /auth/login
 export interface AuthResponse {
-  user: User
   token: string
   expiresIn: number
+  user: AuthUser
 }
 
 export interface ApiError {
@@ -71,3 +68,35 @@ export interface ApiError {
   code?: string
   status?: number
 }
+
+export interface Pageable {
+  offset: number
+  pageNumber: number
+  pageSize: number
+  paged: boolean
+  sort: {
+    empty: boolean
+    sorted: boolean
+    unsorted: boolean
+  }
+  unpaged: boolean
+}
+
+export interface PagedResponse<T> {
+  content: T[]
+  empty: boolean
+  first: boolean
+  last: boolean
+  number: number
+  numberOfElements: number
+  pageable: Pageable
+  size: number
+  sort: {
+    empty: boolean
+    sorted: boolean
+    unsorted: boolean
+  }
+  totalElements: number
+  totalPages: number
+}
+

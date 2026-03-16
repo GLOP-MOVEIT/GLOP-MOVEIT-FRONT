@@ -37,16 +37,12 @@
             <v-col cols="12" md="6">
               <div class="text-overline mb-2">{{ t('profile.accountSection') }}</div>
               <div class="text-body-2 text-grey-darken-1">
-                <strong>{{ t('profile.joinedLabel') }}</strong>
-                {{ formatDate(user?.createdAt) }}
-              </div>
-              <div class="text-body-2 text-grey-darken-1">
                 <strong>{{ t('profile.notificationsLabel') }}</strong>
                 {{ user?.acceptsNotifications ? t('profile.yes') : t('profile.no') }}
               </div>
               <div class="text-body-2 text-grey-darken-1">
                 <strong>{{ t('profile.locationLabel') }}</strong>
-                {{ (user?.acceptsLocationSharing ?? user?.acceptsLocation) ? t('profile.yes') : t('profile.no') }}
+                {{ user?.acceptsLocationSharing ? t('profile.yes') : t('profile.no') }}
               </div>
             </v-col>
           </v-row>
@@ -120,7 +116,7 @@ import { useUserStore } from '@/stores/user'
 import { UserRole } from '@/types/user'
 
 const userStore = useUserStore()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 
 const user = computed(() => userStore.user)
 const isLoading = computed(() => userStore.isLoading)
@@ -161,16 +157,6 @@ const showRoleRequests = computed(() => {
   return !userStore.hasRole(UserRole.ADMIN) && !userStore.hasRole(UserRole.COMMISSIONER)
 })
 
-const formatDate = (value?: string) => {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  return new Intl.DateTimeFormat(locale.value, {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
 
 onMounted(() => {
   userStore.fetchCurrentUser()

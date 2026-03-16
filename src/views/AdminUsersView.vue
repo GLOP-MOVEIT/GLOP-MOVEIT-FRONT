@@ -43,7 +43,7 @@
             {{ t('admin.noUsers') }}
           </td>
         </tr>
-        <tr v-for="user in filteredUsers" :key="user.id">
+        <tr v-for="user in filteredUsers" :key="user.userId">
           <td>{{ formatName(user) }}</td>
           <td>{{ user.email }}</td>
           <td>{{ formatRoleLabel(user) }}</td>
@@ -91,7 +91,7 @@ const normalizeRoleKey = (role: string) => {
 }
 
 const formatRoleValue = (user: User) => {
-  const raw = user.role?.name || user.authorities?.[0]?.authority || ''
+  const raw = user.role?.name || ''
   return raw ? normalizeRoleKey(raw) : ''
 }
 
@@ -107,13 +107,16 @@ const fetchUsers = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    users.value = await userService.getUsers()
+    const result = await userService.getUsers()
+    users.value = Array.isArray(result) ? result : []
   } catch (error: unknown) {
     if (isAxiosError<{ message?: string }>(error)) {
       errorMessage.value = error.response?.data?.message || t('admin.usersError')
     } else {
       errorMessage.value = t('admin.usersError')
     }
+    // Ensure users is set to empty array on error
+    users.value = []
   } finally {
     isLoading.value = false
   }
@@ -133,7 +136,9 @@ const roleOptions = computed(() => [
 
 const filteredUsers = computed(() => {
   const query = (searchQuery.value || '').trim().toLowerCase()
-  return users.value.filter((user) => {
+  const usersArray = Array.isArray(users.value) ? users.value : []
+
+  return usersArray.filter((user) => {
     const role = formatRoleValue(user)
     const matchesQuery =
       !query ||

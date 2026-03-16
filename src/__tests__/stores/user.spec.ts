@@ -7,7 +7,7 @@ const userServiceMock = {
   login: vi.fn(),
   register: vi.fn(),
   logout: vi.fn(),
-  getProfile: vi.fn(),
+  getCurrentUserProfile: vi.fn(),
 }
 
 const isAxiosErrorMock = vi.fn()
@@ -27,27 +27,30 @@ describe('user store', () => {
   })
 
   it('initializes user from local storage', async () => {
-    userServiceMock.getCurrentUser.mockReturnValue({ id: 1, role: { name: 'SPECTATOR' } })
+    userServiceMock.getCurrentUser.mockReturnValue({ userId: 1, role: { name: 'SPECTATOR' } })
     userServiceMock.isAuthenticated.mockReturnValue(true)
     const { useUserStore } = await import('@/stores/user')
 
     const store = useUserStore()
 
-    expect(store.user?.id).toBe(1)
+    expect(store.user?.userId).toBe(1)
     expect(store.isAuthenticated).toBe(true)
   })
 
   it('logs in and stores user', async () => {
     userServiceMock.login.mockResolvedValue({
-      user: { id: 2, role: { name: 'ADMIN' } },
+      user: { userId: 2, role: { name: 'ADMIN' } },
     })
+    userServiceMock.isAuthenticated.mockReturnValue(true)
+    userServiceMock.getCurrentUserProfile.mockResolvedValue({ userId: 2, role: { name: 'ADMIN' } })
     const { useUserStore } = await import('@/stores/user')
 
     const store = useUserStore()
     const result = await store.login({ email: 'a@b.com', password: 'secret' })
 
-    expect(result.user.id).toBe(2)
-    expect(store.user?.id).toBe(2)
+    expect(result.user.userId).toBe(2)
+    expect(userServiceMock.getCurrentUserProfile).toHaveBeenCalled()
+    expect(store.user?.userId).toBe(2)
     expect(store.isLoading).toBe(false)
     expect(store.error).toBeNull()
   })
@@ -66,7 +69,7 @@ describe('user store', () => {
   })
 
   it('registers a user and returns success', async () => {
-    userServiceMock.register.mockResolvedValue({ id: 3 })
+    userServiceMock.register.mockResolvedValue({ userId: 3 })
     const { useUserStore } = await import('@/stores/user')
 
     const store = useUserStore()
@@ -77,16 +80,16 @@ describe('user store', () => {
       surname: 'B',
       phoneNumber: '123',
       acceptsNotifications: true,
-      acceptsLocation: false,
+      acceptsLocationSharing: false,
     })
 
-    expect(result).toEqual({ success: true, user: { id: 3 } })
+    expect(result).toEqual({ success: true, user: { userId: 3 } })
     expect(store.isLoading).toBe(false)
     expect(store.error).toBeNull()
   })
 
   it('clears user on logout', async () => {
-    userServiceMock.getCurrentUser.mockReturnValue({ id: 1 })
+    userServiceMock.getCurrentUser.mockReturnValue({ userId: 1 })
     const { useUserStore } = await import('@/stores/user')
 
     const store = useUserStore()
@@ -103,13 +106,13 @@ describe('user store', () => {
     const store = useUserStore()
     await store.fetchCurrentUser()
 
-    expect(userServiceMock.getProfile).not.toHaveBeenCalled()
+    expect(userServiceMock.getCurrentUserProfile).not.toHaveBeenCalled()
   })
 
   it('clears user on 401 during profile fetch', async () => {
     const error = { response: { status: 401 } }
     userServiceMock.isAuthenticated.mockReturnValue(true)
-    userServiceMock.getProfile.mockRejectedValue(error)
+    userServiceMock.getCurrentUserProfile.mockRejectedValue(error)
     isAxiosErrorMock.mockReturnValue(true)
     const { useUserStore } = await import('@/stores/user')
 
@@ -122,14 +125,14 @@ describe('user store', () => {
 
   it('derives roles and helpers', async () => {
     userServiceMock.getCurrentUser.mockReturnValue({
+      userId: 1,
       role: { name: 'ADMIN' },
-      authorities: [{ authority: 'ROLE_EDITOR' }],
     })
     const { useUserStore } = await import('@/stores/user')
 
     const store = useUserStore()
 
-    expect(store.roles).toEqual(expect.arrayContaining(['ADMIN', 'EDITOR']))
+    expect(store.roles).toEqual(['ADMIN'])
     expect(store.isAdmin).toBe(true)
     expect(store.isSpectator).toBe(false)
     expect(store.hasRole('ADMIN')).toBe(true)

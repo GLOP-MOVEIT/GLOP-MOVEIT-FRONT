@@ -24,12 +24,25 @@ describe('userService', () => {
 
     it('logs in and stores token and user when token is provided', async () => {
         const credentials = {nickname: 'john', password: 'secret'}
-        const responseData = {
+        const loginResponseData = {
             token: 'token-123',
-            user: {id: 1, email: 'john@example.com', firstName: 'John', surname: 'Doe'},
+            expiresIn: 3600,
+            user: {userId: 1, nickname: 'john'},
+        }
+        const userProfileData = {
+            userId: 1,
+            email: 'john@example.com',
+            firstName: 'John',
+            surname: 'Doe',
+            phoneNumber: '123456789',
+            language: 'en',
+            role: { name: 'SPECTATOR' },
+            acceptsNotifications: true,
+            acceptsLocationSharing: false,
         }
 
-        mockedAxios.post.mockResolvedValueOnce({data: responseData})
+        mockedAxios.post.mockResolvedValueOnce({data: loginResponseData})
+        mockedAxios.get.mockResolvedValueOnce({data: userProfileData})
 
         const result = await userService.login(credentials)
 
@@ -40,9 +53,9 @@ describe('userService', () => {
                 headers: {'Content-Type': 'application/json'},
             }),
         )
-        expect(result).toEqual(responseData)
+        expect(result.token).toBe('token-123')
+        expect(result.user.userId).toBe(1)
         expect(localStorage.getItem('authToken')).toBe('token-123')
-        expect(localStorage.getItem('user')).toBe(JSON.stringify(responseData.user))
     })
 
     it('registers a user with the expected payload', async () => {
@@ -57,7 +70,7 @@ describe('userService', () => {
             acceptsNotifications: true,
             acceptsLocationSharing: false,
         }
-        const responseUser = {id: 2, email: 'jane@example.com', firstName: 'Jane', surname: 'Doe'}
+        const responseUser = {userId: 2, email: 'jane@example.com', firstName: 'Jane', surname: 'Doe'}
 
         mockedAxios.post.mockResolvedValueOnce({data: responseUser})
 
@@ -85,7 +98,7 @@ describe('userService', () => {
 
     it('logs out and clears local storage', () => {
         localStorage.setItem('authToken', 'token-123')
-        localStorage.setItem('user', JSON.stringify({id: 1}))
+        localStorage.setItem('user', JSON.stringify({userId: 1}))
 
         userService.logout()
 
@@ -94,7 +107,7 @@ describe('userService', () => {
     })
 
     it('returns the current user from local storage', () => {
-        const user = {id: 1, email: 'john@example.com'}
+        const user = {userId: 1, email: 'john@example.com'}
         localStorage.setItem('user', JSON.stringify(user))
 
         expect(userService.getCurrentUser()).toEqual(user)
@@ -104,37 +117,40 @@ describe('userService', () => {
         expect(userService.getCurrentUser()).toBeNull()
     })
 
-    it('fetches profile with auth token and stores it', async () => {
-        localStorage.setItem('authToken', 'token-123')
-        const profile = {id: 1, email: 'john@example.com'}
-        mockedAxios.get.mockResolvedValueOnce({data: profile})
-
-        const result = await userService.getProfile()
-
-        expect(mockedAxios.get).toHaveBeenCalledWith(
-            `${apiBaseUrl}/auth/users/me`,
-            expect.objectContaining({
-                headers: {Authorization: 'Bearer token-123'},
-            }),
-        )
-        expect(result).toEqual(profile)
-        expect(localStorage.getItem('user')).toBe(JSON.stringify(profile))
-    })
-
     it('fetches users with auth token', async () => {
         localStorage.setItem('authToken', 'token-123')
-        const users = [{id: 1, email: 'john@example.com'}]
-        mockedAxios.get.mockResolvedValueOnce({data: users})
+        const pagedResponse = {
+            content: [
+                {
+                    userId: 1,
+                    firstName: 'John',
+                    surname: 'Doe',
+                    email: 'john@example.com',
+                    phoneNumber: '0102030405',
+                    language: 'fr',
+                    role: { name: 'ADMIN' },
+                    acceptsNotifications: true,
+                    acceptsLocationSharing: false,
+                },
+            ],
+        }
+        mockedAxios.get.mockResolvedValueOnce({data: pagedResponse})
 
         const result = await userService.getUsers()
 
         expect(mockedAxios.get).toHaveBeenCalledWith(
-            `${apiBaseUrl}/auth/users`,
+            `${apiBaseUrl}/users`,
             expect.objectContaining({
                 headers: {Authorization: 'Bearer token-123'},
             }),
         )
-        expect(result).toEqual(users)
+        expect(result).toEqual([
+            expect.objectContaining({
+                userId: 1,
+                email: 'john@example.com',
+                role: { name: 'ADMIN' },
+            }),
+        ])
     })
 
     it('reports authentication state and token', () => {

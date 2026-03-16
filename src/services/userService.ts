@@ -1,27 +1,38 @@
 import axios from 'axios'
-import type { LoginRequest, RegisterRequest, AuthResponse, User } from '@/types/user'
+import type { LoginRequest, RegisterRequest, AuthResponse, User, UserProfile, PagedResponse } from '@/types/user'
 
 const API_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_BASE_URL ?? API_URL
+const USER_API_URL = import.meta.env.VITE_USER_API_BASE_URL ?? API_URL
 
 export const userService = {
   /**
    * Connexion d'un utilisateur
+   * 1. Appelle /auth/login pour obtenir le token et l'AuthUser (id, nickname, lastConnectionDate)
+   * 2. Utilise l'id pour récupérer le profil complet depuis /users/{id}
    */
-  async login(credentials: LoginRequest): Promise<AuthResponse> {
+  async login(credentials: LoginRequest): Promise<{ token: string; expiresIn: number; user: User }> {
     try {
       const response = await axios.post<AuthResponse>(`${AUTH_API_URL}/auth/login`, credentials, {
         headers: {
           'Content-Type': 'application/json',
         },
       })
-      
+
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
+        const userId = response.data.user.userId ?? response.data.user.id
+        const userProfile = await this.getUserProfile(userId)
+        localStorage.setItem('user', JSON.stringify(userProfile))
+
+        return {
+          token: response.data.token,
+          expiresIn: response.data.expiresIn,
+          user: userProfile,
+        }
       }
-      
-      return response.data
+
+      throw new Error('Token non reçu')
     } catch (error) {
       console.error('Login error:', error)
       throw error
@@ -75,35 +86,72 @@ export const userService = {
   },
 
   /**
-   * Récupérer le profil de l'utilisateur depuis l'API
+   * Récupérer le profil utilisateur par ID depuis le user-service
    */
-  async getProfile(): Promise<User> {
+  async getUserProfile(userId: number): Promise<UserProfile> {
     try {
       const token = this.getToken()
-      const response = await axios.get<User>(`${AUTH_API_URL}/auth/users/me`, {
+      const response = await axios.get<UserProfile>(`${USER_API_URL}/users/${userId}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
 
-      localStorage.setItem('user', JSON.stringify(response.data))
-
       return response.data
     } catch (error) {
-      console.error('Get profile error:', error)
+      console.error('Get user profile error:', error)
       throw error
     }
   },
 
   /**
-   * Récupérer la liste des utilisateurs (ADMIN)
+   * Récupérer/rafraîchir le profil de l'utilisateur connecté depuis le user-service
+   */
+  async getCurrentUserProfile(): Promise<User> {
+    try {
+      const currentUser = this.getCurrentUser()
+      if (!currentUser?.userId) {
+        throw new Error('Aucun utilisateur connecté')
+      }
+
+      // Rafraîchir le profil depuis l'API
+      const userProfile = await this.getUserProfile(currentUser.userId)
+      localStorage.setItem('user', JSON.stringify(userProfile))
+
+      return userProfile
+    } catch (error) {
+      console.error('Get current user profile error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer la liste des utilisateurs (ADMIN) - via user-service
+   * L'API retourne une réponse paginée avec la structure: { content: User[], pageable: {...}, ... }
    */
   async getUsers(): Promise<User[]> {
     try {
       const token = this.getToken()
-      const response = await axios.get<User[]>(`${AUTH_API_URL}/auth/users`, {
+      const response = await axios.get<PagedResponse<UserProfile>>(`${USER_API_URL}/users`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
 
-      return response.data
+      const data = response.data
+
+      if (data?.content && Array.isArray(data.content)) {
+        return data.content.map((profile) => ({
+          userId: profile.userId,
+          firstName: profile.firstName,
+          surname: profile.surname,
+          email: profile.email,
+          phoneNumber: profile.phoneNumber,
+          language: profile.language,
+          role: profile.role,
+          acceptsNotifications: profile.acceptsNotifications,
+          acceptsLocationSharing: profile.acceptsLocationSharing,
+        }))
+      }
+
+      console.error('Format de réponse inattendu, content non trouvé:', data)
+      return []
     } catch (error) {
       console.error('Get users error:', error)
       throw error
