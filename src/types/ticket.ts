@@ -1,23 +1,31 @@
 export interface Ticket {
+  id?: number
   ticketNumber: string
-  email: string
-  eventType?: string
-  seatInfo?: string
-  eventDate?: string
+  email?: string
+  eventType?: string | null
+  seatInfo?: string | null
+  eventDate?: string | null
   qrData?: string | null
 }
 
 export interface TicketImportPayload {
   ticketNumber: string
   email: string
+  seatInfo: string
+  eventDate: string
 }
 
-export interface TicketImportResponse {
-  ticket?: Ticket
-  qrData?: string | null
-  token?: string | null
-  qrCode?: string | null
-  eventType?: string
-  seatInfo?: string
-  eventDate?: string
+export interface TicketApiModel {
+  id?: number
+  ticketNumber: string
+  seatInformation: string
+  eventDate: string
+}
+
+export interface TicketPageResponse {
+  content: TicketApiModel[]
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
 }

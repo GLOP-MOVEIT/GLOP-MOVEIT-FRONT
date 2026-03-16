@@ -4,16 +4,20 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import QRCode from 'qrcode'
 import type { Ticket } from '@/types/ticket'
-import { getStoredTickets } from '@/services/ticketStorage'
+import { getUserTickets } from '@/services/ticketService'
+import { useUserStore } from '@/stores/user'
 
 const { t } = useI18n()
 const router = useRouter()
+const userStore = useUserStore()
 
 const tickets = ref<Ticket[]>([])
 const filter = ref<'all' | 'upcoming' | 'past'>('all')
 const selectedTicket = ref<Ticket | null>(null)
 const showDialog = ref(false)
 const qrDialogData = ref('')
+const isLoading = ref(false)
+const errorMessage = ref('')
 
 const filteredTickets = computed(() => {
   if (filter.value === 'all') {
@@ -31,16 +35,48 @@ const filteredTickets = computed(() => {
   })
 })
 
-const isQrImage = (value?: string | null) => {
+const formatTicketDate = (value?: string | null) => {
   if (!value) {
-    return false
+    return t('ticketing.notAvailable')
   }
 
-  return value.startsWith('data:image') || value.startsWith('http')
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date)
+}
+
+const loadTickets = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    if (!userStore.user?.id) {
+      await userStore.fetchCurrentUser()
+    }
+
+    if (!userStore.user?.id) {
+      tickets.value = []
+      errorMessage.value = t('ticketing.authRequired')
+      return
+    }
+
+    tickets.value = await getUserTickets(userStore.user.id, userStore.user.email)
+  } catch {
+    tickets.value = []
+    errorMessage.value = t('ticketing.loadError')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 onMounted(() => {
-  tickets.value = getStoredTickets()
+  loadTickets()
 })
 
 watch(
@@ -129,14 +165,26 @@ const openTicket = (ticket: Ticket) => {
               </v-btn-toggle>
             </div>
 
-            <v-alert v-if="filteredTickets.length === 0" type="info" variant="tonal">
+            <v-alert v-if="isLoading" type="info" variant="tonal" class="mb-4">
+              {{ t('ticketing.loading') }}
+            </v-alert>
+
+            <v-alert v-else-if="errorMessage" type="error" variant="tonal" class="mb-4">
+              {{ errorMessage }}
+            </v-alert>
+
+            <v-alert
+              v-else-if="filteredTickets.length === 0"
+              type="info"
+              variant="tonal"
+            >
               {{ t('ticketing.noTickets') }}
             </v-alert>
 
             <v-row v-else>
               <v-col
                 v-for="ticket in filteredTickets"
-                :key="ticket.ticketNumber"
+                :key="ticket.id ?? ticket.ticketNumber"
                 cols="12"
                 md="6"
                 lg="4"
@@ -152,7 +200,7 @@ const openTicket = (ticket: Ticket) => {
                       {{ t('ticketing.ticketLabel', { number: ticket.ticketNumber }) }}
                     </v-card-title>
                     <v-card-subtitle>
-                      {{ ticket.email }}
+                      {{ ticket.email ?? t('ticketing.notAvailable') }}
                     </v-card-subtitle>
                   </v-card-item>
                   <v-card-text>
@@ -166,7 +214,7 @@ const openTicket = (ticket: Ticket) => {
                     </div>
                     <div class="text-body-2 mb-4">
                       {{ t('ticketing.eventDate') }}:
-                      <strong>{{ ticket.eventDate ?? t('ticketing.notAvailable') }}</strong>
+                      <strong>{{ formatTicketDate(ticket.eventDate) }}</strong>
                     </div>
 
                   </v-card-text>
@@ -186,7 +234,7 @@ const openTicket = (ticket: Ticket) => {
         <v-card-text>
           <div v-if="selectedTicket" class="mb-4 text-body-2">
             <div class="mb-2">
-              {{ selectedTicket.email }}
+              {{ selectedTicket.email ?? t('ticketing.notAvailable') }}
             </div>
             <div class="mb-2">
               {{ t('ticketing.eventType') }}:
@@ -198,7 +246,7 @@ const openTicket = (ticket: Ticket) => {
             </div>
             <div>
               {{ t('ticketing.eventDate') }}:
-              <strong>{{ selectedTicket.eventDate ?? t('ticketing.notAvailable') }}</strong>
+              <strong>{{ formatTicketDate(selectedTicket.eventDate) }}</strong>
             </div>
           </div>
           <v-sheet class="qr-dialog" rounded="lg" border>

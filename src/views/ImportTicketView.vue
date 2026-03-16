@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { VForm } from 'vuetify/components'
 import QRCode from 'qrcode'
 import { importTicket } from '@/services/ticketService'
-import { addStoredTicket } from '@/services/ticketStorage'
+import { useUserStore } from '@/stores/user'
 import type { Ticket } from '@/types/ticket'
-import type { TicketImportPayload, TicketImportResponse } from '@/types/ticket'
+import type { TicketImportPayload } from '@/types/ticket'
 
 const { t } = useI18n()
 const router = useRouter()
+const userStore = useUserStore()
 
 const formRef = ref<VForm | null>(null)
 const isImporting = ref(false)
@@ -26,9 +27,17 @@ const isVerifying = ref(false)
 const formState = ref<TicketImportPayload>({
   ticketNumber: '',
   email: '',
+  seatInfo: '',
+  eventDate: '',
 })
 
 const requiredRule = (value: string) => !!value || t('ticketing.validation.required')
+const emailRule = (value: string) =>
+  !userEmail.value ||
+  value.trim().toLowerCase() === userEmail.value.trim().toLowerCase() ||
+  t('ticketing.validation.emailMismatch')
+
+const userEmail = computed(() => userStore.user?.email ?? '')
 
 const resetMessages = () => {
   errorMessage.value = ''
@@ -45,6 +54,13 @@ const triggerColorize = () => {
 
 const handleImport = async () => {
   resetMessages()
+
+  if (!userStore.user?.id) {
+    errorMessage.value = t('ticketing.authRequired')
+    isFailed.value = true
+    return
+  }
+
   if (!formRef.value) {
     return
   }
@@ -60,13 +76,13 @@ const handleImport = async () => {
   const minimumDelay = new Promise((resolve) => {
     setTimeout(resolve, 3000)
   })
+
   try {
-    const [response] = await Promise.all([
-      importTicket({ ...formState.value }),
+    const [newTicket] = await Promise.all([
+      importTicket(userStore.user.id, { ...formState.value }, userEmail.value),
       minimumDelay,
     ])
-    const newTicket = normalizeTicket(formState.value, response)
-    addStoredTicket(newTicket)
+
     importedTicket.value = newTicket
     if (newTicket.qrData) {
       qrImageData.value = await QRCode.toDataURL(newTicket.qrData, {
@@ -82,7 +98,13 @@ const handleImport = async () => {
     triggerColorize()
   } catch (error) {
     await minimumDelay
-    errorMessage.value = t('ticketing.importError')
+    if (error instanceof Error && error.message === 'ticket-email-mismatch') {
+      errorMessage.value = t('ticketing.validation.emailMismatch')
+    } else if (error instanceof Error && error.message === 'ticket-invalid-date') {
+      errorMessage.value = t('ticketing.validation.invalidDate')
+    } else {
+      errorMessage.value = t('ticketing.importError')
+    }
     isFailed.value = true
     qrState.value = 'idle'
   } finally {
@@ -91,34 +113,47 @@ const handleImport = async () => {
   }
 }
 
-const normalizeTicket = (
-  payload: TicketImportPayload,
-  response: TicketImportResponse
-): Ticket => {
-  const fallbackQr = response.qrData ?? response.token ?? response.qrCode ?? null
-
-  if (response.ticket) {
-    return {
-      ...response.ticket,
-      qrData: response.ticket.qrData ?? fallbackQr,
-    }
+const formatTicketDate = (value?: string | null) => {
+  if (!value) {
+    return ''
   }
 
-  return {
-    ticketNumber: payload.ticketNumber,
-    email: payload.email,
-    eventType: response.eventType,
-    seatInfo: response.seatInfo,
-    eventDate: response.eventDate,
-    qrData: fallbackQr,
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
   }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date)
 }
 
+onMounted(async () => {
+  if (!userStore.user?.id) {
+    await userStore.fetchCurrentUser()
+  }
+
+  formState.value.email = userEmail.value
+})
+
+watch(
+  userEmail,
+  (value) => {
+    if (!importedTicket.value) {
+      formState.value.email = value
+    }
+  },
+  { immediate: true }
+)
+
 const ticketNumberPreview = computed(() => formState.value.ticketNumber || '—')
-const emailPreview = computed(() => formState.value.email || '—')
-const eventPreview = computed(() => importedTicket.value?.eventType ?? '')
+const emailPreview = computed(() => importedTicket.value?.email ?? (formState.value.email || '—'))
+const eventPreview = computed(() =>
+  importedTicket.value ? importedTicket.value.eventType ?? t('ticketing.notAvailable') : ''
+)
 const seatPreview = computed(() => importedTicket.value?.seatInfo ?? '')
-const datePreview = computed(() => importedTicket.value?.eventDate ?? '')
+const datePreview = computed(() => formatTicketDate(importedTicket.value?.eventDate))
 </script>
 
 <template>
@@ -200,12 +235,14 @@ const datePreview = computed(() => importedTicket.value?.eventDate ?? '')
                   :label="t('ticketing.form.email')"
                   :placeholder="t('ticketing.form.placeholders.email')"
                   :aria-label="t('ticketing.form.email')"
-                  :rules="[requiredRule]"
+                  :rules="[requiredRule, emailRule]"
                   prepend-inner-icon="mdi-email-outline"
                   variant="outlined"
                   density="compact"
+                  :hint="t('ticketing.emailHint')"
                   hide-details="auto"
                   type="email"
+                  readonly
                 ></v-text-field>
               </div>
               <div class="ticket-field">
@@ -215,13 +252,35 @@ const datePreview = computed(() => importedTicket.value?.eventDate ?? '')
               </div>
               <div class="ticket-field">
                 <span class="label">{{ t('ticketing.form.seatInfo') }}</span>
-                <span v-if="seatPreview" class="value">{{ seatPreview }}</span>
-                <span v-else class="value ghost" aria-hidden="true"></span>
+                <span v-if="importedTicket" class="value">{{ seatPreview }}</span>
+                <v-text-field
+                  v-else
+                  v-model="formState.seatInfo"
+                  :label="t('ticketing.form.seatInfo')"
+                  :placeholder="t('ticketing.form.placeholders.seatInfo')"
+                  :aria-label="t('ticketing.form.seatInfo')"
+                  :rules="[requiredRule]"
+                  prepend-inner-icon="mdi-seat"
+                  variant="outlined"
+                  density="compact"
+                  hide-details="auto"
+                ></v-text-field>
               </div>
               <div class="ticket-field">
                 <span class="label">{{ t('ticketing.form.eventDate') }}</span>
-                <span v-if="datePreview" class="value">{{ datePreview }}</span>
-                <span v-else class="value ghost" aria-hidden="true"></span>
+                <span v-if="importedTicket" class="value">{{ datePreview }}</span>
+                <v-text-field
+                  v-else
+                  v-model="formState.eventDate"
+                  :label="t('ticketing.form.eventDate')"
+                  :aria-label="t('ticketing.form.eventDate')"
+                  :rules="[requiredRule]"
+                  prepend-inner-icon="mdi-calendar-clock"
+                  variant="outlined"
+                  density="compact"
+                  hide-details="auto"
+                  type="datetime-local"
+                ></v-text-field>
               </div>
             </div>
 
