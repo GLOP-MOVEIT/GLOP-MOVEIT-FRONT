@@ -13,7 +13,6 @@
             <li>{{ t('commissioner.sportifDocMedical') }}</li>
             <li>{{ t('commissioner.sportifDocAntidoping') }}</li>
             <li>{{ t('commissioner.sportifDocIdentity') }}</li>
-            <li>{{ t('commissioner.sportifDocTracking') }}</li>
           </ul>
         </v-card>
       </v-col>
@@ -27,6 +26,10 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <v-alert type="info" variant="tonal" class="mt-6">
+      {{ t('commissioner.externalDocumentsNote') }}
+    </v-alert>
   </div>
 </template>
 
