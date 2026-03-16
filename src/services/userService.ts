@@ -159,6 +159,21 @@ export const userService = {
   },
 
   /**
+   * Promouvoir un utilisateur au rôle de commissaire via le endpoint backend existant.
+   */
+  async promoteToCommissioner(userId: number): Promise<void> {
+    try {
+      const token = this.getToken()
+      await axios.post(`${API_URL}/requests/referee/${userId}`, null, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+    } catch (error) {
+      console.error('Promote to commissioner error:', error)
+      throw error
+    }
+  },
+
+  /**
    * Vérifier si un utilisateur est connecté
    */
   isAuthenticated(): boolean {
