@@ -4,7 +4,7 @@ export enum UserRole {
   SPECTATOR = 'SPECTATOR',
   SPORTIF = 'SPORTIF',
   VOLUNTEER = 'VOLUNTEER',
-  COMMISSIONER = 'COMMISSIONER',
+  REFEREE = 'REFEREE',
 }
 
 // Interface pour l'objet Role (API user-service)
@@ -99,4 +99,3 @@ export interface PagedResponse<T> {
   totalElements: number
   totalPages: number
 }
-

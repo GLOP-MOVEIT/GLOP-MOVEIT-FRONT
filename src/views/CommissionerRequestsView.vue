@@ -5,7 +5,7 @@
         <v-icon icon="mdi-file-document-check" size="32" color="primary" class="mr-2" />
         <h2 class="text-h5 font-weight-bold">{{ t('commissioner.requestsTitle') }}</h2>
       </div>
-      <v-btn variant="text" to="/commissaire" class="text-none">
+      <v-btn variant="text" to="/referee" class="text-none">
         <v-icon icon="mdi-arrow-left" class="mr-1" />
         {{ t('commissioner.backToDashboard') }}
       </v-btn>

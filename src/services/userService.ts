@@ -159,7 +159,7 @@ export const userService = {
   },
 
   /**
-   * Promouvoir un utilisateur au rôle de commissaire via le endpoint backend existant.
+   * Promouvoir un utilisateur au rôle de REFEREE via le endpoint backend existant.
    */
   async promoteToCommissioner(userId: number): Promise<void> {
     try {
@@ -168,7 +168,7 @@ export const userService = {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
     } catch (error) {
-      console.error('Promote to commissioner error:', error)
+      console.error('Promote to referee error:', error)
       throw error
     }
   },

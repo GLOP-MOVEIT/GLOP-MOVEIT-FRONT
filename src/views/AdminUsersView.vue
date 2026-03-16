@@ -94,8 +94,7 @@ const formatName = (user: User) => {
 const normalizeRoleKey = (role: string) => {
   const normalized = role.replace(/^ROLE_/, '').trim().toUpperCase()
   if (normalized === 'VOLONTAIRE') return 'VOLUNTEER'
-  if (normalized === 'COMMISSAIRE') return 'COMMISSIONER'
-  if (normalized === 'REFEREE') return 'COMMISSIONER'
+  if (normalized === 'COMMISSAIRE' || normalized === 'COMMISSIONER') return 'REFEREE'
   return normalized
 }
 
@@ -135,7 +134,7 @@ const isPromoteDisabled = (user: User) => {
   const role = formatRoleValue(user)
   return promotingUserId.value === user.userId ||
     role === UserRole.ADMIN ||
-    role === UserRole.COMMISSIONER
+    role === UserRole.REFEREE
 }
 
 const promoteUser = async (user: User) => {
@@ -172,7 +171,7 @@ const roleOptions = computed(() => [
   { title: t('roles.SPECTATOR'), value: UserRole.SPECTATOR },
   { title: t('roles.SPORTIF'), value: UserRole.SPORTIF },
   { title: t('roles.VOLUNTEER'), value: UserRole.VOLUNTEER },
-  { title: t('roles.COMMISSIONER'), value: UserRole.COMMISSIONER },
+  { title: t('roles.REFEREE'), value: UserRole.REFEREE },
   { title: t('roles.ADMIN'), value: UserRole.ADMIN },
 ])
 

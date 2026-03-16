@@ -21,12 +21,12 @@ const menuItems = computed(() => [
   {
     title: t('commissioner.menuOverview'),
     icon: 'mdi-view-dashboard',
-    to: '/commissaire',
+    to: '/referee',
   },
   {
     title: t('commissioner.menuRequests'),
     icon: 'mdi-file-document-check',
-    to: '/commissaire/demandes',
+    to: '/referee/demandes',
   },
 ])
 </script>
