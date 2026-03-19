@@ -25,6 +25,51 @@ export interface VolunteerPreferencePayload {
   taskTypeId: number
 }
 
+export interface VolunteerTask {
+  id: number
+  targetType: 'CHAMPIONSHIP' | 'COMPETITION' | 'TRIAL'
+  targetId: number
+  title: string
+  description: string
+  taskTypeId: number
+  startDate: string
+  endDate: string
+  maxVolunteers: number
+  locationId: number | null
+  location?: string
+}
+
+export interface VolunteerTaskPayload {
+  targetType: 'CHAMPIONSHIP' | 'COMPETITION' | 'TRIAL'
+  targetId: number
+  title: string
+  description: string
+  taskTypeId: number
+  startDate: string
+  endDate: string
+  maxVolunteers: number
+  locationId: number | null
+  location?: string
+}
+
+export interface VolunteerAssignment {
+  id: number
+  volunteerId: number
+  taskId: number
+  status: 'PENDING' | 'ACCEPTED' | 'REFUSED'
+  comment?: string
+}
+
+export interface VolunteerAssignmentPayload {
+  volunteerId: number
+  taskId: number
+}
+
+export interface VolunteerAssignmentResponse {
+  volunteerId: number
+  hasPreference: boolean
+}
+
 /**
  * Service pour gérer les volontaires et les tâches
  */
@@ -184,6 +229,290 @@ export const volunteerService = {
       return response.data
     } catch (error) {
       console.error('Get user preferences error:', error)
+      throw error
+    }
+  },
+
+  // --- Volunteer Tasks Methods ---
+
+  /**
+   * Récupérer toutes les tâches
+   */
+  async getAllTasks(): Promise<VolunteerTask[]> {
+    try {
+      const response = await axios.get<VolunteerTask[]>(`${API_URL}/volunteer/tasks`, {
+        headers: this.getAuthHeaders(),
+      })
+      return response.data
+    } catch (error) {
+      console.error('Get all tasks error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Créer une nouvelle tâche
+   */
+  async createTask(payload: VolunteerTaskPayload): Promise<VolunteerTask> {
+    try {
+      const response = await axios.post<VolunteerTask>(`${API_URL}/volunteer/tasks`, payload, {
+        headers: {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      })
+      return response.data
+    } catch (error) {
+      console.error('Create task error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer une tâche par ID
+   */
+  async getTask(id: number): Promise<VolunteerTask> {
+    try {
+      const response = await axios.get<VolunteerTask>(`${API_URL}/volunteer/tasks/${id}`, {
+        headers: this.getAuthHeaders(),
+      })
+      return response.data
+    } catch (error) {
+      console.error('Get task error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Mettre à jour une tâche
+   */
+  async updateTask(id: number, payload: VolunteerTaskPayload): Promise<VolunteerTask> {
+    try {
+      const response = await axios.put<VolunteerTask>(`${API_URL}/volunteer/tasks/${id}`, payload, {
+        headers: {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      })
+      return response.data
+    } catch (error) {
+      console.error('Update task error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Supprimer une tâche
+   */
+  async deleteTask(id: number): Promise<void> {
+    try {
+      await axios.delete(`${API_URL}/volunteer/tasks/${id}`, {
+        headers: this.getAuthHeaders(),
+      })
+    } catch (error) {
+      console.error('Delete task error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer les tâches pour une cible (CHAMPIONSHIP, COMPETITION, TRIAL)
+   */
+  async getTasksByTarget(targetType: 'CHAMPIONSHIP' | 'COMPETITION' | 'TRIAL', targetId: number): Promise<VolunteerTask[]> {
+    try {
+      const response = await axios.get<VolunteerTask[]>(
+        `${API_URL}/volunteer/tasks/target/${targetType}/${targetId}`,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      )
+      return response.data
+    } catch (error) {
+      console.error('Get tasks by target error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer les tâches par type de tâche
+   */
+  async getTasksByType(taskTypeId: number): Promise<VolunteerTask[]> {
+    try {
+      const response = await axios.get<VolunteerTask[]>(`${API_URL}/volunteer/tasks/type/${taskTypeId}`, {
+        headers: this.getAuthHeaders(),
+      })
+      return response.data
+    } catch (error) {
+      console.error('Get tasks by type error:', error)
+      throw error
+    }
+  },
+
+  // --- Volunteer Assignments Methods ---
+
+  /**
+   * Assigner un volontaire à une tâche
+   */
+  async createAssignment(payload: VolunteerAssignmentPayload): Promise<VolunteerAssignment> {
+    try {
+      const response = await axios.post<VolunteerAssignment>(`${API_URL}/volunteer/assignments`, payload, {
+        headers: {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      })
+      return response.data
+    } catch (error) {
+      console.error('Create assignment error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer une assignation par ID
+   */
+  async getAssignment(id: number): Promise<VolunteerAssignment> {
+    try {
+      const response = await axios.get<VolunteerAssignment>(`${API_URL}/volunteer/assignments/${id}`, {
+        headers: this.getAuthHeaders(),
+      })
+      return response.data
+    } catch (error) {
+      console.error('Get assignment error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Supprimer une assignation
+   */
+  async deleteAssignment(id: number): Promise<void> {
+    try {
+      await axios.delete(`${API_URL}/volunteer/assignments/${id}`, {
+        headers: this.getAuthHeaders(),
+      })
+    } catch (error) {
+      console.error('Delete assignment error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer les assignations pour une tâche
+   */
+  async getAssignmentsByTask(taskId: number): Promise<VolunteerAssignment[]> {
+    try {
+      const response = await axios.get<VolunteerAssignment[]>(`${API_URL}/volunteer/assignments/task/${taskId}`, {
+        headers: this.getAuthHeaders(),
+      })
+      return response.data
+    } catch (error) {
+      console.error('Get assignments by task error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer les volontaires disponibles pour une tâche
+   */
+  async getAvailableVolunteers(taskId: number, volunteerIds: number[]): Promise<number[]> {
+    try {
+      const response = await axios.post<number[]>(
+        `${API_URL}/volunteer/assignments/task/${taskId}/available-volunteers`,
+        { volunteerIds },
+        {
+          headers: {
+            ...this.getAuthHeaders(),
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+      return response.data
+    } catch (error) {
+      console.error('Get available volunteers error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer les volontaires disponibles avec leurs préférences
+   */
+  async getAvailableVolunteersWithPreference(
+    taskId: number,
+    volunteerIds: number[]
+  ): Promise<VolunteerAssignmentResponse[]> {
+    try {
+      const response = await axios.post<VolunteerAssignmentResponse[]>(
+        `${API_URL}/volunteer/assignments/task/${taskId}/available-volunteers-with-preference`,
+        { volunteerIds },
+        {
+          headers: {
+            ...this.getAuthHeaders(),
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+      return response.data
+    } catch (error) {
+      console.error('Get available volunteers with preference error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer les assignations d'un volontaire
+   */
+  async getAssignmentsByVolunteer(volunteerId: number): Promise<VolunteerAssignment[]> {
+    try {
+      const response = await axios.get<VolunteerAssignment[]>(
+        `${API_URL}/volunteer/assignments/volunteer/${volunteerId}`,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      )
+      return response.data
+    } catch (error) {
+      console.error('Get assignments by volunteer error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer les assignations par statut
+   */
+  async getAssignmentsByStatus(status: 'PENDING' | 'ACCEPTED' | 'REFUSED'): Promise<VolunteerAssignment[]> {
+    try {
+      const response = await axios.get<VolunteerAssignment[]>(`${API_URL}/volunteer/assignments/status/${status}`, {
+        headers: this.getAuthHeaders(),
+      })
+      return response.data
+    } catch (error) {
+      console.error('Get assignments by status error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Répondre à une assignation (accepter ou refuser)
+   */
+  async respondToAssignment(
+    id: number,
+    payload: { volunteerId: number; status: 'ACCEPTED' | 'REFUSED'; comment?: string }
+  ): Promise<VolunteerAssignment> {
+    try {
+      const response = await axios.patch<VolunteerAssignment>(
+        `${API_URL}/volunteer/assignments/${id}/volunteer-response`,
+        payload,
+        {
+          headers: {
+            ...this.getAuthHeaders(),
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+      return response.data
+    } catch (error) {
+      console.error('Respond to assignment error:', error)
       throw error
     }
   },

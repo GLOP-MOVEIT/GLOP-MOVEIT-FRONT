@@ -177,6 +177,15 @@
                     >
                       {{ t('commissionerCompetition.editLocationTitle') }}
                     </v-btn>
+                    <v-btn
+                      variant="outlined"
+                      color="success"
+                      prepend-icon="mdi-clipboard-list-outline"
+                      block
+                      @click="navigateToTrialTasks(trial)"
+                    >
+                      {{ t('trialTasks.title') }}
+                    </v-btn>
                   </div>
                 </div>
               </v-card>
@@ -344,7 +353,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
@@ -356,6 +365,7 @@ import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 import { isAxiosError } from 'axios'
 
 const route = useRoute()
+const router = useRouter()
 const { t, locale } = useI18n()
 
 const formatDateRange = (start: string | Date, end: string | Date) =>
@@ -557,7 +567,7 @@ const saveLocationDialog = async () => {
       trialEndDate: trial.trialEndDate,
       trialDescription: trial.trialDescription,
       trialStatus: trial.trialStatus,
-      locationId: editLocationForm.value.locationId ?? undefined,
+      locationId: editLocationForm.value.locationId ?? 0,
       roundNumber: trial.roundNumber,
       position: trial.position,
       participantIds: trial.participantIds,
