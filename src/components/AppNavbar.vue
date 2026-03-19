@@ -20,6 +20,13 @@ const isAthlete = computed(
     !userStore.hasRole(UserRole.REFEREE),
 )
 
+const isVolunteer = computed(
+  () =>
+    userStore.hasRole(UserRole.VOLUNTEER) &&
+    !userStore.hasRole(UserRole.ADMIN) &&
+    !userStore.hasRole(UserRole.REFEREE),
+)
+
 const menuItems = computed(() => [{ title: t('nav.home'), icon: 'mdi-home', to: '/' }])
 
 const logout = async () => {
@@ -53,6 +60,16 @@ const logout = async () => {
       prepend-icon="mdi-calendar-clock"
     >
       {{ t('nav.myConvocations') }}
+    </v-btn>
+    <v-btn
+      v-if="userStore.isAuthenticated && isVolunteer"
+      to="/mes-taches"
+      variant="outlined"
+      color="white"
+      class="mr-2"
+      prepend-icon="mdi-clipboard-check-outline"
+    >
+      {{ t('nav.myTasks') }}
     </v-btn>
     <LanguageSwitcher class="ml-2" />
     <v-menu v-if="userStore.isAuthenticated">

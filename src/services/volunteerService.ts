@@ -14,6 +14,17 @@ export interface TaskTypePayload {
   description: string
 }
 
+export interface VolunteerPreference {
+  id: number
+  userId: number
+  taskTypeId: number
+}
+
+export interface VolunteerPreferencePayload {
+  userId: number
+  taskTypeId: number
+}
+
 /**
  * Service pour gérer les volontaires et les tâches
  */
@@ -91,6 +102,88 @@ export const volunteerService = {
       })
     } catch (error) {
       console.error('Delete task type error:', error)
+      throw error
+    }
+  },
+
+  // --- Volunteer Preferences Methods ---
+
+  /**
+   * Créer une préférence de volontaire (ajouter un favori)
+   */
+  async createPreference(payload: VolunteerPreferencePayload): Promise<VolunteerPreference> {
+    try {
+      const response = await axios.post<VolunteerPreference>(`${API_URL}/volunteer/preferences`, payload, {
+        headers: {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      })
+      return response.data
+    } catch (error) {
+      console.error('Create preference error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer une préférence par ID
+   */
+  async getPreference(id: number): Promise<VolunteerPreference> {
+    try {
+      const response = await axios.get<VolunteerPreference>(`${API_URL}/volunteer/preferences/${id}`, {
+        headers: this.getAuthHeaders(),
+      })
+      return response.data
+    } catch (error) {
+      console.error('Get preference error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Mettre à jour une préférence
+   */
+  async updatePreference(id: number, payload: VolunteerPreferencePayload): Promise<VolunteerPreference> {
+    try {
+      const response = await axios.put<VolunteerPreference>(`${API_URL}/volunteer/preferences/${id}`, payload, {
+        headers: {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      })
+      return response.data
+    } catch (error) {
+      console.error('Update preference error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Supprimer une préférence (retirer un favori)
+   */
+  async deletePreference(id: number): Promise<void> {
+    try {
+      await axios.delete(`${API_URL}/volunteer/preferences/${id}`, {
+        headers: this.getAuthHeaders(),
+      })
+    } catch (error) {
+      console.error('Delete preference error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Récupérer toutes les préférences d'un utilisateur
+   */
+  async getUserPreferences(userId: number): Promise<VolunteerPreference[]> {
+    try {
+      const response = await axios.get<VolunteerPreference[]>(`${API_URL}/volunteer/preferences/user/${userId}`, {
+        headers: this.getAuthHeaders(),
+      })
+      return response.data
+    } catch (error) {
+      console.error('Get user preferences error:', error)
       throw error
     }
   },

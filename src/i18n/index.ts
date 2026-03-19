@@ -13,6 +13,7 @@ const messages = {
       menu: 'Menu',
       language: 'Language',
       myConvocations: 'My summons',
+      myTasks: 'My tasks',
     },
     footer: {
       rightsReserved: 'All rights reserved',
@@ -368,6 +369,20 @@ const messages = {
       updateError: 'Unable to update this trial.',
       cancel: 'Cancel',
     },
+    volunteerTasks: {
+      title: 'My favorite tasks',
+      subtitle: 'Select task types you are interested in',
+      noTaskTypes: 'No task types available yet.',
+      favorite: 'Favorite',
+      addFavoriteSuccess: 'Task type added to favorites.',
+      removeFavoriteSuccess: 'Task type removed from favorites.',
+      toggleFavoriteError: 'Unable to toggle favorite status.',
+      loadTaskTypesError: 'Unable to load task types.',
+      loadPreferencesError: 'Unable to load your preferences.',
+      authRequired: 'You must be logged in to manage favorites.',
+      infoTitle: 'About task preferences',
+      infoText: 'Click the heart icon to mark task types as favorites. This helps organizers know which types of tasks you are most interested in.',
+    },
     about: {
       tagline:
         'Your complete platform to follow and organize sports competitions',
@@ -535,6 +550,7 @@ const messages = {
       menu: 'Menu',
       language: 'Langue',
       myConvocations: 'Mes convocations',
+      myTasks: 'Mes tâches',
     },
     footer: {
       rightsReserved: 'Tous droits réservés',
@@ -893,6 +909,20 @@ const messages = {
       updateError: 'Impossible de mettre à jour cette manche.',
       cancel: 'Annuler',
     },
+    volunteerTasks: {
+      title: 'My favorite tasks',
+      subtitle: 'Select task types you are interested in',
+      noTaskTypes: 'No task types available yet.',
+      favorite: 'Favorite',
+      addFavoriteSuccess: 'Task type added to favorites.',
+      removeFavoriteSuccess: 'Task type removed from favorites.',
+      toggleFavoriteError: 'Unable to toggle favorite status.',
+      loadTaskTypesError: 'Unable to load task types.',
+      loadPreferencesError: 'Unable to load your preferences.',
+      authRequired: 'You must be logged in to manage favorites.',
+      infoTitle: 'About task preferences',
+      infoText: 'Click the heart icon to mark task types as favorites. This helps organizers know which types of tasks you are most interested in.',
+    },
     about: {
       tagline:
         'Votre plateforme complète pour suivre et organiser des compétitions sportives',
@@ -1018,6 +1048,20 @@ const messages = {
       authRequired: 'Vous devez être connecté pour envoyer une demande.',
       backToProfile: 'Retour au profil',
       unknownRole: 'Rôle inconnu',
+    },
+    volunteerTasks: {
+      title: 'Mes tâches favorites',
+      subtitle: 'Sélectionnez les types de tâches qui vous intéressent',
+      noTaskTypes: 'Aucun type de tâche disponible pour le moment.',
+      favorite: 'Favori',
+      addFavoriteSuccess: 'Type de tâche ajouté aux favoris.',
+      removeFavoriteSuccess: 'Type de tâche retiré des favoris.',
+      toggleFavoriteError: 'Impossible de modifier le statut favori.',
+      loadTaskTypesError: 'Impossible de charger les types de tâches.',
+      loadPreferencesError: 'Impossible de charger vos préférences.',
+      authRequired: 'Vous devez être connecté pour gérer les favoris.',
+      infoTitle: 'À propos des préférences de tâches',
+      infoText: 'Cliquez sur l\'icône du cœur pour marquer les types de tâches comme favoris. Cela aide les organisateurs à savoir quels types de tâches vous intéressent le plus.',
     },
     roles: {
       SPECTATOR: 'Spectateur',

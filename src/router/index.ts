@@ -77,6 +77,15 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'mes-taches',
+        name: 'volunteer-tasks',
+        component: () => import('@/views/VolunteerTaskPreferencesView.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresRole: UserRole.VOLUNTEER,
+        },
+      },
+      {
         path: 'admin',
         component: () => import('@/views/AdminShellView.vue'),
         meta: {
