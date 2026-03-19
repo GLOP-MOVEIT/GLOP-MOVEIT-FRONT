@@ -28,6 +28,13 @@ export enum ParticipantType {
   TEAM = 'TEAM',
 }
 
+export enum ResultUnit {
+  POINTS = 'POINTS',
+  MINUTES = 'MINUTES',
+  SECONDS = 'SECONDS',
+  HOURS = 'HOURS',
+}
+
 export interface Championship {
   id: number
   name: string
@@ -53,6 +60,7 @@ export interface Competition {
   maxPerHeat: number
   nbManches: number
   assignedCommissaireId?: number | null
+  competitionResultUnit?: ResultUnit | null
   events?: CompetitionTreeEvent[]
   trials?: Trial[]
 }
@@ -72,6 +80,7 @@ export interface CompetitionFormValues {
   status: Status
   nbManches: number
   assignedCommissaireId: number | null
+  resultUnit: ResultUnit | null
 }
 
 export interface CompetitionTreeEvent {

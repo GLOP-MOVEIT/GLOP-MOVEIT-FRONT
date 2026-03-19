@@ -151,6 +151,20 @@
                   clearable
                 />
               </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="competitionForm.resultUnit"
+                  :items="resultUnitOptions"
+                  item-title="title"
+                  item-value="value"
+                  :label="t('admin.competitionResultUnitLabel')"
+                  variant="outlined"
+                  density="comfortable"
+                  :rules="[rules.required]"
+                  required
+                  clearable
+                />
+              </v-col>
               <v-col cols="12">
                 <v-textarea
                   v-model="competitionForm.description"
@@ -235,7 +249,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Status, Sport, ParticipantType } from '@/types/competition'
+import { Status, Sport, ParticipantType, ResultUnit } from '@/types/competition'
 import type { Championship, Competition } from '@/types/competition'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
@@ -281,6 +295,7 @@ const mapCompetition = (competition: Competition): Competition => ({
   maxPerHeat: competition.maxPerHeat,
   nbManches: competition.nbManches,
   assignedCommissaireId: competition.assignedCommissaireId ?? null,
+  competitionResultUnit: competition.competitionResultUnit ?? null,
 })
 
 const competitionForm = reactive({
@@ -296,6 +311,7 @@ const competitionForm = reactive({
   status: Status.PLANNED,
   nbManches: 1,
   assignedCommissaireId: null as number | null,
+  resultUnit: null as ResultUnit | null,
 })
 
 const statusOptions = computed(() =>
@@ -363,6 +379,13 @@ const commissaireOptions = computed(() =>
   commissaireUsers.value.map((user) => ({
     title: `${user.firstName ?? ''} ${user.surname ?? ''}`.trim() || user.email,
     value: user.userId,
+  })),
+)
+
+const resultUnitOptions = computed(() =>
+  Object.values(ResultUnit).map((unit) => ({
+    title: t(`admin.resultUnit.${unit}`),
+    value: unit,
   })),
 )
 
@@ -458,6 +481,7 @@ const resetCompetitionForm = () => {
   competitionForm.status = Status.PLANNED
   competitionForm.nbManches = 0
   competitionForm.assignedCommissaireId = null
+  competitionForm.resultUnit = null
   editingCompetitionId.value = null
   nextTick(() => competitionFormRef.value?.resetValidation())
 }
@@ -490,6 +514,7 @@ const handleCompetitionSubmit = async () => {
         maxPerHeat: competitionForm.maxPerHeat,
         nbManches: competitionForm.nbManches,
         assignedCommissaireId: competitionForm.assignedCommissaireId,
+        competitionResultUnit: competitionForm.resultUnit,
       })
       snackbarMessage.value = t('admin.competitionUpdateSuccess')
     } else {
@@ -507,6 +532,7 @@ const handleCompetitionSubmit = async () => {
         maxPerHeat: competitionForm.maxPerHeat,
         nbManches: competitionForm.nbManches,
         assignedCommissaireId: competitionForm.assignedCommissaireId,
+        competitionResultUnit: competitionForm.resultUnit,
       }
       await championshipService.createCompetition(payload)
       snackbarMessage.value = t('admin.competitionSuccess')
@@ -540,6 +566,7 @@ const startCompetitionEdit = (competition: Competition) => {
   competitionForm.status = competition.competitionStatus
   competitionForm.nbManches = competition.nbManches
   competitionForm.assignedCommissaireId = competition.assignedCommissaireId ?? null
+  competitionForm.resultUnit = competition.competitionResultUnit ?? null
   nextTick(() => competitionFormRef.value?.resetValidation())
 }
 
