@@ -129,6 +129,11 @@ const routes: RouteRecordRaw[] = [
             name: 'commissioner-requests',
             component: () => import('@/views/CommissionerRequestsView.vue'),
           },
+          {
+            path: 'taches',
+            name: 'commissioner-tasks',
+            component: () => import('@/views/CommissionerTaskManagementView.vue'),
+          },
         ],
       },
       {

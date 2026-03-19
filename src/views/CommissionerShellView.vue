@@ -28,5 +28,10 @@ const menuItems = computed(() => [
     icon: 'mdi-file-document-check',
     to: '/referee/demandes',
   },
+  {
+    title: t('commissioner.menuTasks'),
+    icon: 'mdi-clipboard-list-outline',
+    to: '/referee/taches',
+  },
 ])
 </script>
