@@ -88,11 +88,6 @@ const routes: RouteRecordRaw[] = [
             name: 'admin-competitions',
             component: () => import('@/views/AdminCompetitionsView.vue'),
           },
-          {
-            path: 'events',
-            name: 'admin-events',
-            component: () => import('@/views/AdminEventsView.vue'),
-          },
         ],
       },
       {
