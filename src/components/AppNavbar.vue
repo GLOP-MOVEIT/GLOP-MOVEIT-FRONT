@@ -13,6 +13,12 @@ const { t } = useI18n()
 const drawer = ref(false)
 const isAdmin = computed(() => userStore.hasRole(UserRole.ADMIN))
 const isReferee = computed(() => userStore.hasRole(UserRole.REFEREE))
+const isAthlete = computed(
+  () =>
+    userStore.hasRole(UserRole.ATHLETE) &&
+    !userStore.hasRole(UserRole.ADMIN) &&
+    !userStore.hasRole(UserRole.REFEREE),
+)
 
 const menuItems = computed(() => [{ title: t('nav.home'), icon: 'mdi-home', to: '/' }])
 
@@ -37,6 +43,17 @@ const logout = async () => {
     </v-toolbar-title>
     <v-spacer></v-spacer>
     <div class="d-none d-md-flex app-nav-spacer"></div>
+    <!-- Bouton convocations visible uniquement pour les athlètes -->
+    <v-btn
+      v-if="userStore.isAuthenticated && isAthlete"
+      to="/mes-convocations"
+      variant="outlined"
+      color="white"
+      class="mr-2"
+      prepend-icon="mdi-calendar-clock"
+    >
+      {{ t('nav.myConvocations') }}
+    </v-btn>
     <LanguageSwitcher class="ml-2" />
     <v-menu v-if="userStore.isAuthenticated">
       <template v-slot:activator="{ props }">

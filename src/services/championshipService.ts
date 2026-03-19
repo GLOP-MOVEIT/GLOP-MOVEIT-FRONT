@@ -363,6 +363,21 @@ export const championshipService = {
   },
 
   /**
+   * Récupérer toutes les manches d'un athlète
+   */
+  async getTrialsByAthlete(athleteId: number): Promise<Trial[]> {
+    try {
+      const response = await axios.get<Trial[]>(`${API_URL}/trials/athlete/${athleteId}`, {
+        headers: this.getAuthHeaders(),
+      })
+      return ensureArray(response.data)
+    } catch (error) {
+      console.error(`Get trials for athlete ${athleteId} error:`, error)
+      throw error
+    }
+  },
+
+  /**
    * Supprimer une épreuve
    */
   async deleteEvent(id: number): Promise<void> {

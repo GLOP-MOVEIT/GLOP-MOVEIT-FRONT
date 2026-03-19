@@ -60,6 +60,14 @@ const routes: RouteRecordRaw[] = [
           disallowRoles: [UserRole.ADMIN, UserRole.REFEREE],
         },
       },
+      {path: 'mes-convocations',
+        name: 'athlete-convocations',
+        component: () => import('@/views/AthleteConvocationsView.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresRole: UserRole.ATHLETE,
+        },
+      },
       {
         path: 'admin',
         component: () => import('@/views/AdminShellView.vue'),

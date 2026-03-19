@@ -12,6 +12,7 @@ const messages = {
       login: 'Sign in',
       menu: 'Menu',
       language: 'Language',
+      myConvocations: 'My summons',
     },
     footer: {
       rightsReserved: 'All rights reserved',
@@ -34,6 +35,26 @@ const messages = {
       noOngoing: 'No ongoing championships at the moment.',
       noUpcoming: 'No upcoming championships at the moment.',
       loadError: 'Unable to load championships.',
+    },
+    athlete: {
+      convocations: {
+        title: 'My summons',
+        subtitle: 'All your assigned trials.',
+        empty: 'No summons yet.',
+        emptySubtitle: 'You have not been assigned to any trial.',
+        startDate: 'Start',
+        endDate: 'End',
+        round: 'Round',
+        position: 'Position',
+        errorNoId: 'Unable to identify your account.',
+        errorLoad: 'Unable to load your summons.',
+        status: {
+          PLANNED: 'Planned',
+          ONGOING: 'Ongoing',
+          COMPLETED: 'Completed',
+          CANCELLED: 'Cancelled',
+        },
+      },
     },
     championshipDetails: {
       title: 'Championship details',
@@ -455,6 +476,7 @@ const messages = {
       login: 'Connexion',
       menu: 'Menu',
       language: 'Langue',
+      myConvocations: 'Mes convocations',
     },
     footer: {
       rightsReserved: 'Tous droits réservés',
@@ -477,6 +499,26 @@ const messages = {
       noOngoing: 'Aucun championnat en cours pour le moment.',
       noUpcoming: 'Aucun championnat à venir pour le moment.',
       loadError: 'Impossible de charger les championnats.',
+    },
+    athlete: {
+      convocations: {
+        title: 'Mes convocations',
+        subtitle: 'Toutes vos épreuves assignées.',
+        empty: 'Aucune convocation pour le moment.',
+        emptySubtitle: 'Vous n\'avez pas encore été assigné à une épreuve.',
+        startDate: 'Début',
+        endDate: 'Fin',
+        round: 'Manche',
+        position: 'Position',
+        errorNoId: 'Impossible d\'identifier votre compte.',
+        errorLoad: 'Impossible de charger vos convocations.',
+        status: {
+          PLANNED: 'Planifié',
+          ONGOING: 'En cours',
+          COMPLETED: 'Terminé',
+          CANCELLED: 'Annulé',
+        },
+      },
     },
     championshipDetails: {
       title: 'Détails du championnat',
