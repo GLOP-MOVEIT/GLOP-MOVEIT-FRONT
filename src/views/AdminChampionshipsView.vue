@@ -75,6 +75,8 @@
                   rows="3"
                   density="comfortable"
                   auto-grow
+                  :rules="[rules.required]"
+                  required
                 />
               </v-col>
             </v-row>
