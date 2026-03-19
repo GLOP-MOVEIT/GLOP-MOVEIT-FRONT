@@ -27,6 +27,21 @@ export function formatDate(dateStr: string | Date, locale = 'fr-FR'): string {
 }
 
 /**
+ * Formate une date avec l'heure pour l'affichage (ex: "9 mars 2026 à 14:30")
+ */
+export function formatDateTime(dateStr: string | Date, locale = 'fr-FR'): string {
+  if (!dateStr) return '-'
+  const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr
+  return new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
+
+/**
  * Formate une plage de dates pour l'affichage (ex: "9 mars 2026 → 15 mars 2026")
  */
 export function formatDateRange(startDate: string | Date, endDate: string | Date, locale = 'fr-FR'): string {

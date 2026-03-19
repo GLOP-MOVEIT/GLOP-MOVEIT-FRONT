@@ -279,6 +279,24 @@ export const championshipService = {
     }
   },
 
+  /**
+   * Mettre à jour une manche (date, lieu, etc.)
+   */
+  async updateTrial(id: number, payload: Partial<Trial>): Promise<Trial> {
+    try {
+      const response = await axios.put<Trial>(`${API_URL}/trials/${id}`, payload, {
+        headers: {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      })
+      return response.data
+    } catch (error) {
+      console.error(`Update trial ${id} error:`, error)
+      throw error
+    }
+  },
+
   // --- Event Methods ---
   /**
    * Récupérer toutes les épreuves d'une compétition

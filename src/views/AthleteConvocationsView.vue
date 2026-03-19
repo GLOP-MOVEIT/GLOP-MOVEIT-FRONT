@@ -80,24 +80,16 @@ import { useUserStore } from '@/stores/user'
 import championshipService from '@/services/championshipService'
 import type { Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
+import { formatDateTime } from '@/utils/date'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const userStore = useUserStore()
 
 const trials = ref<Trial[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
+const formatDate = (dateStr: string) => formatDateTime(dateStr, locale.value)
 
 const statusColor = (status: string) => {
   if (status === Status.PLANNED) return 'grey'

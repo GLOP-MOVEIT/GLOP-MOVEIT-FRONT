@@ -147,12 +147,16 @@ import { useUserStore } from '@/stores/user'
 import type { Championship, Competition } from '@/types/competition'
 import { Status } from '@/types/competition'
 import { getUserDisplayName, UserRole } from '@/types/user'
-import { formatDateRange } from '@/utils/date'
+import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+// Wrapper pour utiliser la locale de l'app
+const formatDateRange = (start: string | Date, end: string | Date) =>
+  formatDateRangeUtil(start, end, locale.value)
 
 const championship = ref<Championship | null>(null)
 const competitions = ref<Competition[]>([])

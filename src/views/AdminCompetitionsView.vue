@@ -255,9 +255,12 @@ import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import type { User } from '@/types/user'
 import { UserRole } from '@/types/user'
-import { formatDateRange } from '@/utils/date'
+import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+const formatDateRange = (start: string | Date, end: string | Date) =>
+  formatDateRangeUtil(start, end, locale.value)
 
 const competitionFormRef = ref()
 const editingCompetitionId = ref<number | null>(null)

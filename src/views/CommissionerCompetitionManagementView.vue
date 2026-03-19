@@ -114,31 +114,73 @@
               {{ t('commissionerCompetition.noTrials') }}
             </div>
 
-            <v-list v-else lines="three" density="comfortable">
-              <v-list-item v-for="trial in trials" :key="trial.trialId" class="rounded-lg mb-2 border-sm">
-                <template #title>
-                  <div class="d-flex flex-wrap align-center justify-space-between gap-2">
-                    <span class="font-weight-medium">{{ trial.trialName }}</span>
-                    <v-chip size="x-small" :color="statusColor(trial.trialStatus)" variant="tonal">
-                      {{ t(`admin.competitionStatus.${trial.trialStatus}`) }}
-                    </v-chip>
+            <div v-else>
+              <v-card
+                v-for="trial in trials"
+                :key="trial.trialId"
+                class="rounded-lg mb-3 pa-4"
+                variant="outlined"
+              >
+                <div class="d-flex align-start gap-4">
+                  <!-- Infos de la manche -->
+                  <div class="flex-grow-1">
+                    <div class="d-flex flex-wrap align-center gap-2 mb-2">
+                      <span class="font-weight-medium text-body-1">{{ trial.trialName }}</span>
+                      <v-chip
+                        :color="isTrialReady(trial) ? 'success' : 'warning'"
+                        :prepend-icon="isTrialReady(trial) ? 'mdi-check-circle' : 'mdi-alert-circle-outline'"
+                        size="small"
+                        variant="tonal"
+                      >
+                        {{ isTrialReady(trial) ? t('commissionerCompetition.trialReady') : t('commissionerCompetition.trialNotReady') }}
+                      </v-chip>
+                      <v-chip size="small" :color="statusColor(trial.trialStatus)" variant="tonal">
+                        {{ t(`admin.competitionStatus.${trial.trialStatus}`) }}
+                      </v-chip>
+                    </div>
+                    <div class="d-flex flex-column text-caption text-grey-darken-2 gap-1">
+                      <span>
+                        <v-icon size="13" class="mr-1">mdi-calendar-range</v-icon>
+                        {{ formatDateRange(trial.trialStartDate, trial.trialEndDate) }}
+                      </span>
+                      <span>
+                        <v-icon size="13" class="mr-1">mdi-counter</v-icon>
+                        {{ t('commissionerCompetition.trialRoundLabel', { round: trial.roundNumber, position: trial.position }) }}
+                      </span>
+                      <span v-if="trial.locationId">
+                        <v-icon size="13" class="mr-1">mdi-map-marker</v-icon>
+                        {{ t('commissionerCompetition.locationId') }} : {{ trial.locationId }}
+                      </span>
+                      <span>
+                        <v-icon size="13" class="mr-1">mdi-account-group</v-icon>
+                        {{ t('commissionerCompetition.trialParticipantsLabel') }}
+                        {{ formatParticipantNames(trial.participantIds) }}
+                      </span>
+                    </div>
                   </div>
-                </template>
-
-                <template #subtitle>
-                  <div class="d-flex flex-column text-caption text-grey-darken-2 mt-2 gap-1">
-                    <span>{{ formatDateRange(trial.trialStartDate, trial.trialEndDate) }}</span>
-                    <span>
-                      {{ t('commissionerCompetition.trialRoundLabel', { round: trial.roundNumber, position: trial.position }) }}
-                    </span>
-                    <span>
-                      {{ t('commissionerCompetition.trialParticipantsLabel') }}
-                      {{ formatParticipantNames(trial.participantIds) }}
-                    </span>
+                  <div class="d-flex flex-column flex-shrink-0" style="min-width: 190px; gap: 16px;">
+                    <v-btn
+                      variant="outlined"
+                      color="primary"
+                      prepend-icon="mdi-calendar-clock"
+                      block
+                      @click="openDateDialog(trial)"
+                    >
+                      {{ t('commissionerCompetition.editDateTitle') }}
+                    </v-btn>
+                    <v-btn
+                      variant="outlined"
+                      color="secondary"
+                      prepend-icon="mdi-map-marker"
+                      block
+                      @click="openLocationDialog(trial)"
+                    >
+                      {{ t('commissionerCompetition.editLocationTitle') }}
+                    </v-btn>
                   </div>
-                </template>
-              </v-list-item>
-            </v-list>
+                </div>
+              </v-card>
+            </div>
           </v-card>
         </v-col>
 
@@ -202,6 +244,100 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <!-- Dialog : modifier l'horaire -->
+      <v-dialog v-model="isDateDialogOpen" max-width="500">
+        <v-card>
+          <v-card-title>
+            <v-icon icon="mdi-calendar-clock" class="mr-2" />
+            {{ t('commissionerCompetition.editDateTitle') }}
+          </v-card-title>
+          <v-card-text>
+            <div class="mb-4">
+              <div class="text-subtitle-2 mb-2">{{ t('commissionerCompetition.trialStartDate') }}</div>
+              <v-row dense>
+                <v-col cols="7">
+                  <v-text-field
+                    v-model="editDateForm.startDate"
+                    type="date"
+                    label="Date"
+                    variant="outlined"
+                    density="comfortable"
+                    hide-details
+                  />
+                </v-col>
+                <v-col cols="5">
+                  <v-text-field
+                    v-model="editDateForm.startTime"
+                    type="time"
+                    label="Heure"
+                    variant="outlined"
+                    density="comfortable"
+                    hide-details
+                  />
+                </v-col>
+              </v-row>
+            </div>
+            <div>
+              <div class="text-subtitle-2 mb-2">{{ t('commissionerCompetition.trialEndDate') }}</div>
+              <v-row dense>
+                <v-col cols="7">
+                  <v-text-field
+                    v-model="editDateForm.endDate"
+                    type="date"
+                    label="Date"
+                    variant="outlined"
+                    density="comfortable"
+                    hide-details
+                  />
+                </v-col>
+                <v-col cols="5">
+                  <v-text-field
+                    v-model="editDateForm.endTime"
+                    type="time"
+                    label="Heure"
+                    variant="outlined"
+                    density="comfortable"
+                    hide-details
+                  />
+                </v-col>
+              </v-row>
+            </div>
+          </v-card-text>
+          <v-card-actions class="justify-end">
+            <v-btn variant="text" @click="isDateDialogOpen = false">{{ t('commissionerCompetition.cancel') }}</v-btn>
+            <v-btn color="primary" :loading="isSavingTrial" @click="saveDateDialog">
+              {{ t('commissionerCompetition.saveDate') }}
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Dialog : modifier le lieu -->
+      <v-dialog v-model="isLocationDialogOpen" max-width="400">
+        <v-card>
+          <v-card-title>
+            <v-icon icon="mdi-map-marker" class="mr-2" />
+            {{ t('commissionerCompetition.editLocationTitle') }}
+          </v-card-title>
+          <v-card-text>
+            <v-text-field
+              v-model.number="editLocationForm.locationId"
+              type="number"
+              :label="t('commissionerCompetition.locationId')"
+              variant="outlined"
+              density="comfortable"
+              min="1"
+            />
+          </v-card-text>
+          <v-card-actions class="justify-end">
+            <v-btn variant="text" @click="isLocationDialogOpen = false">{{ t('commissionerCompetition.cancel') }}</v-btn>
+            <v-btn color="secondary" :loading="isSavingTrial" @click="saveLocationDialog">
+              {{ t('commissionerCompetition.saveLocation') }}
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </template>
   </div>
 </template>
@@ -216,11 +352,14 @@ import type { CompetitionTreeResult, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
 import type { User } from '@/types/user'
 import { getUserDisplayName, UserRole } from '@/types/user'
-import { formatDateRange } from '@/utils/date'
+import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 import { isAxiosError } from 'axios'
 
 const route = useRoute()
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+const formatDateRange = (start: string | Date, end: string | Date) =>
+  formatDateRangeUtil(start, end, locale.value)
 
 const competition = ref<CompetitionTreeResult | null>(null)
 const athletes = ref<User[]>([])
@@ -232,6 +371,22 @@ const infoMessage = ref('')
 const isLoading = ref(false)
 const isGeneratingTree = ref(false)
 const isAthleteDialogOpen = ref(false)
+
+// Dialog date
+const isDateDialogOpen = ref(false)
+const editingTrialId = ref<number | null>(null)
+const editDateForm = ref({
+  startDate: '',
+  startTime: '',
+  endDate: '',
+  endTime: '',
+})
+
+// Dialog lieu
+const isLocationDialogOpen = ref(false)
+const editLocationForm = ref({ locationId: null as number | null })
+
+const isSavingTrial = ref(false)
 
 const competitionId = computed(() => Number(route.params.id))
 const championshipDetailsId = computed(() => competition.value?.championshipId ?? competition.value?.championship?.id ?? null)
@@ -315,6 +470,106 @@ const loadTrials = async () => {
     trials.value = await championshipService.getTrialsByCompetition(competitionId.value)
   } catch {
     trials.value = []
+  }
+}
+
+// Un trial est "PRÊT" si il a une date de début, une date de fin ET un lieu renseignés
+const isTrialReady = (trial: Trial): boolean =>
+  !!trial.trialStartDate && !!trial.trialEndDate && !!trial.locationId
+
+const splitDateTime = (dateTimeStr: string | null | undefined): { date: string; time: string } => {
+  if (!dateTimeStr) return { date: '', time: '' }
+  // Format ISO: 2026-03-20T14:30:00
+  const parts = dateTimeStr.split('T')
+  return {
+    date: parts[0] || '',
+    time: parts[1]?.slice(0, 5) || '', // HH:mm
+  }
+}
+
+const combineDateTime = (date: string, time: string): string => {
+  if (!date || !time) return ''
+  return `${date}T${time}:00` // Format ISO avec secondes
+}
+
+const openDateDialog = (trial: Trial) => {
+  editingTrialId.value = trial.trialId
+  const start = splitDateTime(trial.trialStartDate)
+  const end = splitDateTime(trial.trialEndDate)
+  editDateForm.value = {
+    startDate: start.date,
+    startTime: start.time,
+    endDate: end.date,
+    endTime: end.time,
+  }
+  isDateDialogOpen.value = true
+}
+
+const openLocationDialog = (trial: Trial) => {
+  editingTrialId.value = trial.trialId
+  editLocationForm.value = { locationId: trial.locationId ?? null }
+  isLocationDialogOpen.value = true
+}
+
+const saveDateDialog = async () => {
+  if (!editingTrialId.value) return
+  isSavingTrial.value = true
+  errorMessage.value = ''
+  try {
+    const trial = trials.value.find((t) => t.trialId === editingTrialId.value)
+    if (!trial) return
+
+    const startDateTime = combineDateTime(editDateForm.value.startDate, editDateForm.value.startTime)
+    const endDateTime = combineDateTime(editDateForm.value.endDate, editDateForm.value.endTime)
+
+    const updated = await championshipService.updateTrial(editingTrialId.value, {
+      trialName: trial.trialName,
+      trialStartDate: startDateTime,
+      trialEndDate: endDateTime,
+      trialDescription: trial.trialDescription,
+      trialStatus: trial.trialStatus,
+      locationId: trial.locationId,
+      roundNumber: trial.roundNumber,
+      position: trial.position,
+      participantIds: trial.participantIds,
+    })
+    const idx = trials.value.findIndex((t) => t.trialId === editingTrialId.value)
+    if (idx !== -1) trials.value[idx] = updated
+    isDateDialogOpen.value = false
+    infoMessage.value = t('commissionerCompetition.updateSuccess')
+  } catch {
+    errorMessage.value = t('commissionerCompetition.updateError')
+  } finally {
+    isSavingTrial.value = false
+  }
+}
+
+const saveLocationDialog = async () => {
+  if (!editingTrialId.value) return
+  isSavingTrial.value = true
+  errorMessage.value = ''
+  try {
+    const trial = trials.value.find((t) => t.trialId === editingTrialId.value)
+    if (!trial) return
+    const updated = await championshipService.updateTrial(editingTrialId.value, {
+      trialName: trial.trialName,
+      trialStartDate: trial.trialStartDate,
+      trialEndDate: trial.trialEndDate,
+      trialDescription: trial.trialDescription,
+      trialStatus: trial.trialStatus,
+      locationId: editLocationForm.value.locationId ?? undefined,
+      roundNumber: trial.roundNumber,
+      position: trial.position,
+      participantIds: trial.participantIds,
+    })
+    const idx = trials.value.findIndex((t) => t.trialId === editingTrialId.value)
+    if (idx !== -1) trials.value[idx] = updated
+    isLocationDialogOpen.value = false
+    infoMessage.value = t('commissionerCompetition.updateSuccess')
+  } catch {
+    errorMessage.value = t('commissionerCompetition.updateError')
+  } finally {
+    isSavingTrial.value = false
   }
 }
 
