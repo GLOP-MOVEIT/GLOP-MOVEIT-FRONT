@@ -69,7 +69,13 @@
             cols="12"
             md="6"
           >
-            <v-card variant="tonal" class="pa-3 h-100" rounded="lg">
+            <v-card
+              variant="tonal"
+              class="pa-3 h-100"
+              rounded="lg"
+              hover
+              :to="{ name: 'competition-details', params: { id: competition.competitionId } }"
+            >
               <div class="d-flex align-center justify-space-between mb-2">
                 <div class="text-subtitle-2 font-weight-bold">{{ competition.competitionName }}</div>
                 <v-chip :color="statusColor(competition.competitionStatus)" variant="tonal" size="x-small" label>
@@ -124,6 +130,7 @@
                   variant="outlined"
                   size="small"
                   :to="{ name: 'commissioner-competition-management', params: { id: competition.competitionId } }"
+                  @click.stop
                 >
                   <v-icon size="18" class="mr-1">mdi-cog</v-icon>
                   {{ t('championshipDetails.manageTrials') }}

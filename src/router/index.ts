@@ -52,6 +52,14 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'competitions/:id',
+        name: 'competition-details',
+        component: () => import('@/views/CompetitionDetailsView.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
         path: 'demande-role/:role',
         name: 'role-request',
         component: () => import('@/views/RoleRequestView.vue'),
