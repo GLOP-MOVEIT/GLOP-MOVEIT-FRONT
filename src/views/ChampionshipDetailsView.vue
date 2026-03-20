@@ -69,7 +69,13 @@
             cols="12"
             md="6"
           >
-            <v-card variant="tonal" class="pa-3 h-100" rounded="lg">
+            <v-card
+              variant="tonal"
+              class="pa-3 h-100"
+              rounded="lg"
+              hover
+              :to="{ name: 'competition-details', params: { id: competition.competitionId } }"
+            >
               <div class="d-flex align-center justify-space-between mb-2">
                 <div class="text-subtitle-2 font-weight-bold">{{ competition.competitionName }}</div>
                 <v-chip :color="statusColor(competition.competitionStatus)" variant="tonal" size="x-small" label>
@@ -117,6 +123,19 @@
                   {{ getCommissaireLabel(competition.assignedCommissaireId) }}
                 </span>
               </div>
+
+              <div v-if="canManageCompetition(competition)" class="d-flex justify-end mt-3">
+                <v-btn
+                  color="primary"
+                  variant="outlined"
+                  size="small"
+                  :to="{ name: 'commissioner-competition-management', params: { id: competition.competitionId } }"
+                  @click.stop
+                >
+                  <v-icon size="18" class="mr-1">mdi-cog</v-icon>
+                  {{ t('championshipDetails.manageTrials') }}
+                </v-btn>
+              </div>
             </v-card>
           </v-col>
         </v-row>
@@ -131,13 +150,20 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
+import { useUserStore } from '@/stores/user'
 import type { Championship, Competition } from '@/types/competition'
 import { Status } from '@/types/competition'
-import { formatDateRange } from '@/utils/date'
+import { getUserDisplayName, UserRole } from '@/types/user'
+import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 
 const route = useRoute()
 const router = useRouter()
-const { t } = useI18n()
+const userStore = useUserStore()
+const { t, locale } = useI18n()
+
+// Wrapper pour utiliser la locale de l'app
+const formatDateRange = (start: string | Date, end: string | Date) =>
+  formatDateRangeUtil(start, end, locale.value)
 
 const championship = ref<Championship | null>(null)
 const competitions = ref<Competition[]>([])
@@ -149,6 +175,14 @@ const selectedSport = ref<string | null>(null)
 const commissaireNames = ref<Record<number, string>>({})
 
 const championshipId = computed(() => Number(route.params.id))
+const currentUserId = computed(() => userStore.user?.userId ?? null)
+
+const canManageCompetition = (competition: Competition) => {
+  if (!userStore.hasRole(UserRole.REFEREE) || currentUserId.value == null) {
+    return false
+  }
+  return competition.assignedCommissaireId === currentUserId.value
+}
 
 const statusColor = (status: Status) => {
   if (status === Status.PLANNED) return 'grey'
@@ -165,10 +199,22 @@ const sportFilterOptions = computed(() => {
   return sports.map((sport) => ({ title: sport, value: sport }))
 })
 
-// Compétitions filtrées par sport
+// Compétitions filtrées par sport + priorisation des compétitions assignées au referee connecté
 const filteredCompetitions = computed(() => {
-  if (!selectedSport.value) return competitions.value
-  return competitions.value.filter((c) => c.competitionSport === selectedSport.value)
+  const base = selectedSport.value
+    ? competitions.value.filter((c) => c.competitionSport === selectedSport.value)
+    : competitions.value
+
+  const userId = currentUserId.value
+  if (userId == null) {
+    return base
+  }
+
+  return [...base].sort((a, b) => {
+    const aAssignedToCurrent = a.assignedCommissaireId === userId ? 1 : 0
+    const bAssignedToCurrent = b.assignedCommissaireId === userId ? 1 : 0
+    return bAssignedToCurrent - aAssignedToCurrent
+  })
 })
 
 const getCommissaireLabel = (id: number | null | undefined) => {
@@ -193,9 +239,7 @@ const loadCommissaireNames = async () => {
     if (result.status === 'fulfilled') {
       const commissaireId = ids[index]
       if (commissaireId !== undefined) {
-        const profile = result.value
-        const fullName = `${profile.firstName ?? ''} ${profile.surname ?? ''}`.trim() || profile.email
-        commissaireNames.value[commissaireId] = fullName
+        commissaireNames.value[commissaireId] = getUserDisplayName(result.value)
       }
     }
   })

@@ -24,6 +24,6 @@ describe('AdminShellView', () => {
     expect(vm.menuItems[1].to).toBe('/admin/users')
     expect(vm.menuItems[2].to).toBe('/admin/championships')
     expect(vm.menuItems[3].to).toBe('/admin/competitions')
-    expect(vm.menuItems[4].to).toBe('/admin/events')
+    expect(vm.menuItems[4].to).toBe('/admin/lieux')
   })
 })

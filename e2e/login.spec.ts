@@ -102,7 +102,7 @@ test('login as admin shows admin dashboard link', async ({ page }) => {
   await expect(page.locator('a[href="/admin"]')).toHaveCount(1)
 
   await page.goto('/referee')
-  await expect(page).toHaveURL('/')
+  await expect(page).toHaveURL('/referee')
 })
 
 test('login fails and stays on login page', async ({ page }) => {

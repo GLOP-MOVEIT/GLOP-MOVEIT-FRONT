@@ -28,6 +28,13 @@ export enum ParticipantType {
   TEAM = 'TEAM',
 }
 
+export enum ResultUnit {
+  POINTS = 'POINTS',
+  MINUTES = 'MINUTES',
+  SECONDS = 'SECONDS',
+  HOURS = 'HOURS',
+}
+
 export interface Championship {
   id: number
   name: string
@@ -53,28 +60,60 @@ export interface Competition {
   maxPerHeat: number
   nbManches: number
   assignedCommissaireId?: number | null
-  events?: Event[]
+  competitionResultUnit?: ResultUnit | null
+  events?: CompetitionTreeEvent[]
+  trials?: Trial[]
+}
+
+export type CompetitionPayload = Omit<Competition, 'competitionId' | 'events' | 'trials'>
+
+export interface CompetitionFormValues {
+  championshipId: number | null
+  sport: string
+  participantType: ParticipantType
+  type: string
+  maxPerHeat: number
+  name: string
+  description: string
+  startDate: string
+  endDate: string
+  status: Status
+  nbManches: number
+  assignedCommissaireId: number | null
+  resultUnit: ResultUnit | null
+}
+
+export interface CompetitionTreeEvent {
+  eventId: string
+  eventName: string
+  eventDate: string
+  eventDescription: string
+}
+
+export interface Trial {
+  trialId: number
+  trialName: string
+  trialStartDate: string
+  trialEndDate: string
+  trialDescription: string
+  trialStatus: Status
+  locationId: number | null
+  roundNumber: number
+  position: number
+  nextTrialId: number | null
+  competitionId: number
+  participantIds: number[]
+}
+
+export interface CompetitionTreeResult extends Competition {
+  events?: CompetitionTreeEvent[]
   trials?: Trial[]
 }
 
 export interface Event {
   id: number
-  competitionId?: number
-  competition?: Competition
   name: string
-  description: string
-  startDate: string | Date
-  endDate: string | Date
-  status: Status
+  startDate: string
+  endDate: string
+  description?: string
 }
-
-export interface Trial {
-  id: number
-  competition?: Competition
-  name: string
-  description: string
-  startDate: string | Date
-  endDate: string | Date
-  status: Status
-}
-

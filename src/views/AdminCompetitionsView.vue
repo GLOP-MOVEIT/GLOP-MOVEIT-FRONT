@@ -69,7 +69,7 @@
                   required
                 />
               </v-col>
-              <v-col cols="12" md="6">
+              <v-col v-if="competitionForm.type === 'HEATS'" cols="12" md="6">
                 <v-text-field
                   v-model.number="competitionForm.maxPerHeat"
                   type="number"
@@ -81,7 +81,7 @@
                   min="1"
                 />
               </v-col>
-              <v-col cols="12" md="6">
+              <v-col v-if="competitionForm.type !== 'ROUND_ROBIN'" cols="12" md="6">
                 <v-text-field
                   v-model.number="competitionForm.nbManches"
                   type="number"
@@ -148,6 +148,20 @@
                   :label="t('admin.competitionCommissaireLabel')"
                   variant="outlined"
                   density="comfortable"
+                  clearable
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="competitionForm.resultUnit"
+                  :items="resultUnitOptions"
+                  item-title="title"
+                  item-value="value"
+                  :label="t('admin.competitionResultUnitLabel')"
+                  variant="outlined"
+                  density="comfortable"
+                  :rules="[rules.required]"
+                  required
                   clearable
                 />
               </v-col>
@@ -235,15 +249,18 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Status, Sport, ParticipantType } from '@/types/competition'
+import { Status, Sport, ParticipantType, ResultUnit } from '@/types/competition'
 import type { Championship, Competition } from '@/types/competition'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import type { User } from '@/types/user'
 import { UserRole } from '@/types/user'
-import { formatDateRange } from '@/utils/date'
+import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+const formatDateRange = (start: string | Date, end: string | Date) =>
+  formatDateRangeUtil(start, end, locale.value)
 
 const competitionFormRef = ref()
 const editingCompetitionId = ref<number | null>(null)
@@ -281,6 +298,7 @@ const mapCompetition = (competition: Competition): Competition => ({
   maxPerHeat: competition.maxPerHeat,
   nbManches: competition.nbManches,
   assignedCommissaireId: competition.assignedCommissaireId ?? null,
+  competitionResultUnit: competition.competitionResultUnit ?? null,
 })
 
 const competitionForm = reactive({
@@ -296,6 +314,7 @@ const competitionForm = reactive({
   status: Status.PLANNED,
   nbManches: 1,
   assignedCommissaireId: null as number | null,
+  resultUnit: null as ResultUnit | null,
 })
 
 const statusOptions = computed(() =>
@@ -366,6 +385,13 @@ const commissaireOptions = computed(() =>
   })),
 )
 
+const resultUnitOptions = computed(() =>
+  Object.values(ResultUnit).map((unit) => ({
+    title: t(`admin.resultUnit.${unit}`),
+    value: unit,
+  })),
+)
+
 const rules = {
   required: (value: unknown) => {
     if (value === null || value === undefined) return t('validation.requiredField')
@@ -432,11 +458,9 @@ onMounted(async () => {
     championships.value = champsData.map(mapChampionship)
     competitions.value = compsData.map(mapCompetition)
     competitionTypes.value = typesData
-    // TODO: filtrer uniquement les REFEREE quand il y en aura dans la base
-    // Pour l'instant on affiche ADMIN et REFEREE
     commissaireUsers.value = usersData.filter((u) => {
       const roleName = u.role?.name ?? ''
-      return roleName === UserRole.REFEREE || roleName === UserRole.ADMIN
+      return roleName === UserRole.REFEREE
     })
   } catch (error) {
     console.error('Error loading data:', error)
@@ -452,14 +476,15 @@ const resetCompetitionForm = () => {
   competitionForm.sport = ''
   competitionForm.participantType = ParticipantType.INDIVIDUAL
   competitionForm.type = ''
-  competitionForm.maxPerHeat = 1
+  competitionForm.maxPerHeat = 0
   competitionForm.name = ''
   competitionForm.description = ''
   competitionForm.startDate = ''
   competitionForm.endDate = ''
   competitionForm.status = Status.PLANNED
-  competitionForm.nbManches = 1
+  competitionForm.nbManches = 0
   competitionForm.assignedCommissaireId = null
+  competitionForm.resultUnit = null
   editingCompetitionId.value = null
   nextTick(() => competitionFormRef.value?.resetValidation())
 }
@@ -492,6 +517,7 @@ const handleCompetitionSubmit = async () => {
         maxPerHeat: competitionForm.maxPerHeat,
         nbManches: competitionForm.nbManches,
         assignedCommissaireId: competitionForm.assignedCommissaireId,
+        competitionResultUnit: competitionForm.resultUnit,
       })
       snackbarMessage.value = t('admin.competitionUpdateSuccess')
     } else {
@@ -509,13 +535,12 @@ const handleCompetitionSubmit = async () => {
         maxPerHeat: competitionForm.maxPerHeat,
         nbManches: competitionForm.nbManches,
         assignedCommissaireId: competitionForm.assignedCommissaireId,
+        competitionResultUnit: competitionForm.resultUnit,
       }
-      // Ne pas inclure competitionId pour la création, Hibernate le génère
       await championshipService.createCompetition(payload)
       snackbarMessage.value = t('admin.competitionSuccess')
     }
 
-    // Reload competitions
     console.log('Reloading competitions')
     const data = await championshipService.getAllCompetitions()
     competitions.value = data.map(mapCompetition)
@@ -544,6 +569,7 @@ const startCompetitionEdit = (competition: Competition) => {
   competitionForm.status = competition.competitionStatus
   competitionForm.nbManches = competition.nbManches
   competitionForm.assignedCommissaireId = competition.assignedCommissaireId ?? null
+  competitionForm.resultUnit = competition.competitionResultUnit ?? null
   nextTick(() => competitionFormRef.value?.resetValidation())
 }
 

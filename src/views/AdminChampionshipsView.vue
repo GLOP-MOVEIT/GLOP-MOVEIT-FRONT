@@ -75,6 +75,8 @@
                   rows="3"
                   density="comfortable"
                   auto-grow
+                  :rules="[rules.required]"
+                  required
                 />
               </v-col>
             </v-row>
@@ -152,9 +154,12 @@ import { useI18n } from 'vue-i18n'
 import { Status } from '@/types/competition'
 import type { Championship } from '@/types/competition'
 import championshipService from '@/services/championshipService'
-import { formatDateRange } from '@/utils/date'
+import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+const formatDateRange = (start: string | Date, end: string | Date) =>
+  formatDateRangeUtil(start, end, locale.value)
 
 const championshipFormRef = ref()
 const editingChampionshipId = ref<number | null>(null)

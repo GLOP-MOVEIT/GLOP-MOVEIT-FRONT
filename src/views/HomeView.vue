@@ -106,18 +106,12 @@
               </div>
             </v-card-item>
             <v-spacer />
-            <v-card-actions class="mt-auto flex-column align-stretch">
-              <div class="d-flex align-center justify-space-between mb-2">
-                <v-chip :color="statusColor(championship.status)" variant="tonal" size="small" label>
-                  {{ t(`admin.competitionStatus.${championship.status}`) }}
-                </v-chip>
-              </div>
-              <div class="d-flex justify-end">
-                <v-btn variant="text" color="primary">
-                  {{ t('home.viewDetails') }}
-                  <v-icon icon="mdi-arrow-right" class="ml-2" />
-                </v-btn>
-              </div>
+            <v-card-actions class="mt-auto">
+              <v-spacer />
+              <v-btn variant="text" color="primary">
+                {{ t('home.viewDetails') }}
+                <v-icon icon="mdi-arrow-right" class="ml-2" />
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
@@ -156,18 +150,12 @@
               </div>
             </v-card-item>
             <v-spacer />
-            <v-card-actions class="mt-auto flex-column align-stretch">
-              <div class="d-flex align-center justify-space-between mb-2">
-                <v-chip :color="statusColor(championship.status)" variant="tonal" size="small" label>
-                  {{ t(`admin.competitionStatus.${championship.status}`) }}
-                </v-chip>
-              </div>
-              <div class="d-flex justify-end">
-                <v-btn variant="text" color="primary">
-                  {{ t('home.viewDetails') }}
-                  <v-icon icon="mdi-arrow-right" class="ml-2" />
-                </v-btn>
-              </div>
+            <v-card-actions class="mt-auto">
+              <v-spacer />
+              <v-btn variant="text" color="primary">
+                {{ t('home.viewDetails') }}
+                <v-icon icon="mdi-arrow-right" class="ml-2" />
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
@@ -188,12 +176,16 @@ import { UserRole } from '@/types/user'
 import championshipService from '@/services/championshipService'
 import type { Championship } from '@/types/competition'
 import { Status } from '@/types/competition'
-import { formatDateRange } from '@/utils/date'
+import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 
 const userStore = useUserStore()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const isAdmin = computed(() => userStore.hasRole(UserRole.ADMIN))
 const isReferee = computed(() => userStore.hasRole(UserRole.REFEREE))
+
+// Wrapper pour utiliser la locale de l'app
+const formatDateRange = (start: string | Date, end: string | Date) =>
+  formatDateRangeUtil(start, end, locale.value)
 
 const championships = ref<Championship[]>([])
 const isLoading = ref(false)
@@ -213,42 +205,31 @@ const filteredChampionships = computed(() => {
   })
 })
 
-const isCancelledOrCompleted = (status: Status) =>
-  status === Status.CANCELLED || status === Status.COMPLETED
-
 const ongoingChampionships = computed(() => {
   const now = new Date()
+  now.setHours(0, 0, 0, 0)
   return filteredChampionships.value
     .filter((championship) => {
-      if (isCancelledOrCompleted(championship.status)) return false
-      if (championship.status === Status.ONGOING) return true
+      if (championship.status === Status.CANCELLED || championship.status === Status.COMPLETED) return false
       const start = new Date(championship.startDate)
-      const end = new Date(championship.endDate)
-      return start <= now && end >= now
+      start.setHours(0, 0, 0, 0)
+      return start <= now
     })
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
 })
 
 const upcomingChampionships = computed(() => {
   const now = new Date()
+  now.setHours(0, 0, 0, 0)
   return filteredChampionships.value
     .filter((championship) => {
-      if (isCancelledOrCompleted(championship.status)) return false
-      if (championship.status === Status.PLANNED) return true
+      if (championship.status === Status.CANCELLED || championship.status === Status.COMPLETED) return false
       const start = new Date(championship.startDate)
+      start.setHours(0, 0, 0, 0)
       return start > now
     })
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
 })
-
-const statusColor = (status: Status) => {
-  if (status === Status.PLANNED) return 'grey'
-  if (status === Status.ONGOING) return 'primary'
-  if (status === Status.COMPLETED) return 'success'
-  if (status === Status.CANCELLED) return 'error'
-  return 'primary'
-}
-
 
 const loadChampionships = async () => {
   isLoading.value = true

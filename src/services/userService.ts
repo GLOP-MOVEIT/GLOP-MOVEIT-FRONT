@@ -1,9 +1,27 @@
 import axios from 'axios'
-import type { LoginRequest, RegisterRequest, AuthResponse, User, UserProfile, PagedResponse } from '@/types/user'
+import {
+  type LoginRequest,
+  type RegisterRequest,
+  type AuthResponse,
+  type User,
+  type UserProfile,
+  type PagedResponse,
+  type AuthUser,
+  UserRole,
+  matchesUserRole,
+} from '@/types/user'
 
 const API_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_BASE_URL ?? API_URL
 const USER_API_URL = import.meta.env.VITE_USER_API_BASE_URL ?? API_URL
+
+const extractUsers = (data: PagedResponse<UserProfile> | UserProfile[] | undefined): UserProfile[] => {
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  return Array.isArray(data?.content) ? data.content : []
+}
 
 export const userService = {
   /**
@@ -82,13 +100,23 @@ export const userService = {
    */
   getCurrentUser(): User | null {
     const user = localStorage.getItem('user')
-    return user ? JSON.parse(user) : null
+    if (!user) {
+      return null
+    }
+
+    try {
+      return JSON.parse(user) as User
+    } catch (error) {
+      console.error('Parse current user error:', error)
+      return null
+    }
   },
 
   /**
    * Récupérer le profil utilisateur par ID depuis le user-service
    */
   async getUserProfile(userId: number): Promise<UserProfile> {
+
     try {
       const token = this.getToken()
       const response = await axios.get<UserProfile>(`${USER_API_URL}/users/${userId}`, {
@@ -107,13 +135,14 @@ export const userService = {
    */
   async getCurrentUserProfile(): Promise<User> {
     try {
-      const currentUser = this.getCurrentUser()
-      if (!currentUser?.userId) {
+      const currentUser = this.getCurrentUser() as (User & Partial<AuthUser>) | null
+      const currentUserId = currentUser?.userId ?? currentUser?.id
+
+      if (!currentUserId) {
         throw new Error('Aucun utilisateur connecté')
       }
 
-      // Rafraîchir le profil depuis l'API
-      const userProfile = await this.getUserProfile(currentUser.userId)
+      const userProfile = await this.getUserProfile(currentUserId)
       localStorage.setItem('user', JSON.stringify(userProfile))
 
       return userProfile
@@ -130,28 +159,21 @@ export const userService = {
   async getUsers(): Promise<User[]> {
     try {
       const token = this.getToken()
-      const response = await axios.get<PagedResponse<UserProfile>>(`${USER_API_URL}/users`, {
+      const response = await axios.get<PagedResponse<UserProfile> | UserProfile[]>(`${USER_API_URL}/users`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
 
-      const data = response.data
-
-      if (data?.content && Array.isArray(data.content)) {
-        return data.content.map((profile) => ({
-          userId: profile.userId,
-          firstName: profile.firstName,
-          surname: profile.surname,
-          email: profile.email,
-          phoneNumber: profile.phoneNumber,
-          language: profile.language,
-          role: profile.role,
-          acceptsNotifications: profile.acceptsNotifications,
-          acceptsLocationSharing: profile.acceptsLocationSharing,
-        }))
-      }
-
-      console.error('Format de réponse inattendu, content non trouvé:', data)
-      return []
+      return extractUsers(response.data).map((profile) => ({
+        userId: profile.userId,
+        firstName: profile.firstName,
+        surname: profile.surname,
+        email: profile.email,
+        phoneNumber: profile.phoneNumber,
+        language: profile.language,
+        role: profile.role,
+        acceptsNotifications: profile.acceptsNotifications,
+        acceptsLocationSharing: profile.acceptsLocationSharing,
+      }))
     } catch (error) {
       console.error('Get users error:', error)
       throw error
@@ -171,6 +193,16 @@ export const userService = {
       console.error('Promote to referee error:', error)
       throw error
     }
+  },
+
+  /**
+   * Récupérer les utilisateurs par rôle
+   * Fait un GET /users et filtre par rôle côté front
+   * TODO: utiliser un filtre serveur quand l'API le supportera
+   */
+  async getUsersByRole(role: UserRole | string): Promise<User[]> {
+    const users = await this.getUsers()
+    return users.filter((user) => matchesUserRole(user.role?.name, role))
   },
 
   /**

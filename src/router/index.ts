@@ -52,12 +52,37 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'competitions/:id',
+        name: 'competition-details',
+        component: () => import('@/views/CompetitionDetailsView.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
         path: 'demande-role/:role',
         name: 'role-request',
         component: () => import('@/views/RoleRequestView.vue'),
         meta: {
           requiresAuth: true,
           disallowRoles: [UserRole.ADMIN, UserRole.REFEREE],
+        },
+      },
+      {path: 'mes-convocations',
+        name: 'athlete-convocations',
+        component: () => import('@/views/AthleteConvocationsView.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresRole: UserRole.ATHLETE,
+        },
+      },
+      {
+        path: 'mes-taches',
+        name: 'volunteer-tasks',
+        component: () => import('@/views/VolunteerTaskPreferencesView.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresRole: UserRole.VOLUNTEER,
         },
       },
       {
@@ -89,9 +114,9 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/AdminCompetitionsView.vue'),
           },
           {
-            path: 'events',
-            name: 'admin-events',
-            component: () => import('@/views/AdminEventsView.vue'),
+            path: 'lieux',
+            name: 'admin-locations',
+            component: () => import('@/views/AdminLocationsView.vue'),
           },
         ],
       },
@@ -109,9 +134,24 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/CommissionerOverviewView.vue'),
           },
           {
+            path: 'competitions/:id/gestion',
+            name: 'commissioner-competition-management',
+            component: () => import('@/views/CommissionerCompetitionManagementView.vue'),
+          },
+          {
             path: 'demandes',
             name: 'commissioner-requests',
             component: () => import('@/views/CommissionerRequestsView.vue'),
+          },
+          {
+            path: 'taches',
+            name: 'commissioner-tasks',
+            component: () => import('@/views/CommissionerTaskManagementView.vue'),
+          },
+          {
+            path: 'epreuves/:id/taches',
+            name: 'trial-tasks',
+            component: () => import('@/views/TrialTaskManagementView.vue'),
           },
         ],
       },
@@ -156,6 +196,11 @@ const handleRequiredRole = (
   userStore: ReturnType<typeof useUserStore>,
 ): { name: string } | null => {
   const requiredRole = to.meta.requiresRole as UserRole
+
+  if (requiredRole === UserRole.REFEREE && userStore.hasRole(UserRole.ADMIN)) {
+    return null
+  }
+
   return userStore.hasRole(requiredRole) ? null : { name: 'home' }
 }
 

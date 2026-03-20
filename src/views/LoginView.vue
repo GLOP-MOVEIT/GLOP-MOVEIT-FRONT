@@ -5,16 +5,15 @@
         <div class="d-flex justify-end mb-4">
           <LanguageSwitcher button-color="white" />
         </div>
-        <v-card 
-          elevation="8" 
+        <v-card
+          elevation="8"
           rounded="lg"
           class="mx-auto"
         >
-          <!-- En-tête de la carte -->
           <v-card-item class="text-center pa-6 bg-primary">
-            <v-icon 
-              icon="mdi-medal" 
-              size="x-large" 
+            <v-icon
+              icon="mdi-medal"
+              size="x-large"
               color="white"
               class="mb-3"
             ></v-icon>
@@ -26,16 +25,13 @@
             </v-card-subtitle>
           </v-card-item>
 
-          <!-- Formulaire de connexion -->
           <v-card-text class="pa-6">
-            <!-- FORMULAIRE DE CONNEXION -->
             <template v-if="!showRegisterForm">
-              <v-form 
-                ref="form" 
+              <v-form
+                ref="form"
                 v-model="valid"
                 @submit.prevent="handleLogin"
               >
-                <!-- Champ pseudo -->
                 <v-text-field
                   v-model="nickname"
                   :rules="[(v) => !!v || t('validation.nicknameRequired')]"
@@ -48,7 +44,6 @@
                   :error-messages="errorMessage"
                 ></v-text-field>
 
-                <!-- Champ mot de passe -->
                 <v-text-field
                   v-model="password"
                   :rules="passwordRules"
@@ -62,7 +57,6 @@
                   :error-messages="errorMessage"
                 ></v-text-field>
 
-                <!-- Se souvenir de moi -->
                 <v-checkbox
                   v-model="rememberMe"
                   :label="t('login.rememberMe')"
@@ -71,7 +65,6 @@
                   class="mb-4"
                 ></v-checkbox>
 
-                <!-- Message d'erreur global -->
                 <v-alert
                   v-if="errorMessage"
                   type="error"
@@ -83,7 +76,6 @@
                   {{ errorMessage }}
                 </v-alert>
 
-                <!-- Bouton de connexion -->
                 <v-btn
                   type="submit"
                   color="primary"
@@ -97,7 +89,6 @@
                   {{ t('login.signIn') }}
                 </v-btn>
 
-                <!-- Mot de passe oublié -->
                 <div class="text-center">
                   <v-btn
                     variant="text"
@@ -116,14 +107,12 @@
               />
             </template>
 
-            <!-- FORMULAIRE D'INSCRIPTION -->
-            <v-form 
+            <v-form
               v-else
-              ref="registerForm" 
+              ref="registerForm"
               v-model="validRegister"
               @submit.prevent="handleRegister"
             >
-              <!-- Prénom -->
               <v-text-field
                 v-model="registerData.firstName"
                 :rules="[(v) => !!v || t('validation.firstNameRequired')]"
@@ -134,7 +123,6 @@
                 class="mb-3"
               ></v-text-field>
 
-              <!-- Nom -->
               <v-text-field
                 v-model="registerData.surname"
                 :rules="[(v) => !!v || t('validation.surnameRequired')]"
@@ -145,7 +133,6 @@
                 class="mb-3"
               ></v-text-field>
 
-              <!-- Téléphone -->
               <v-text-field
                 v-model="registerData.phoneNumber"
                 :rules="[
@@ -160,7 +147,6 @@
                 class="mb-3"
               ></v-text-field>
 
-              <!-- Pseudo -->
               <v-text-field
                 v-model="registerData.nickname"
                 :rules="[(v) => !!v || t('validation.nicknameRequired')]"
@@ -171,7 +157,6 @@
                 class="mb-3"
               ></v-text-field>
 
-              <!-- Email -->
               <v-text-field
                 v-model="registerData.email"
                 :rules="emailRules"
@@ -183,7 +168,6 @@
                 class="mb-3"
               ></v-text-field>
 
-              <!-- Mot de passe -->
               <v-text-field
                 v-model="registerData.password"
                 :rules="passwordRules"
@@ -197,7 +181,6 @@
                 class="mb-3"
               ></v-text-field>
 
-              <!-- Confirmation mot de passe -->
               <v-text-field
                 v-model="registerData.confirmPassword"
                 :rules="[
@@ -214,7 +197,6 @@
                 class="mb-3"
               ></v-text-field>
 
-              <!-- Options de consentement -->
               <v-checkbox
                 v-model="registerData.acceptsNotifications"
                 color="primary"
@@ -250,13 +232,12 @@
                 <template v-slot:label>
                   <div class="text-caption">
                     {{ t('login.acceptTermsText') }}
-                    
+
                     <a href="#" @click.stop>{{ t('login.termsLink') }}</a>
                   </div>
                 </template>
               </v-checkbox>
 
-              <!-- Message d'erreur global -->
               <v-alert
                 v-if="errorMessage"
                 type="error"
@@ -268,7 +249,6 @@
                 {{ errorMessage }}
               </v-alert>
 
-              <!-- Bouton d'inscription -->
               <v-btn
                 type="submit"
                 color="primary"
@@ -284,7 +264,6 @@
             </v-form>
           </v-card-text>
 
-          <!-- Pied de carte - Basculer entre connexion/inscription -->
           <v-divider></v-divider>
           <v-card-actions class="justify-center pa-4">
             <span class="text-body-2 mr-2">
@@ -301,7 +280,6 @@
           </v-card-actions>
         </v-card>
 
-        <!-- Info supplémentaire responsive -->
         <v-row class="mt-6" justify="center">
           <v-col cols="12" sm="4" class="text-center">
             <v-icon color="white" size="large">mdi-shield-check</v-icon>
@@ -384,9 +362,9 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 // Gestion de la connexion
 const handleLogin = async () => {
   errorMessage.value = ''
-  
+
   const { valid } = await form.value.validate()
-  
+
   if (!valid) return
 
   loading.value = true
@@ -398,7 +376,7 @@ const handleLogin = async () => {
     }
 
     await userStore.login(credentials)
-    
+
     // Redirection après connexion réussie
     router.push('/')
   } catch (error: unknown) {
@@ -437,9 +415,9 @@ const toggleForm = () => {
 // Gestion de l'inscription
 const handleRegister = async () => {
   errorMessage.value = ''
-  
+
   const { valid } = await registerForm.value.validate()
-  
+
   if (!valid) return
 
   loading.value = true
@@ -460,7 +438,7 @@ const handleRegister = async () => {
     }
 
     await userStore.register(userData)
-    
+
     // Après inscription réussie, basculer vers le formulaire de connexion
     alert(t('login.registerSuccess'))
     showRegisterForm.value = false
