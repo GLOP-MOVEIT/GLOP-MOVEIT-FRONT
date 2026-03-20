@@ -145,67 +145,231 @@
         {{ t('trialTasks.noTasks') }}
       </v-alert>
 
-      <v-list v-else lines="three">
-        <v-list-item
-          v-for="task in tasks"
-          :key="task.id"
-          class="rounded-lg mb-2"
-          variant="tonal"
-        >
-          <template #title>
-            <span class="font-weight-medium">{{ task.title }}</span>
-          </template>
+      <v-row v-else dense>
+        <v-col v-for="task in tasks" :key="task.id" cols="12">
+          <v-card variant="elevated" elevation="2" rounded="lg" class="mb-3">
+            <v-card-item>
+              <template #prepend>
+                <v-avatar color="primary" variant="tonal" size="42" class="mr-2">
+                  <v-icon icon="mdi-clipboard-text" />
+                </v-avatar>
+              </template>
+              <v-card-title class="text-subtitle-1 font-weight-bold">{{ task.title }}</v-card-title>
+              <v-card-subtitle v-if="task.description" class="mt-1">{{ task.description }}</v-card-subtitle>
+            </v-card-item>
 
-          <template #subtitle>
-            <div class="d-flex flex-wrap gap-2 mt-1">
-              <v-chip size="small" variant="outlined">
-                {{ getTaskTypeName(task.taskTypeId) }}
-              </v-chip>
-              <v-chip size="small" variant="outlined">
-                {{ task.description }}
-              </v-chip>
-            </div>
-          </template>
+            <v-card-text class="pt-0">
+              <div class="d-flex align-center flex-wrap gap-2 mb-3">
+                <v-chip size="small" color="primary" variant="flat" prepend-icon="mdi-tag">
+                  {{ getTaskTypeName(task.taskTypeId) }}
+                </v-chip>
+                <v-chip size="small" color="grey" variant="tonal" prepend-icon="mdi-account-group">
+                  {{ task.maxVolunteers }} max
+                </v-chip>
+                <v-chip
+                  v-if="getAssignmentsForTask(task.id).filter(a => a.status === 'ACCEPTED').length"
+                  size="small"
+                  color="success"
+                  variant="flat"
+                  prepend-icon="mdi-check-circle"
+                >
+                  {{ getAssignmentsForTask(task.id).filter(a => a.status === 'ACCEPTED').length }} {{ t('trialTasks.statusAccepted') }}
+                </v-chip>
+                <v-chip
+                  v-if="getAssignmentsForTask(task.id).filter(a => a.status === 'PENDING').length"
+                  size="small"
+                  color="warning"
+                  variant="flat"
+                  prepend-icon="mdi-clock-outline"
+                >
+                  {{ getAssignmentsForTask(task.id).filter(a => a.status === 'PENDING').length }} {{ t('trialTasks.statusPending') }}
+                </v-chip>
+                <v-chip
+                  v-if="getAssignmentsForTask(task.id).filter(a => a.status === 'REFUSED').length"
+                  size="small"
+                  color="error"
+                  variant="flat"
+                  prepend-icon="mdi-close-circle"
+                >
+                  {{ getAssignmentsForTask(task.id).filter(a => a.status === 'REFUSED').length }} {{ t('trialTasks.statusRefused') }}
+                </v-chip>
+              </div>
+              <v-progress-linear
+                :model-value="(getAssignmentsForTask(task.id).filter(a => a.status === 'ACCEPTED').length / task.maxVolunteers) * 100"
+                color="success"
+                rounded
+                height="6"
+                bg-color="grey-lighten-3"
+              />
+            </v-card-text>
 
-          <template #append>
-            <div class="d-flex flex-column flex-shrink-0" style="min-width: 200px; gap: 8px;">
+            <v-divider />
+
+            <v-card-actions class="pa-3 gap-2">
               <v-btn
-                size="small"
-                variant="outlined"
                 color="primary"
+                variant="tonal"
+                size="small"
                 prepend-icon="mdi-calendar-clock"
-                block
                 @click="openDateDialog(task)"
               >
                 {{ t('trialTasks.editDateTitle') }}
               </v-btn>
               <v-btn
-                size="small"
-                variant="outlined"
                 color="success"
-                prepend-icon="mdi-plus-circle-outline"
-                block
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-account-plus"
                 @click="openVolunteerDialog(task)"
               >
                 {{ t('trialTasks.assignVolunteers') }}
               </v-btn>
               <v-btn
+                color="info"
+                variant="text"
                 size="small"
-                variant="outlined"
-                color="error"
-                prepend-icon="mdi-delete"
-                block
-                @click="deleteTask(task.id)"
+                prepend-icon="mdi-account-group"
+                @click="openVolunteerListDialog(task)"
               >
-                {{ t('trialTasks.delete') }}
+                {{ t('trialTasks.viewVolunteers') }}
+                <v-badge
+                  v-if="getAssignmentsForTask(task.id).length"
+                  :content="getAssignmentsForTask(task.id).length"
+                  color="info"
+                  inline
+                />
               </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-card>
+    <v-dialog v-model="isVolunteerDialogOpen" max-width="600" scrollable>
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          <v-icon icon="mdi-account-plus" class="mr-2" />
+          {{ t('trialTasks.assignVolunteers', { taskTitle: selectedTask?.title }) }}
+        </v-card-title>
+        <v-card-text style="max-height: 60vh">
+          <div v-if="isLoadingVolunteerPreferences" class="d-flex justify-center py-4">
+            <v-progress-circular indeterminate color="primary" />
+          </div>
+          <div v-else-if="volunteers.length === 0" class="text-grey text-center py-4">
+            {{ t('trialTasks.noVolunteers') }}
+          </div>
+          <template v-else>
+            <!-- Indicateur de places -->
+            <v-alert
+              :type="canSelectMore ? 'info' : 'warning'"
+              variant="tonal"
+              density="compact"
+              class="mb-3"
+            >
+              {{ t('trialTasks.slotsRemaining', { n: remainingSlots }) }}
+            </v-alert>
+
+            <!-- Déjà assignés à cette tâche -->
+            <div v-if="currentTaskAssignments.length" class="mb-4">
+              <div class="text-caption font-weight-bold text-grey text-uppercase mb-2">
+                {{ t('trialTasks.alreadyAssigned') }}
+              </div>
+              <v-card
+                v-for="a in currentTaskAssignments"
+                :key="a.id"
+                variant="tonal"
+                :color="a.status === 'ACCEPTED' ? 'success' : a.status === 'REFUSED' ? 'error' : 'warning'"
+                class="mb-1"
+              >
+                <div class="d-flex align-center justify-space-between px-3 py-2">
+                  <span class="text-body-2">{{ getVolunteerName(a.volunteerId) }}</span>
+                  <v-chip
+                    :color="a.status === 'ACCEPTED' ? 'success' : a.status === 'REFUSED' ? 'error' : 'warning'"
+                    size="x-small"
+                    label
+                  >
+                    {{ t(`trialTasks.status${a.status.charAt(0) + a.status.slice(1).toLowerCase()}`) }}
+                  </v-chip>
+                </div>
+              </v-card>
+            </div>
+
+            <!-- Volontaires préférés disponibles -->
+            <div v-if="volunteersWithPreference.length" class="mb-4">
+              <div class="d-flex align-center mb-2">
+                <v-icon size="16" color="success" class="mr-1">mdi-star</v-icon>
+                <span class="text-caption font-weight-bold text-success text-uppercase">
+                  {{ t('trialTasks.preferredVolunteers') }}
+                </span>
+              </div>
+              <v-card
+                v-for="v in volunteersWithPreference"
+                :key="v.userId"
+                variant="tonal"
+                color="success"
+                class="mb-1"
+                :class="{ 'opacity-40': !canSelectMore && !selectedVolunteerIds.includes(v.userId) }"
+                @click="toggleSelectVolunteer(v.userId)"
+              >
+                <div class="d-flex align-center px-3 py-1">
+                  <v-checkbox
+                    :model-value="selectedVolunteerIds.includes(v.userId)"
+                    :disabled="!canSelectMore && !selectedVolunteerIds.includes(v.userId)"
+                    hide-details
+                    density="compact"
+                    color="success"
+                    @click.stop
+                    @update:model-value="toggleSelectVolunteer(v.userId)"
+                  />
+                  <v-icon size="14" color="success" class="mr-1">mdi-star</v-icon>
+                  <span class="text-body-2 font-weight-medium">{{ v.firstName }} {{ v.surname }}</span>
+                </div>
+              </v-card>
+            </div>
+
+            <!-- Autres volontaires disponibles -->
+            <div>
+              <div v-if="volunteersWithPreference.length" class="d-flex align-center mb-2">
+                <span class="text-caption font-weight-bold text-grey text-uppercase">
+                  {{ t('trialTasks.otherVolunteers') }}
+                </span>
+              </div>
+              <v-card
+                v-for="v in volunteersWithoutPreference"
+                :key="v.userId"
+                variant="outlined"
+                class="mb-1"
+                :class="{ 'opacity-40': !canSelectMore && !selectedVolunteerIds.includes(v.userId) }"
+                @click="toggleSelectVolunteer(v.userId)"
+              >
+                <div class="d-flex align-center px-3 py-1">
+                  <v-checkbox
+                    :model-value="selectedVolunteerIds.includes(v.userId)"
+                    :disabled="!canSelectMore && !selectedVolunteerIds.includes(v.userId)"
+                    hide-details
+                    density="compact"
+                    @click.stop
+                    @update:model-value="toggleSelectVolunteer(v.userId)"
+                  />
+                  <span class="text-body-2">{{ v.firstName }} {{ v.surname }}</span>
+                </div>
+              </v-card>
             </div>
           </template>
-        </v-list-item>
-      </v-list>
-    </v-card>
+        </v-card-text>
+        <v-card-actions class="justify-end">
+          <v-btn variant="text" @click="isVolunteerDialogOpen = false">{{ t('trialTasks.cancel') }}</v-btn>
+          <v-btn
+            color="success"
+            :loading="isAssigning"
+            :disabled="selectedVolunteerIds.length === 0"
+            @click="handleAssignVolunteers"
+          >
+            {{ t('trialTasks.assign') }} ({{ selectedVolunteerIds.length }})
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-    <!-- Dialog : Modifier la date -->
     <v-dialog v-model="isDateDialogOpen" max-width="500">
       <v-card>
         <v-card-title>
@@ -272,6 +436,89 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="isVolunteerListDialogOpen" max-width="500" scrollable>
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          <v-icon icon="mdi-account-group" class="mr-2" />
+          {{ t('trialTasks.viewVolunteers') }} — {{ volunteerListTask?.title }}
+        </v-card-title>
+        <v-card-text style="max-height: 60vh">
+          <v-alert
+            v-if="!getAssignmentsForTask(volunteerListTask?.id ?? 0).length"
+            type="info"
+            variant="tonal"
+          >
+            {{ t('trialTasks.noAssignmentsYet') }}
+          </v-alert>
+          <template v-else>
+            <div
+              v-if="getAssignmentsForTask(volunteerListTask?.id ?? 0).filter(a => a.status === 'ACCEPTED').length"
+              class="mb-4"
+            >
+              <div class="d-flex align-center gap-1 mb-2">
+                <v-icon size="16" color="success">mdi-check-circle</v-icon>
+                <span class="text-caption font-weight-bold text-success text-uppercase">{{ t('trialTasks.volunteersAccepted') }}</span>
+              </div>
+              <v-chip
+                v-for="a in getAssignmentsForTask(volunteerListTask?.id ?? 0).filter(a => a.status === 'ACCEPTED')"
+                :key="a.id"
+                color="success"
+                variant="tonal"
+                size="small"
+                class="mr-1 mb-1"
+                prepend-icon="mdi-account"
+              >
+                {{ getVolunteerName(a.volunteerId) }}
+              </v-chip>
+            </div>
+            <div
+              v-if="getAssignmentsForTask(volunteerListTask?.id ?? 0).filter(a => a.status === 'PENDING').length"
+              class="mb-4"
+            >
+              <div class="d-flex align-center gap-1 mb-2">
+                <v-icon size="16" color="warning">mdi-clock-outline</v-icon>
+                <span class="text-caption font-weight-bold text-warning text-uppercase">{{ t('trialTasks.volunteersPending') }}</span>
+              </div>
+              <v-chip
+                v-for="a in getAssignmentsForTask(volunteerListTask?.id ?? 0).filter(a => a.status === 'PENDING')"
+                :key="a.id"
+                color="warning"
+                variant="tonal"
+                size="small"
+                class="mr-1 mb-1"
+                prepend-icon="mdi-account"
+              >
+                {{ getVolunteerName(a.volunteerId) }}
+              </v-chip>
+            </div>
+            <div
+              v-if="getAssignmentsForTask(volunteerListTask?.id ?? 0).filter(a => a.status === 'REFUSED').length"
+              class="mb-4"
+            >
+              <div class="d-flex align-center gap-1 mb-2">
+                <v-icon size="16" color="error">mdi-close-circle</v-icon>
+                <span class="text-caption font-weight-bold text-error text-uppercase">{{ t('trialTasks.volunteersRefused') }}</span>
+              </div>
+              <v-chip
+                v-for="a in getAssignmentsForTask(volunteerListTask?.id ?? 0).filter(a => a.status === 'REFUSED')"
+                :key="a.id"
+                color="error"
+                variant="tonal"
+                size="small"
+                class="mr-1 mb-1"
+                prepend-icon="mdi-account"
+              >
+                {{ getVolunteerName(a.volunteerId) }}
+              </v-chip>
+            </div>
+          </template>
+        </v-card-text>
+        <v-card-actions class="justify-end">
+          <v-btn variant="text" @click="isVolunteerListDialogOpen = false">{{ t('trialTasks.cancel') }}</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -279,7 +526,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import volunteerService, { type VolunteerTask, type TaskType } from '@/services/volunteerService'
+import volunteerService, { type VolunteerTask, type TaskType, type VolunteerAssignmentResponse, type VolunteerAssignment } from '@/services/volunteerService'
 import userService from '@/services/userService'
 import championshipService from '@/services/championshipService'
 import { UserRole } from '@/types/user'
@@ -307,8 +554,13 @@ const trial = ref<Trial | null>(null)
 const trialInfo = ref<{ name: string } | null>(null)
 const isVolunteerDialogOpen = ref(false)
 const isDateDialogOpen = ref(false)
+const isVolunteerListDialogOpen = ref(false)
+const isLoadingVolunteerPreferences = ref(false)
 const selectedTask = ref<VolunteerTask | null>(null)
 const selectedVolunteerIds = ref<number[]>([])
+const volunteerWithPreferences = ref<VolunteerAssignmentResponse[]>([])
+const volunteerListTask = ref<VolunteerTask | null>(null)
+const taskAssignmentsMap = ref<Map<number, VolunteerAssignment[]>>(new Map())
 
 const taskForm = ref({
   title: '',
@@ -329,6 +581,53 @@ const editDateForm = ref({
 })
 
 const taskTypeOptions = computed(() => taskTypes.value)
+
+const getAssignmentsForTask = (taskId: number): VolunteerAssignment[] =>
+  taskAssignmentsMap.value.get(taskId) ?? []
+
+const getVolunteerName = (volunteerId: number): string => {
+  const v = volunteers.value.find((u) => u.userId === volunteerId)
+  return v ? `${v.firstName} ${v.surname}` : `#${volunteerId}`
+}
+
+const currentTaskAssignments = computed(() => {
+  if (!selectedTask.value) return []
+  return getAssignmentsForTask(selectedTask.value.id)
+})
+
+const activeAssignedVolunteerIds = computed(() =>
+  new Set(currentTaskAssignments.value.filter((a) => a.status !== 'REFUSED').map((a) => a.volunteerId))
+)
+
+const usedSlots = computed(() => {
+  if (!selectedTask.value) return 0
+  return currentTaskAssignments.value.filter((a) => a.status !== 'REFUSED').length
+})
+
+const remainingSlots = computed(() =>
+  selectedTask.value
+    ? Math.max(0, selectedTask.value.maxVolunteers - usedSlots.value - selectedVolunteerIds.value.length)
+    : 0
+)
+
+const canSelectMore = computed(() => remainingSlots.value > 0)
+
+const volunteersWithPreference = computed(() => {
+  const prefIds = new Set(
+    volunteerWithPreferences.value.filter((p) => p.hasPreference).map((p) => p.volunteerId)
+  )
+  return volunteers.value.filter((v) => prefIds.has(v.userId) && !activeAssignedVolunteerIds.value.has(v.userId))
+})
+
+const volunteersWithoutPreference = computed(() => {
+  const availableIds = new Set(volunteerWithPreferences.value.map((p) => p.volunteerId))
+  const prefIds = new Set(
+    volunteerWithPreferences.value.filter((p) => p.hasPreference).map((p) => p.volunteerId)
+  )
+  return volunteers.value.filter(
+    (v) => availableIds.has(v.userId) && !prefIds.has(v.userId) && !activeAssignedVolunteerIds.value.has(v.userId)
+  )
+})
 
 const availableVolunteers = computed(() =>
   volunteers.value.map((v) => ({
@@ -378,12 +677,25 @@ const loadTrialData = async () => {
     const endDate = loaded.trialEndDate?.split('T')[0] || ''
     taskForm.value.startDate = startDate
     taskForm.value.endDate = endDate
-    taskForm.value.startTime = '09:00'
-    taskForm.value.endTime = '17:00'
+    taskForm.value.startTime = loaded.trialStartDate?.split('T')[1]?.substring(0, 5) || '09:00'
+    taskForm.value.endTime = loaded.trialEndDate?.split('T')[1]?.substring(0, 5) || '17:00'
   } catch (error) {
     console.error('Error loading trial data:', error)
     trialInfo.value = { name: `Trial #${trialId.value}` }
   }
+}
+
+const loadAssignmentsForTask = async (taskId: number) => {
+  try {
+    const data = await volunteerService.getAssignmentsByTask(taskId)
+    const newMap = new Map(taskAssignmentsMap.value)
+    newMap.set(taskId, data)
+    taskAssignmentsMap.value = newMap
+  } catch { /* silent */ }
+}
+
+const loadAllTaskAssignments = async () => {
+  await Promise.all(tasks.value.map((task) => loadAssignmentsForTask(task.id)))
 }
 
 const handleCreateTask = async () => {
@@ -417,9 +729,9 @@ const handleCreateTask = async () => {
       taskTypeId: 0,
       maxVolunteers: 1,
       startDate: trial.value?.trialStartDate?.split('T')[0] || '',
-      startTime: '09:00',
+      startTime: trial.value?.trialStartDate?.split('T')[1]?.substring(0, 5) || '09:00',
       endDate: trial.value?.trialEndDate?.split('T')[0] || '',
-      endTime: '17:00',
+      endTime: trial.value?.trialEndDate?.split('T')[1]?.substring(0, 5) || '17:00',
     }
     taskFormRef.value?.resetValidation()
   } catch (error) {
@@ -430,10 +742,42 @@ const handleCreateTask = async () => {
   }
 }
 
-const openVolunteerDialog = (task: VolunteerTask) => {
+const openVolunteerListDialog = (task: VolunteerTask) => {
+  volunteerListTask.value = task
+  isVolunteerListDialogOpen.value = true
+}
+
+const openVolunteerDialog = async (task: VolunteerTask) => {
   selectedTask.value = task
   selectedVolunteerIds.value = []
+  volunteerWithPreferences.value = []
   isVolunteerDialogOpen.value = true
+
+  if (volunteers.value.length === 0) return
+  isLoadingVolunteerPreferences.value = true
+  try {
+    const ids = volunteers.value.map((v) => v.userId)
+    const [prefData] = await Promise.all([
+      volunteerService.getAvailableVolunteersWithPreference(task.id, ids),
+      loadAssignmentsForTask(task.id),
+    ])
+    volunteerWithPreferences.value = prefData
+  } catch {
+    // non-bloquant
+  } finally {
+    isLoadingVolunteerPreferences.value = false
+  }
+}
+
+const toggleSelectVolunteer = (userId: number) => {
+  if (activeAssignedVolunteerIds.value.has(userId)) return
+  const idx = selectedVolunteerIds.value.indexOf(userId)
+  if (idx === -1) {
+    if (!canSelectMore.value) return
+    selectedVolunteerIds.value.push(userId)
+  } else {
+    selectedVolunteerIds.value.splice(idx, 1)
+  }
 }
 
 const openDateDialog = (task: VolunteerTask) => {
@@ -447,12 +791,6 @@ const openDateDialog = (task: VolunteerTask) => {
   isDateDialogOpen.value = true
 }
 
-const openLocationDialog = (task: VolunteerTask) => {
-  selectedTask.value = task
-  editLocationForm.value = { locationId: task.locationId || 0 }
-  isLocationDialogOpen.value = true
-}
-
 const handleAssignVolunteers = async () => {
   if (!selectedTask.value || selectedVolunteerIds.value.length === 0) {
     errorMessage.value = t('trialTasks.selectVolunteersError')
@@ -463,23 +801,40 @@ const handleAssignVolunteers = async () => {
   errorMessage.value = ''
   successMessage.value = ''
 
-  try {
-    for (const volunteerId of selectedVolunteerIds.value) {
-      await volunteerService.createAssignment({
-        volunteerId,
-        taskId: selectedTask.value.id,
-      })
-    }
+  let successCount = 0
+  const errors: string[] = []
+  const idsToProcess = [...selectedVolunteerIds.value]
 
-    successMessage.value = t('trialTasks.assignSuccess', { count: selectedVolunteerIds.value.length })
+  for (const volunteerId of idsToProcess) {
+    try {
+      await volunteerService.createAssignment({ volunteerId, taskId: selectedTask.value.id })
+      successCount++
+    } catch (error: unknown) {
+      const body = (error as any)?.response?.data
+      const msg = typeof body === 'string' ? body : (body?.message ?? '')
+      const name = getVolunteerName(volunteerId)
+      if (msg.includes('already has another task')) {
+        errors.push(`${name} : ${t('trialTasks.errorTimeslotConflict')}`)
+      } else if (msg.includes('Assignment already exists')) {
+        errors.push(`${name} : ${t('trialTasks.errorAlreadyAssigned')}`)
+      } else {
+        errors.push(`${name} : ${t('trialTasks.assignError')}`)
+      }
+    }
+  }
+
+  if (successCount > 0) {
+    await loadAssignmentsForTask(selectedTask.value.id)
+    successMessage.value = t('trialTasks.partialAssignSuccess', { success: successCount, total: idsToProcess.length })
+  }
+  if (errors.length) {
+    errorMessage.value = errors.join('\n')
+  }
+  selectedVolunteerIds.value = []
+  isAssigning.value = false
+  if (!errors.length) {
     isVolunteerDialogOpen.value = false
     selectedTask.value = null
-    selectedVolunteerIds.value = []
-  } catch (error) {
-    console.error('Error assigning volunteers:', error)
-    errorMessage.value = t('trialTasks.assignError')
-  } finally {
-    isAssigning.value = false
   }
 }
 
@@ -512,19 +867,6 @@ const saveDateDialog = async () => {
   }
 }
 
-const deleteTask = async (taskId: number) => {
-  if (!confirm(t('trialTasks.deleteConfirm'))) return
-
-  try {
-    await volunteerService.deleteTask(taskId)
-    tasks.value = tasks.value.filter((t) => t.id !== taskId)
-    successMessage.value = t('trialTasks.deleteSuccess')
-  } catch (error) {
-    console.error('Error deleting task:', error)
-    errorMessage.value = t('trialTasks.deleteError')
-  }
-}
-
 const goBack = () => {
   router.back()
 }
@@ -533,6 +875,7 @@ onMounted(async () => {
   isLoading.value = true
   try {
     await Promise.all([loadTasks(), loadTaskTypes(), loadVolunteers(), loadTrialData()])
+    await loadAllTaskAssignments()
   } finally {
     isLoading.value = false
   }
