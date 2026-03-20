@@ -113,6 +113,11 @@ const routes: RouteRecordRaw[] = [
             name: 'admin-competitions',
             component: () => import('@/views/AdminCompetitionsView.vue'),
           },
+          {
+            path: 'lieux',
+            name: 'admin-locations',
+            component: () => import('@/views/AdminLocationsView.vue'),
+          },
         ],
       },
       {

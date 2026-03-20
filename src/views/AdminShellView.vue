@@ -18,5 +18,6 @@ const menuItems = computed(() => [
   { title: t('admin.menuUsers'), icon: 'mdi-account-group', to: '/admin/users' },
   { title: t('admin.menuChampionships'), icon: 'mdi-trophy', to: '/admin/championships' },
   { title: t('admin.menuCompetitions'), icon: 'mdi-medal', to: '/admin/competitions' },
+  { title: t('admin.menuLocations'), icon: 'mdi-map-marker', to: '/admin/lieux' },
 ])
 </script>
