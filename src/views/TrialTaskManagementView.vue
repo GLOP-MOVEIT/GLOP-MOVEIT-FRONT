@@ -258,7 +258,6 @@
             {{ t('trialTasks.noVolunteers') }}
           </div>
           <template v-else>
-            <!-- Indicateur de places -->
             <v-alert
               :type="canSelectMore ? 'info' : 'warning'"
               variant="tonal"
@@ -268,7 +267,6 @@
               {{ t('trialTasks.slotsRemaining', { n: remainingSlots }) }}
             </v-alert>
 
-            <!-- Déjà assignés à cette tâche -->
             <div v-if="currentTaskAssignments.length" class="mb-4">
               <div class="text-caption font-weight-bold text-grey text-uppercase mb-2">
                 {{ t('trialTasks.alreadyAssigned') }}
@@ -293,7 +291,6 @@
               </v-card>
             </div>
 
-            <!-- Volontaires préférés disponibles -->
             <div v-if="volunteersWithPreference.length" class="mb-4">
               <div class="d-flex align-center mb-2">
                 <v-icon size="16" color="success" class="mr-1">mdi-star</v-icon>
@@ -326,7 +323,6 @@
               </v-card>
             </div>
 
-            <!-- Autres volontaires disponibles -->
             <div>
               <div v-if="volunteersWithPreference.length" class="d-flex align-center mb-2">
                 <span class="text-caption font-weight-bold text-grey text-uppercase">
