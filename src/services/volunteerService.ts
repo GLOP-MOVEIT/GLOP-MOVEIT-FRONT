@@ -25,9 +25,11 @@ export interface VolunteerPreferencePayload {
   taskTypeId: number
 }
 
+export type TargetType = 'CHAMPIONSHIP' | 'COMPETITION' | 'TRIAL'
+
 export interface VolunteerTask {
   id: number
-  targetType: 'CHAMPIONSHIP' | 'COMPETITION' | 'TRIAL'
+  targetType: TargetType
   targetId: number
   title: string
   description: string
@@ -40,7 +42,7 @@ export interface VolunteerTask {
 }
 
 export interface VolunteerTaskPayload {
-  targetType: 'CHAMPIONSHIP' | 'COMPETITION' | 'TRIAL'
+  targetType: TargetType
   targetId: number
   title: string
   description: string
@@ -318,7 +320,7 @@ export const volunteerService = {
   /**
    * Récupérer les tâches pour une cible (CHAMPIONSHIP, COMPETITION, TRIAL)
    */
-  async getTasksByTarget(targetType: 'CHAMPIONSHIP' | 'COMPETITION' | 'TRIAL', targetId: number): Promise<VolunteerTask[]> {
+  async getTasksByTarget(targetType: TargetType, targetId: number): Promise<VolunteerTask[]> {
     try {
       const response = await axios.get<VolunteerTask[]>(
         `${API_URL}/volunteer/tasks/target/${targetType}/${targetId}`,
