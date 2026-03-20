@@ -264,6 +264,21 @@ export const championshipService = {
   },
 
   /**
+   * Récupérer une manche par ID
+   */
+  async getTrialById(id: number): Promise<Trial> {
+    try {
+      const response = await axios.get<Trial>(`${API_URL}/trials/${id}`, {
+        headers: this.getAuthHeaders(),
+      })
+      return response.data
+    } catch (error) {
+      console.error(`Get trial ${id} error:`, error)
+      throw error
+    }
+  },
+
+  /**
    * Récupérer toutes les manches d'une compétition
    */
   async getTrialsByCompetition(competitionId: number): Promise<Trial[]> {

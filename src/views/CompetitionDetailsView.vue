@@ -134,10 +134,22 @@
                   <span class="font-weight-medium mr-1">{{ t('competitionDetails.round') }} :</span>
                   <span>{{ trial.roundNumber }} - {{ t('competitionDetails.position') }} {{ trial.position }}</span>
                 </div>
-                <div v-if="trial.locationId" class="d-flex align-center">
-                  <v-icon size="14" class="mr-2" color="primary">mdi-map-marker</v-icon>
-                  <span class="font-weight-medium mr-1">{{ t('competitionDetails.location') }} :</span>
-                  <span>{{ trial.locationId }}</span>
+                <div v-if="trial.locationId" class="d-flex flex-column gap-1">
+                  <div class="d-flex align-start">
+                    <v-icon size="14" class="mr-2 mt-1" color="primary">mdi-map-marker</v-icon>
+                    <div>
+                      <span class="font-weight-medium">{{ t('competitionDetails.location') }} :</span>
+                      <div class="text-body-2">{{ getLocation(trial.locationId)?.name ?? trial.locationId }}</div>
+                    </div>
+                  </div>
+                  <div v-if="getLocation(trial.locationId) && getEntrance(getLocation(trial.locationId)!)" class="d-flex align-center pl-4">
+                    <v-icon size="14" class="mr-2">mdi-door-open</v-icon>
+                    <span>{{ getEntrance(getLocation(trial.locationId)!) }}</span>
+                  </div>
+                </div>
+                <div v-else class="d-flex align-center">
+                  <v-icon size="14" class="mr-2" color="warning">mdi-alert</v-icon>
+                  <span class="text-warning">{{ t('competitionDetails.noLocation') }}</span>
                 </div>
               </div>
 
@@ -176,9 +188,12 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
+import locationService from '@/services/locationService'
+import { useUserStore } from '@/stores/user'
 import type { CompetitionTreeResult, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
 import type { User } from '@/types/user'
+import type { Location } from '@/types/location'
 import { getUserDisplayName, UserRole } from '@/types/user'
 import { formatDateRange as formatDateRangeUtil, formatDateTime as formatDateTimeUtil } from '@/utils/date'
 
@@ -188,8 +203,22 @@ const { t, locale } = useI18n()
 const competition = ref<CompetitionTreeResult | null>(null)
 const trials = ref<Trial[]>([])
 const athletes = ref<User[]>([])
+const locations = ref<Location[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
+
+const userStore = useUserStore()
+const isReferee = computed(() => userStore.hasRole(UserRole.REFEREE) || userStore.hasRole(UserRole.ADMIN))
+
+const getLocation = (locationId: number | null | undefined): Location | null => {
+  if (!locationId) return null
+  return locations.value.find((l) => l.locationId === locationId) ?? null
+}
+
+const getEntrance = (location: Location): string | null => {
+  if (isReferee.value) return location.refereeEntrance || location.mainEntrance || null
+  return location.mainEntrance || null
+}
 
 const competitionId = computed(() => Number(route.params.id))
 
@@ -219,6 +248,7 @@ onMounted(async () => {
   try {
     competition.value = await championshipService.getCompetitionById(competitionId.value)
     trials.value = await championshipService.getTrialsByCompetition(competitionId.value)
+    try { locations.value = await locationService.getAllLocations() } catch { locations.value = [] }
     try {
       athletes.value = await userService.getUsersByRole(UserRole.ATHLETE)
     } catch {

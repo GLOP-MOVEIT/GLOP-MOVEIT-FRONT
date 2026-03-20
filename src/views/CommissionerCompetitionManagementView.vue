@@ -149,7 +149,7 @@
                       </span>
                       <span v-if="trial.locationId">
                         <v-icon size="13" class="mr-1">mdi-map-marker</v-icon>
-                        {{ t('commissionerCompetition.locationId') }} : {{ trial.locationId }}
+                        {{ getLocationName(trial.locationId) }}
                       </span>
                       <span>
                         <v-icon size="13" class="mr-1">mdi-account-group</v-icon>
@@ -198,9 +198,6 @@
             <div class="text-subtitle-1 font-weight-medium mb-3">{{ t('commissionerCompetition.selectionSummaryTitle') }}</div>
             <div class="text-body-2 text-grey-darken-1 mb-2">
               {{ t('commissionerCompetition.selectionCount', { count: selectedAthleteIds.length }) }}
-            </div>
-            <div class="text-body-2 text-grey-darken-1">
-              {{ t('commissionerCompetition.realAthletesNotice') }}
             </div>
           </v-card>
         </v-col>
@@ -312,6 +309,9 @@
                 </v-col>
               </v-row>
             </div>
+            <v-alert v-if="dateOrderError" type="error" variant="tonal" class="mt-3" density="compact">
+              {{ t('commissionerCompetition.dateOrderError') }}
+            </v-alert>
           </v-card-text>
           <v-card-actions class="justify-end">
             <v-btn variant="text" @click="isDateDialogOpen = false">{{ t('commissionerCompetition.cancel') }}</v-btn>
@@ -330,13 +330,16 @@
             {{ t('commissionerCompetition.editLocationTitle') }}
           </v-card-title>
           <v-card-text>
-            <v-text-field
-              v-model.number="editLocationForm.locationId"
-              type="number"
+            <v-select
+              v-model="editLocationForm.locationId"
+              :items="availableLocations"
+              item-title="name"
+              item-value="locationId"
               :label="t('commissionerCompetition.locationId')"
               variant="outlined"
               density="comfortable"
-              min="1"
+              :loading="isLoadingLocations"
+              clearable
             />
           </v-card-text>
           <v-card-actions class="justify-end">
@@ -357,10 +360,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
+import locationService from '@/services/locationService'
 import type { CompetitionTreeResult, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
 import type { User } from '@/types/user'
 import { getUserDisplayName, UserRole } from '@/types/user'
+import type { Location } from '@/types/location'
 import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 import { isAxiosError } from 'axios'
 
@@ -374,6 +379,7 @@ const formatDateRange = (start: string | Date, end: string | Date) =>
 const competition = ref<CompetitionTreeResult | null>(null)
 const athletes = ref<User[]>([])
 const trials = ref<Trial[]>([])
+const allLocations = ref<Location[]>([])
 const selectedAthleteIds = ref<number[]>([])
 const athleteSearch = ref('')
 const errorMessage = ref('')
@@ -395,6 +401,11 @@ const editDateForm = ref({
 // Dialog lieu
 const isLocationDialogOpen = ref(false)
 const editLocationForm = ref({ locationId: null as number | null })
+const availableLocations = ref<Location[]>([])
+const isLoadingLocations = ref(false)
+
+// Dialog date - validation error
+const dateOrderError = ref(false)
 
 const isSavingTrial = ref(false)
 
@@ -467,6 +478,11 @@ const formatParticipantNames = (participantIds: number[]) => {
     .join(', ')
 }
 
+const getLocationName = (locationId: number | null | undefined): string | null => {
+  if (!locationId) return null
+  return allLocations.value.find((l) => l.locationId === locationId)?.name ?? String(locationId)
+}
+
 const loadCompetition = async () => {
   competition.value = await championshipService.getCompetitionById(competitionId.value)
 }
@@ -515,22 +531,37 @@ const openDateDialog = (trial: Trial) => {
   isDateDialogOpen.value = true
 }
 
-const openLocationDialog = (trial: Trial) => {
+const openLocationDialog = async (trial: Trial) => {
   editingTrialId.value = trial.trialId
   editLocationForm.value = { locationId: trial.locationId ?? null }
+  isLoadingLocations.value = true
+  try {
+    availableLocations.value = await locationService.getAllLocations()
+  } catch {
+    availableLocations.value = []
+  } finally {
+    isLoadingLocations.value = false
+  }
   isLocationDialogOpen.value = true
 }
 
 const saveDateDialog = async () => {
   if (!editingTrialId.value) return
+  dateOrderError.value = false
+
+  const startDateTime = combineDateTime(editDateForm.value.startDate, editDateForm.value.startTime)
+  const endDateTime = combineDateTime(editDateForm.value.endDate, editDateForm.value.endTime)
+  if (startDateTime && endDateTime && endDateTime <= startDateTime) {
+    dateOrderError.value = true
+    return
+  }
+
   isSavingTrial.value = true
   errorMessage.value = ''
   try {
     const trial = trials.value.find((t) => t.trialId === editingTrialId.value)
     if (!trial) return
 
-    const startDateTime = combineDateTime(editDateForm.value.startDate, editDateForm.value.startTime)
-    const endDateTime = combineDateTime(editDateForm.value.endDate, editDateForm.value.endTime)
 
     const updated = await championshipService.updateTrial(editingTrialId.value, {
       trialName: trial.trialName,
@@ -554,6 +585,10 @@ const saveDateDialog = async () => {
   }
 }
 
+const navigateToTrialTasks = (trial: Trial) => {
+  router.push({ name: 'trial-tasks', params: { id: trial.trialId } })
+}
+
 const saveLocationDialog = async () => {
   if (!editingTrialId.value) return
   isSavingTrial.value = true
@@ -561,19 +596,33 @@ const saveLocationDialog = async () => {
   try {
     const trial = trials.value.find((t) => t.trialId === editingTrialId.value)
     if (!trial) return
+    const newLocationId = editLocationForm.value.locationId ?? 0
     const updated = await championshipService.updateTrial(editingTrialId.value, {
       trialName: trial.trialName,
       trialStartDate: trial.trialStartDate,
       trialEndDate: trial.trialEndDate,
       trialDescription: trial.trialDescription,
       trialStatus: trial.trialStatus,
-      locationId: editLocationForm.value.locationId ?? 0,
+      locationId: newLocationId,
       roundNumber: trial.roundNumber,
       position: trial.position,
       participantIds: trial.participantIds,
     })
     const idx = trials.value.findIndex((t) => t.trialId === editingTrialId.value)
     if (idx !== -1) trials.value[idx] = updated
+
+    // Cascade : mettre à jour le locationId de toutes les tâches de cette épreuve
+    try {
+      const trialTasks = await volunteerService.getTasksByTarget('TRIAL', editingTrialId.value)
+      await Promise.all(
+        trialTasks.map((task) =>
+          volunteerService.updateTask(task.id, { ...task, locationId: newLocationId })
+        )
+      )
+    } catch {
+      // non bloquant
+    }
+
     isLocationDialogOpen.value = false
     infoMessage.value = t('commissionerCompetition.updateSuccess')
   } catch {
@@ -614,6 +663,7 @@ onMounted(async () => {
   try {
     await Promise.all([loadCompetition(), loadAthletes()])
     await loadTrials()
+    allLocations.value = await locationService.getAllLocations().catch(() => [])
   } catch {
     errorMessage.value = t('commissionerCompetition.loadError')
   } finally {

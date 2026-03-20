@@ -49,6 +49,10 @@ const messages = {
         position: 'Position',
         errorNoId: 'Unable to identify your account.',
         errorLoad: 'Unable to load your summons.',
+        competition: 'Competition',
+        venueLabel: 'On the day of the trial, please go to the following address:',
+        athleteEntrance: 'Athlete entrance',
+        noLocation: 'Attention: no venue defined yet.',
         status: {
           PLANNED: 'Planned',
           ONGOING: 'Ongoing',
@@ -95,6 +99,7 @@ const messages = {
       athletes: 'Athletes',
       noAthletes: 'No athletes assigned yet.',
       loadError: 'Unable to load competition details.',
+      noLocation: 'No venue defined yet.',
     },
     admin: {
       title: 'Administration',
@@ -378,7 +383,6 @@ const messages = {
       trialParticipantsLabel: 'Athletes:',
       selectionSummaryTitle: 'Selection summary',
       selectionCount: '{count} athlete(s) selected',
-      realAthletesNotice: 'Athletes are loaded from the API.',
       dialogTitle: 'Select athletes',
       searchAthletes: 'Search athletes',
       noAthletesFound: 'No athlete found.',
@@ -392,12 +396,13 @@ const messages = {
       editLocationTitle: 'Edit location',
       trialStartDate: 'Start date and time',
       trialEndDate: 'End date and time',
-      locationId: 'Location ID',
+      locationId: 'Sélectionner un lieu',
       saveDate: 'Save schedule',
       saveLocation: 'Save location',
       updateSuccess: 'Trial updated successfully.',
       updateError: 'Unable to update this trial.',
       cancel: 'Cancel',
+      dateOrderError: 'End date and time must be after start date and time.',
     },
     trialTasks: {
       title: 'Task management',
@@ -438,6 +443,8 @@ const messages = {
       dateUpdateError: 'Unable to update schedule.',
       locationUpdateSuccess: 'Location updated successfully.',
       locationUpdateError: 'Unable to update location.',
+      noTrialLocation: 'Please assign a location to this trial before creating tasks.',
+      dateLocked: 'Fixed to the trial date',
     },
     about: {
       tagline:
@@ -642,6 +649,10 @@ const messages = {
         position: 'Position',
         errorNoId: 'Impossible d\'identifier votre compte.',
         errorLoad: 'Impossible de charger vos convocations.',
+        competition: 'Compétition',
+        venueLabel: 'Veuillez vous rendre à l\'adresse suivante :',
+        athleteEntrance: 'Entrée athlètes',
+        noLocation: 'Attention : aucun lieu défini pour le moment.',
         status: {
           PLANNED: 'Planifié',
           ONGOING: 'En cours',
@@ -688,6 +699,7 @@ const messages = {
       athletes: 'Athlètes',
       noAthletes: 'Aucun athlète assigné pour le moment.',
       loadError: 'Impossible de charger les détails de la compétition.',
+      noLocation: 'Aucun lieu défini pour le moment.',
     },
     admin: {
       title: 'Administration',
@@ -974,7 +986,6 @@ const messages = {
       trialParticipantsLabel: 'Athlètes :',
       selectionSummaryTitle: 'Résumé de la sélection',
       selectionCount: '{count} athlète(s) sélectionné(s)',
-      realAthletesNotice: 'Les athlètes proviennent de l\'API.',
       dialogTitle: 'Sélection des athlètes',
       searchAthletes: 'Rechercher des athlètes',
       noAthletesFound: 'Aucun athlète trouvé.',
@@ -994,6 +1005,7 @@ const messages = {
       updateSuccess: 'Manche mise à jour avec succès.',
       updateError: 'Impossible de mettre à jour cette manche.',
       cancel: 'Annuler',
+      dateOrderError: 'La date et heure de fin doivent être après la date et heure de début.',
     },
     trialTasks: {
       title: 'Gestion des tâches',
@@ -1034,6 +1046,8 @@ const messages = {
       dateUpdateError: 'Impossible de mettre à jour l\'horaire.',
       locationUpdateSuccess: 'Lieu mis à jour avec succès.',
       locationUpdateError: 'Impossible de mettre à jour le lieu.',
+      noTrialLocation: "Veuillez sélectionner le lieu de l'épreuve avant de créer une tâche.",
+      dateLocked: "Fixé à la date de l'épreuve",
     },
     volunteerTasks: {
       title: 'My favorite tasks',

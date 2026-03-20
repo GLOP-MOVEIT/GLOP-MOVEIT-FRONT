@@ -21,6 +21,12 @@
 
     <v-card variant="outlined" class="pa-4 mb-6">
       <div class="text-h6 font-weight-medium mb-4">{{ t('trialTasks.createTask') }}</div>
+
+      <v-alert v-if="!trial?.locationId" type="warning" variant="tonal">
+        {{ t('trialTasks.noTrialLocation') }}
+      </v-alert>
+
+      <template v-else>
       <v-form ref="taskFormRef" @submit.prevent="handleCreateTask">
         <v-row dense>
           <v-col cols="12" md="4">
@@ -77,7 +83,8 @@
               density="comfortable"
               disabled
               required
-              hint="Date de l'épreuve"
+              :hint="t('trialTasks.dateLocked')"
+              persistent-hint
             />
           </v-col>
           <v-col cols="12" md="2">
@@ -99,7 +106,8 @@
               density="comfortable"
               disabled
               required
-              hint="Date de l'épreuve"
+              :hint="t('trialTasks.dateLocked')"
+              persistent-hint
             />
           </v-col>
           <v-col cols="12" md="2">
@@ -112,16 +120,6 @@
               required
             />
           </v-col>
-          <v-col cols="12" md="2">
-            <v-text-field
-              v-model.number="taskForm.locationId"
-              type="number"
-              :label="t('trialTasks.locationId')"
-              variant="outlined"
-              density="comfortable"
-              min="0"
-            />
-          </v-col>
         </v-row>
 
         <v-row dense class="justify-end">
@@ -132,6 +130,7 @@
           </v-col>
         </v-row>
       </v-form>
+      </template>
     </v-card>
 
     <v-card variant="outlined" class="pa-4">
@@ -179,16 +178,6 @@
                 @click="openDateDialog(task)"
               >
                 {{ t('trialTasks.editDateTitle') }}
-              </v-btn>
-              <v-btn
-                size="small"
-                variant="outlined"
-                color="secondary"
-                prepend-icon="mdi-map-marker"
-                block
-                @click="openLocationDialog(task)"
-              >
-                {{ t('trialTasks.editLocationTitle') }}
               </v-btn>
               <v-btn
                 size="small"
@@ -283,32 +272,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <!-- Dialog : Modifier le lieu -->
-    <v-dialog v-model="isLocationDialogOpen" max-width="400">
-      <v-card>
-        <v-card-title>
-          <v-icon icon="mdi-map-marker" class="mr-2" />
-          {{ t('trialTasks.editLocationTitle') }}
-        </v-card-title>
-        <v-card-text>
-          <v-text-field
-            v-model.number="editLocationForm.locationId"
-            type="number"
-            :label="t('trialTasks.locationId')"
-            variant="outlined"
-            density="comfortable"
-            min="0"
-          />
-        </v-card-text>
-        <v-card-actions class="justify-end">
-          <v-btn variant="text" @click="isLocationDialogOpen = false">{{ t('trialTasks.cancel') }}</v-btn>
-          <v-btn color="secondary" :loading="isSavingTask" @click="saveLocationDialog">
-            {{ t('trialTasks.saveLocation') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </v-container>
 </template>
 
@@ -339,11 +302,11 @@ const successMessage = ref('')
 const tasks = ref<VolunteerTask[]>([])
 const taskTypes = ref<TaskType[]>([])
 const volunteers = ref<User[]>([])
+const trial = ref<Trial | null>(null)
 
 const trialInfo = ref<{ name: string } | null>(null)
 const isVolunteerDialogOpen = ref(false)
 const isDateDialogOpen = ref(false)
-const isLocationDialogOpen = ref(false)
 const selectedTask = ref<VolunteerTask | null>(null)
 const selectedVolunteerIds = ref<number[]>([])
 
@@ -356,7 +319,6 @@ const taskForm = ref({
   startTime: '',
   endDate: '',
   endTime: '',
-  locationId: 0,
 })
 
 const editDateForm = ref({
@@ -364,10 +326,6 @@ const editDateForm = ref({
   startTime: '',
   endDate: '',
   endTime: '',
-})
-
-const editLocationForm = ref({
-  locationId: 0,
 })
 
 const taskTypeOptions = computed(() => taskTypes.value)
@@ -413,38 +371,18 @@ const loadVolunteers = async () => {
 
 const loadTrialData = async () => {
   try {
-    // Charger les tâches existantes pour récupérer les dates
-    const trialTasks = await volunteerService.getTasksByTarget('TRIAL', trialId.value)
-
-    if (trialTasks && trialTasks.length > 0) {
-      // Utiliser la première tâche pour obtenir les dates de l'épreuve
-      const firstTask = trialTasks[0]
-      const startDate = firstTask.startDate?.split('T')[0] || ''
-      const endDate = firstTask.endDate?.split('T')[0] || ''
-
-      taskForm.value.startDate = startDate
-      taskForm.value.endDate = endDate
-      taskForm.value.startTime = '09:00'
-      taskForm.value.endTime = '17:00'
-
-      trialInfo.value = { name: `Trial #${trialId.value}` }
-    } else {
-      // Si aucune tâche n'existe, initialiser avec les dates d'aujourd'hui
-      const today = new Date().toISOString().split('T')[0]
-      taskForm.value.startDate = today
-      taskForm.value.endDate = today
-      taskForm.value.startTime = '09:00'
-      taskForm.value.endTime = '17:00'
-      trialInfo.value = { name: `Trial #${trialId.value}` }
-    }
-  } catch (error) {
-    console.error('Error loading trial data:', error)
-    // Initialiser avec les dates d'aujourd'hui en cas d'erreur
-    const today = new Date().toISOString().split('T')[0]
-    taskForm.value.startDate = today
-    taskForm.value.endDate = today
+    const loaded = await championshipService.getTrialById(trialId.value)
+    trial.value = loaded
+    trialInfo.value = { name: loaded.trialName }
+    const startDate = loaded.trialStartDate?.split('T')[0] || ''
+    const endDate = loaded.trialEndDate?.split('T')[0] || ''
+    taskForm.value.startDate = startDate
+    taskForm.value.endDate = endDate
     taskForm.value.startTime = '09:00'
     taskForm.value.endTime = '17:00'
+  } catch (error) {
+    console.error('Error loading trial data:', error)
+    trialInfo.value = { name: `Trial #${trialId.value}` }
   }
 }
 
@@ -468,7 +406,7 @@ const handleCreateTask = async () => {
       startDate: `${taskForm.value.startDate}T${taskForm.value.startTime}:00`,
       endDate: `${taskForm.value.endDate}T${taskForm.value.endTime}:00`,
       maxVolunteers: taskForm.value.maxVolunteers,
-      locationId: taskForm.value.locationId || 0,
+      locationId: trial.value?.locationId ?? 0,
     })
 
     tasks.value.unshift(newTask)
@@ -478,11 +416,10 @@ const handleCreateTask = async () => {
       description: '',
       taskTypeId: 0,
       maxVolunteers: 1,
-      startDate: '',
-      startTime: '',
-      endDate: '',
-      endTime: '',
-      locationId: 0,
+      startDate: trial.value?.trialStartDate?.split('T')[0] || '',
+      startTime: '09:00',
+      endDate: trial.value?.trialEndDate?.split('T')[0] || '',
+      endTime: '17:00',
     }
     taskFormRef.value?.resetValidation()
   } catch (error) {
@@ -570,34 +507,6 @@ const saveDateDialog = async () => {
   } catch (error) {
     console.error('Error updating task date:', error)
     errorMessage.value = t('trialTasks.dateUpdateError')
-  } finally {
-    isSavingTask.value = false
-  }
-}
-
-const saveLocationDialog = async () => {
-  if (!selectedTask.value) return
-
-  isSavingTask.value = true
-  errorMessage.value = ''
-  successMessage.value = ''
-
-  try {
-    const updatedTask = await volunteerService.updateTask(selectedTask.value.id, {
-      ...selectedTask.value,
-      locationId: editLocationForm.value.locationId,
-    })
-
-    const index = tasks.value.findIndex((t) => t.id === updatedTask.id)
-    if (index !== -1) {
-      tasks.value[index] = updatedTask
-    }
-
-    successMessage.value = t('trialTasks.locationUpdateSuccess')
-    isLocationDialogOpen.value = false
-  } catch (error) {
-    console.error('Error updating task location:', error)
-    errorMessage.value = t('trialTasks.locationUpdateError')
   } finally {
     isSavingTask.value = false
   }
