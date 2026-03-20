@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import axios from 'axios'
 import championshipService from '@/services/championshipService'
+import { Status, ParticipantType } from '@/types/competition'
 
 vi.mock('axios', () => ({
     default: {
@@ -166,8 +167,11 @@ describe('championshipService', () => {
                 competitionDescription: 'Desc',
                 competitionStartDate: '2026-06-01',
                 competitionEndDate: '2026-06-02',
-                competitionStatus: 'UPCOMING' as const,
+                competitionStatus: Status.PLANNED,
                 competitionType: 'INDIVIDUAL',
+                participantType: ParticipantType.INDIVIDUAL,
+                maxPerHeat: 8,
+                nbManches: 3,
             }
             const created = { competitionId: 10, ...payload }
             mockedAxios.post.mockResolvedValueOnce({ data: created })

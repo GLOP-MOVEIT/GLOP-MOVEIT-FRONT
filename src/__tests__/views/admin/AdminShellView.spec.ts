@@ -19,10 +19,11 @@ describe('AdminShellView', () => {
     const wrapper = mount(AdminShellView, { global: { stubs } })
     const vm = wrapper.vm as unknown as { menuItems: Array<{ to?: string }> }
 
-    expect(vm.menuItems).toHaveLength(4)
+    expect(vm.menuItems).toHaveLength(5)
     expect(vm.menuItems[0].to).toBe('/admin')
     expect(vm.menuItems[1].to).toBe('/admin/users')
     expect(vm.menuItems[2].to).toBe('/admin/championships')
     expect(vm.menuItems[3].to).toBe('/admin/competitions')
+    expect(vm.menuItems[4].to).toBe('/admin/lieux')
   })
 })

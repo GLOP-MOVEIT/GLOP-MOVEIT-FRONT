@@ -109,3 +109,11 @@ export interface CompetitionTreeResult extends Competition {
   events?: CompetitionTreeEvent[]
   trials?: Trial[]
 }
+
+export interface Event {
+  id: number
+  name: string
+  startDate: string
+  endDate: string
+  description?: string
+}

@@ -625,13 +625,6 @@ const volunteersWithoutPreference = computed(() => {
   )
 })
 
-const availableVolunteers = computed(() =>
-  volunteers.value.map((v) => ({
-    id: v.userId,
-    label: `${v.firstName} ${v.surname}`,
-  }))
-)
-
 const getTaskTypeName = (taskTypeId: number): string => {
   return taskTypes.value.find((t) => t.id === taskTypeId)?.name || `#${taskTypeId}`
 }
@@ -806,8 +799,9 @@ const handleAssignVolunteers = async () => {
       await volunteerService.createAssignment({ volunteerId, taskId: selectedTask.value.id })
       successCount++
     } catch (error: unknown) {
-      const body = (error as any)?.response?.data
-      const msg = typeof body === 'string' ? body : (body?.message ?? '')
+      const body = (error as { response?: { data?: unknown } })?.response?.data
+      const bodyObj = body as Record<string, unknown> | null | undefined
+      const msg = typeof body === 'string' ? body : (typeof bodyObj?.message === 'string' ? bodyObj.message : '')
       const name = getVolunteerName(volunteerId)
       if (msg.includes('already has another task')) {
         errors.push(`${name} : ${t('trialTasks.errorTimeslotConflict')}`)

@@ -122,7 +122,6 @@
                 variant="outlined"
               >
                 <div class="d-flex align-start gap-4">
-                  <!-- Infos de la manche -->
                   <div class="flex-grow-1">
                     <div class="d-flex flex-wrap align-center gap-2 mb-2">
                       <span class="font-weight-medium text-body-1">{{ trial.trialName }}</span>
@@ -251,7 +250,6 @@
         </v-card>
       </v-dialog>
 
-      <!-- Dialog : modifier l'horaire -->
       <v-dialog v-model="isDateDialogOpen" max-width="500">
         <v-card>
           <v-card-title>
@@ -322,7 +320,6 @@
         </v-card>
       </v-dialog>
 
-      <!-- Dialog : modifier le lieu -->
       <v-dialog v-model="isLocationDialogOpen" max-width="400">
         <v-card>
           <v-card-title>
@@ -361,6 +358,8 @@ import { useI18n } from 'vue-i18n'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import locationService from '@/services/locationService'
+import volunteerService from '@/services/volunteerService'
+import type { VolunteerTask } from '@/services/volunteerService'
 import type { CompetitionTreeResult, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
 import type { User } from '@/types/user'
@@ -615,7 +614,7 @@ const saveLocationDialog = async () => {
     try {
       const trialTasks = await volunteerService.getTasksByTarget('TRIAL', editingTrialId.value)
       await Promise.all(
-        trialTasks.map((task) =>
+        trialTasks.map((task: VolunteerTask) =>
           volunteerService.updateTask(task.id, { ...task, locationId: newLocationId })
         )
       )

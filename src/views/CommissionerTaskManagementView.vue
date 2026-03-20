@@ -381,7 +381,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import volunteerService, { type TaskType, type VolunteerTask, type VolunteerAssignment } from '@/services/volunteerService'
 import championshipService from '@/services/championshipService'
@@ -390,7 +389,6 @@ import { UserRole } from '@/types/user'
 import type { User } from '@/types/user'
 
 const { t } = useI18n()
-const router = useRouter()
 
 const taskTypeFormRef = ref()
 const editFormRef = ref()
