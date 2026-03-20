@@ -50,7 +50,6 @@ const logout = async () => {
     </v-toolbar-title>
     <v-spacer></v-spacer>
     <div class="d-none d-md-flex app-nav-spacer"></div>
-    <!-- Bouton convocations visible uniquement pour les athlètes -->
     <v-btn
       v-if="userStore.isAuthenticated && isAthlete"
       to="/mes-convocations"
