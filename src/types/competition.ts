@@ -103,6 +103,7 @@ export interface Trial {
   nextTrialId: number | null
   competitionId: number
   participantIds: number[]
+  qualifiedParticipantIds?: number[]
 }
 
 export interface CompetitionTreeResult extends Competition {

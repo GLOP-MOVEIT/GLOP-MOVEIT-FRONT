@@ -583,11 +583,11 @@ const confirmDeleteCompetition = async (competition: Competition) => {
     if (editingCompetitionId.value === competition.competitionId) {
       resetCompetitionForm()
     }
-    snackbarMessage.value = 'Compétition supprimée avec succès'
+    snackbarMessage.value = t('admin.competitionDeleteSuccess')
     snackbar.value = true
   } catch (error) {
     console.error('Error deleting competition:', error)
-    snackbarMessage.value = 'Erreur lors de la suppression'
+    snackbarMessage.value = t('admin.competitionDeleteError')
     snackbar.value = true
   }
 }

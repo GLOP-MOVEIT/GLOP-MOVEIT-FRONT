@@ -324,12 +324,22 @@ const startChampionshipEdit = (championship: Championship) => {
   nextTick(() => championshipFormRef.value?.resetValidation())
 }
 
-const confirmDeleteChampionship = (championship: Championship) => {
+const confirmDeleteChampionship = async (championship: Championship) => {
   const confirmed = globalThis.confirm(t('admin.championshipDeleteConfirm', { name: championship.name }))
   if (!confirmed) return
-  championships.value = championships.value.filter((c) => c.id !== championship.id)
-  if (editingChampionshipId.value === championship.id) {
-    resetChampionshipForm()
+
+  try {
+    await championshipService.deleteChampionship(championship.id)
+    championships.value = championships.value.filter((c) => c.id !== championship.id)
+    if (editingChampionshipId.value === championship.id) {
+      resetChampionshipForm()
+    }
+    snackbarMessage.value = t('admin.championshipDeleteSuccess')
+    snackbar.value = true
+  } catch (error) {
+    console.error('Error deleting championship:', error)
+    snackbarMessage.value = t('admin.championshipDeleteError')
+    snackbar.value = true
   }
 }
 </script>

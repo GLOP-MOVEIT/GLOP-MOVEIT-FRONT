@@ -423,6 +423,43 @@ export const championshipService = {
       throw error
     }
   },
+
+  /**
+   * Qualifier une liste de participants vers la manche suivante
+   */
+  async advanceQualifiedParticipants(trialId: number, participantIds: number[]): Promise<Trial> {
+    try {
+      const response = await axios.post<Trial>(`${API_URL}/trials/${trialId}/advance-qualified`, participantIds, {
+        headers: {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      })
+      return response.data
+    } catch (error) {
+      console.error(`Advance qualified participants for trial ${trialId} error:`, error)
+      throw error
+    }
+  },
+
+  /**
+   * Mettre à jour une épreuve
+   */
+  async updateTrial(trial: Trial): Promise<Trial> {
+    try {
+      const response = await axios.put<Trial>(`${API_URL}/trials/${trial.trialId}`, trial, {
+        headers: {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      })
+      return response.data
+    } catch (error) {
+      console.error(`Update trial ${trial.trialId} error:`, error)
+      throw error
+    }
+  },
 }
 
 export default championshipService
+

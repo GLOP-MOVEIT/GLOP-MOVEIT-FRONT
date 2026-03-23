@@ -34,6 +34,7 @@
           <th scope="col" class="text-left">{{ t('commissionerResults.trial') }}</th>
           <th scope="col" class="text-left">{{ t('commissionerResults.round') }}</th>
           <th scope="col" class="text-left">{{ t('commissionerResults.date') }}</th>
+          <th scope="col" class="text-left">{{ t('commissionerResults.status') }}</th>
           <th scope="col" class="text-left">{{ t('commissionerResults.actions') }}</th>
         </tr>
       </thead>
@@ -43,6 +44,16 @@
           <td>{{ row.trial.trialName }}</td>
           <td>{{ t('commissionerResults.roundLabel', { round: row.trial.roundNumber, position: row.trial.position }) }}</td>
           <td>{{ formatTrialDate(row.trial.trialStartDate) }}</td>
+          <td>
+            <v-chip
+              :color="statusColor(row.trial.trialStatus)"
+              variant="tonal"
+              size="small"
+              label
+            >
+              {{ t(`admin.competitionStatus.${row.trial.trialStatus}`) }}
+            </v-chip>
+          </td>
           <td>
             <v-btn
               size="small"
@@ -78,9 +89,20 @@
               {{ dialogError }}
             </v-alert>
 
+            <v-alert
+              v-if="hasQualifiedParticipantsInTrial"
+              type="warning"
+              variant="tonal"
+              class="mb-4"
+              icon="mdi-lock"
+            >
+              {{ t('commissionerResults.resultsLocked') }}
+            </v-alert>
+
             <v-checkbox
               v-model="editForm.lastTrial"
               :label="t('commissionerResults.lastTrial')"
+              :disabled="hasQualifiedParticipantsInTrial"
               class="mb-2"
             />
 
@@ -100,6 +122,9 @@
                   <th scope="col" class="text-left">{{ t('commissionerResults.participant') }}</th>
                   <th scope="col" class="text-left">{{ t('commissionerResults.score') }}</th>
                   <th scope="col" style="width: 100px">{{ t('commissionerResults.order') }}</th>
+                  <th v-if="!editForm.lastTrial && activeRow?.trial.nextTrialId" scope="col" style="width: 100px">
+                    {{ t('commissionerResults.qualify') }}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -117,6 +142,7 @@
                         hide-details
                         class="my-1"
                         style="min-width: 120px"
+                        :disabled="hasQualifiedParticipantsInTrial"
                       />
                       <span v-if="resultUnit" class="ml-2 text-body-2 text-grey-darken-1 text-no-wrap">
                         {{ resultUnit }}
@@ -128,7 +154,7 @@
                       icon
                       size="x-small"
                       variant="text"
-                      :disabled="index === 0"
+                      :disabled="index === 0 || hasQualifiedParticipantsInTrial"
                       @click="moveUp(index)"
                     >
                       <v-icon>mdi-arrow-up</v-icon>
@@ -137,11 +163,19 @@
                       icon
                       size="x-small"
                       variant="text"
-                      :disabled="index === editForm.rows.length - 1"
+                      :disabled="index === editForm.rows.length - 1 || hasQualifiedParticipantsInTrial"
                       @click="moveDown(index)"
                     >
                       <v-icon>mdi-arrow-down</v-icon>
                     </v-btn>
+                  </td>
+                  <td v-if="!editForm.lastTrial && activeRow?.trial.nextTrialId">
+                    <v-checkbox
+                      v-model="row.qualified"
+                      hide-details
+                      density="compact"
+                      :disabled="hasQualifiedParticipantsInTrial"
+                    />
                   </td>
                 </tr>
               </tbody>
@@ -153,10 +187,22 @@
           <v-spacer />
           <v-btn variant="text" @click="closeDialog">{{ t('commissionerResults.cancel') }}</v-btn>
           <v-btn
+            v-if="!editForm.lastTrial && activeRow?.trial.nextTrialId && hasQualifiedParticipants"
+            color="success"
+            variant="elevated"
+            :loading="isAdvancing"
+            :disabled="isDialogLoading || editForm.rows.length === 0"
+            @click="advanceQualified"
+            class="mr-2"
+          >
+            <v-icon icon="mdi-arrow-right" class="mr-1" />
+            {{ t('commissionerResults.advanceQualified') }}
+          </v-btn>
+          <v-btn
             color="primary"
             variant="elevated"
             :loading="isSaving"
-            :disabled="isDialogLoading || editForm.rows.length === 0"
+            :disabled="isDialogLoading || editForm.rows.length === 0 || hasQualifiedParticipantsInTrial"
             @click="saveResult"
           >
             {{ t('commissionerResults.save') }}
@@ -188,6 +234,7 @@ interface TrialRow {
 interface RankingRow {
   id: number
   scoreValue: string
+  qualified?: boolean
 }
 
 interface EditForm {
@@ -211,11 +258,20 @@ const athletes = ref<User[]>([])
 const isDialogOpen = ref(false)
 const isDialogLoading = ref(false)
 const isSaving = ref(false)
+const isAdvancing = ref(false)
 const dialogError = ref('')
 const activeRow = ref<TrialRow | null>(null)
 const editForm = ref<EditForm>({ lastTrial: false, rows: [] })
 
 const resultUnit = computed(() => activeRow.value?.competition.competitionResultUnit ?? null)
+
+const hasQualifiedParticipants = computed(() =>
+  editForm.value.rows.some((row) => row.qualified === true)
+)
+
+const hasQualifiedParticipantsInTrial = computed(() =>
+  activeRow.value?.trial.qualifiedParticipantIds && activeRow.value.trial.qualifiedParticipantIds.length > 0
+)
 
 const moveUp = (index: number) => {
   if (index === 0) return
@@ -240,6 +296,13 @@ const formatTrialDate = (dateStr: string): string => {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+const statusColor = (status: string) => {
+  if (status === Status.COMPLETED) return 'success'
+  if (status === Status.ONGOING) return 'primary'
+  if (status === Status.PLANNED) return 'grey'
+  return 'grey'
 }
 
 const getAthleteName = (userId: number): string => {
@@ -327,6 +390,33 @@ const closeDialog = () => {
   dialogError.value = ''
 }
 
+const advanceQualified = async () => {
+  if (!activeRow.value) return
+  isAdvancing.value = true
+  dialogError.value = ''
+  try {
+    const qualifiedIds = editForm.value.rows
+      .filter((row) => row.qualified === true)
+      .map((row) => row.id)
+
+    if (qualifiedIds.length === 0) {
+      dialogError.value = t('commissionerResults.noQualifiedSelected')
+      return
+    }
+
+    await championshipService.advanceQualifiedParticipants(activeRow.value.trial.trialId!, qualifiedIds)
+    successMessage.value = t('commissionerResults.advanceSuccess')
+    closeDialog()
+    // Reload data to show the updated trials
+    await loadData()
+  } catch (error) {
+    console.error('Advance qualified error:', error)
+    dialogError.value = t('commissionerResults.advanceError')
+  } finally {
+    isAdvancing.value = false
+  }
+}
+
 const saveResult = async () => {
   if (!activeRow.value) return
   isSaving.value = true
@@ -349,8 +439,18 @@ const saveResult = async () => {
     } else {
       await resultService.saveResult(payload)
     }
+
+    // Update trial status to COMPLETED with all fields
+    const updatedTrial = {
+      ...activeRow.value.trial,
+      trialStatus: Status.COMPLETED,
+    }
+    await championshipService.updateTrial(updatedTrial)
+
     successMessage.value = t('commissionerResults.saveSuccess')
     closeDialog()
+    // Reload data to show the updated trials
+    await loadData()
   } catch (error) {
     console.error('Save result error:', error)
     dialogError.value = t('commissionerResults.saveError')

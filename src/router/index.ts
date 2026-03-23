@@ -28,6 +28,14 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'resultats',
+        name: 'results',
+        component: () => import('@/views/ResultsView.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
         path: 'profil',
         name: 'profile',
         component: () => import('@/views/ProfileView.vue'),

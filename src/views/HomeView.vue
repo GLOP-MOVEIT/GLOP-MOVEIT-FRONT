@@ -164,6 +164,82 @@
       <v-alert v-else type="info" variant="tonal">
         {{ t('home.noUpcoming') }}
       </v-alert>
+
+      <div class="d-flex align-center justify-space-between mb-4 mt-10">
+        <h2 class="text-h5 font-weight-bold">{{ t('home.latestResults') }}</h2>
+        <v-chip size="small" variant="tonal" color="success" label>{{ latestResults.length }}</v-chip>
+      </div>
+
+      <v-row v-if="latestResults.length" dense>
+        <v-col
+          v-for="competition in latestResults"
+          :key="competition.competitionId"
+          cols="12"
+          md="6"
+          lg="4"
+        >
+          <v-card
+            class="h-100 d-flex flex-column"
+            variant="outlined"
+          >
+            <v-card-item>
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="text-subtitle-1 font-weight-medium">
+                  {{ competition.competitionName }}
+                </div>
+                <v-chip color="success" size="small" variant="tonal" label>
+                  {{ t('admin.competitionStatus.COMPLETED') }}
+                </v-chip>
+              </div>
+              <div class="text-caption text-grey-darken-1 mb-2">
+                {{ getChampionshipName(competition.championshipId) }}
+              </div>
+              <div class="text-caption text-grey-darken-2">
+                {{ formatDateRange(competition.competitionStartDate, competition.competitionEndDate) }}
+              </div>
+            </v-card-item>
+
+            <v-card-text class="py-2 text-caption">
+              <div v-if="getLatestTrialsInfo(competition.competitionId).length === 0" class="text-grey-darken-1">
+                {{ t('home.noTrialsCompleted') }}
+              </div>
+              <div v-else>
+                <div class="font-weight-medium mb-2">{{ t('home.completedTrials') }}:</div>
+                <div
+                  v-for="trial in getLatestTrialsInfo(competition.competitionId).slice(0, 2)"
+                  :key="trial.trialId"
+                  class="text-grey-darken-1 mb-1"
+                >
+                  • {{ trial.trialName }}
+                </div>
+                <div
+                  v-if="getLatestTrialsInfo(competition.competitionId).length > 2"
+                  class="text-grey-darken-2 mt-2 font-italic"
+                >
+                  +{{ getLatestTrialsInfo(competition.competitionId).length - 2 }} {{ t('home.moreTrials') }}
+                </div>
+              </div>
+            </v-card-text>
+
+            <v-spacer />
+            <v-card-actions class="mt-auto">
+              <v-spacer />
+              <v-btn
+                variant="text"
+                color="success"
+                to="/resultats"
+              >
+                {{ t('home.viewResults') }}
+                <v-icon icon="mdi-arrow-right" class="ml-2" />
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <v-alert v-else type="info" variant="tonal">
+        {{ t('home.noResults') }}
+      </v-alert>
     </div>
   </v-container>
 </template>
@@ -174,7 +250,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { UserRole } from '@/types/user'
 import championshipService from '@/services/championshipService'
-import type { Championship } from '@/types/competition'
+import type { Championship, Competition, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
 import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 
@@ -191,6 +267,9 @@ const championships = ref<Championship[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 const searchQuery = ref('')
+const allCompetitions = ref<Competition[]>([])
+const allTrials = ref<Trial[]>([])
+const championshipsMap = ref<Map<number, string>>(new Map())
 
 const bannerUrl = new URL('@/assets/images/banniere.jpg', import.meta.url).href
 
@@ -231,11 +310,65 @@ const upcomingChampionships = computed(() => {
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
 })
 
+const latestResults = computed(() => {
+  // Get competitions that have at least one completed trial
+  const competitionsWithResults = new Set<number>()
+  allTrials.value.forEach((trial) => {
+    if (trial.trialStatus === Status.COMPLETED) {
+      competitionsWithResults.add(trial.competitionId)
+    }
+  })
+
+  const completedComps = allCompetitions.value.filter((c) =>
+    competitionsWithResults.has(c.competitionId!)
+  )
+
+  // Sort by most recently completed (by end date)
+  return completedComps.sort((a, b) => {
+    const dateA = new Date(a.competitionEndDate).getTime()
+    const dateB = new Date(b.competitionEndDate).getTime()
+    return dateB - dateA
+  }).slice(0, 6) // Show top 6
+})
+
+const getChampionshipName = (championshipId: number | undefined): string => {
+  if (!championshipId) return ''
+  return championshipsMap.value.get(championshipId) ?? ''
+}
+
+const getLatestTrialsInfo = (competitionId: number): Trial[] =>
+  allTrials.value.filter((t) => t.competitionId === competitionId && t.trialStatus === Status.COMPLETED)
+
 const loadChampionships = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    championships.value = await championshipService.getAllChampionships()
+    const [champs, comps] = await Promise.all([
+      championshipService.getAllChampionships(),
+      championshipService.getAllCompetitions(),
+    ])
+
+    championships.value = champs
+    allCompetitions.value = comps
+
+    // Build championships map
+    const map = new Map<number, string>()
+    champs.forEach((ch) => map.set(ch.id, ch.name))
+    championshipsMap.value = map
+
+    // Load all trials for all competitions
+    const allTrialsList: Trial[] = []
+    await Promise.all(
+      comps.map(async (comp) => {
+        try {
+          const trials = await championshipService.getTrialsByCompetition(comp.competitionId!)
+          allTrialsList.push(...trials)
+        } catch {
+          // ignore
+        }
+      }),
+    )
+    allTrials.value = allTrialsList
   } catch {
     errorMessage.value = t('home.loadError')
   } finally {
