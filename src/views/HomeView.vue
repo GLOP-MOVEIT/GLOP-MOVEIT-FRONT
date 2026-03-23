@@ -59,7 +59,7 @@
     <v-row class="mb-6" justify="center">
       <v-col cols="12" md="8">
         <v-text-field
-          v-model="searchQuery"
+          v-model="championshipSearchQuery"
           :label="t('home.searchPlaceholder')"
           prepend-inner-icon="mdi-magnify"
           variant="outlined"
@@ -349,7 +349,7 @@ const formatDateRange = (start: string | Date, end: string | Date) =>
 const championships = ref<Championship[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
-const searchQuery = ref('')
+const championshipSearchQuery = ref('')
 const allCompetitions = ref<Competition[]>([])
 const allTrials = ref<Trial[]>([])
 const championshipsMap = ref<Map<number, string>>(new Map())
@@ -376,14 +376,15 @@ const scrollCarousel = (section: string, direction: number) => {
   }
 }
 
-const normalizedQuery = computed(() => searchQuery.value.trim().toLowerCase())
+const normalizedChampionshipQuery = computed(() => championshipSearchQuery.value.trim().toLowerCase())
 
 const filteredChampionships = computed(() => {
-  if (!normalizedQuery.value) return championships.value
+  if (!normalizedChampionshipQuery.value) return championships.value
   return championships.value.filter((championship) => {
     const name = championship.name?.toLowerCase() ?? ''
     const description = championship.description?.toLowerCase() ?? ''
-    return name.includes(normalizedQuery.value) || description.includes(normalizedQuery.value)
+    return name.includes(normalizedChampionshipQuery.value) ||
+      description.includes(normalizedChampionshipQuery.value)
   })
 })
 

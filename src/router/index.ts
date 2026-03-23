@@ -52,6 +52,11 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'profil/:id',
+        name: 'public-profile',
+        component: () => import('@/views/PublicProfileView.vue'),
+      },
+      {
         path: 'parametres',
         name: 'settings',
         component: () => import('@/views/SettingsView.vue'),

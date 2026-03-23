@@ -41,6 +41,7 @@ export const userService = {
         localStorage.setItem('authToken', response.data.token)
         const userId = response.data.user.userId ?? response.data.user.id
         const userProfile = await this.getUserProfile(userId)
+        userProfile.nickname = response.data.user.nickname
         localStorage.setItem('user', JSON.stringify(userProfile))
 
         return {
@@ -143,6 +144,7 @@ export const userService = {
       }
 
       const userProfile = await this.getUserProfile(currentUserId)
+      userProfile.nickname = currentUser?.nickname
       localStorage.setItem('user', JSON.stringify(userProfile))
 
       return userProfile
