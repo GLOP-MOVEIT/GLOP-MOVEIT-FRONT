@@ -153,6 +153,11 @@ const routes: RouteRecordRaw[] = [
             name: 'trial-tasks',
             component: () => import('@/views/TrialTaskManagementView.vue'),
           },
+          {
+            path: 'resultats',
+            name: 'commissioner-results',
+            component: () => import('@/views/CommissionerResultsView.vue'),
+          },
         ],
       },
       {

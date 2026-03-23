@@ -1,0 +1,365 @@
+<template>
+  <div>
+    <div class="d-flex align-center justify-space-between mb-4">
+      <div class="d-flex align-center">
+        <v-icon icon="mdi-trophy" size="32" color="primary" class="mr-2" />
+        <div>
+          <h2 class="text-h5 font-weight-bold">{{ t('commissionerResults.title') }}</h2>
+          <p class="text-body-2 text-grey-darken-1">{{ t('commissionerResults.subtitle') }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="isLoading" class="d-flex justify-center py-10">
+      <v-progress-circular indeterminate color="primary" />
+    </div>
+
+    <v-alert v-else-if="errorMessage" type="error" variant="tonal" class="mb-4">
+      {{ errorMessage }}
+    </v-alert>
+
+    <v-alert
+      v-else-if="trialRows.length === 0"
+      type="info"
+      variant="tonal"
+      class="mb-4"
+    >
+      {{ t('commissionerResults.noTrials') }}
+    </v-alert>
+
+    <v-table v-else>
+      <thead>
+        <tr>
+          <th scope="col" class="text-left">{{ t('commissionerResults.competition') }}</th>
+          <th scope="col" class="text-left">{{ t('commissionerResults.trial') }}</th>
+          <th scope="col" class="text-left">{{ t('commissionerResults.round') }}</th>
+          <th scope="col" class="text-left">{{ t('commissionerResults.date') }}</th>
+          <th scope="col" class="text-left">{{ t('commissionerResults.actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="row in trialRows" :key="row.trial.trialId">
+          <td>{{ row.competition.competitionName }}</td>
+          <td>{{ row.trial.trialName }}</td>
+          <td>{{ t('commissionerResults.roundLabel', { round: row.trial.roundNumber, position: row.trial.position }) }}</td>
+          <td>{{ formatTrialDate(row.trial.trialStartDate) }}</td>
+          <td>
+            <v-btn
+              size="small"
+              color="primary"
+              variant="outlined"
+              @click="openResultDialog(row)"
+            >
+              {{ t('commissionerResults.manageResults') }}
+            </v-btn>
+          </td>
+        </tr>
+      </tbody>
+    </v-table>
+
+    <v-alert v-if="successMessage" type="success" variant="tonal" class="mt-4" closable @click:close="successMessage = ''">
+      {{ successMessage }}
+    </v-alert>
+
+    <v-dialog v-model="isDialogOpen" max-width="760" persistent>
+      <v-card v-if="activeRow">
+        <v-card-title class="pt-4 px-6">
+          {{ t('commissionerResults.dialogTitle') }}
+          <span class="text-body-2 text-grey-darken-1 ml-2">— {{ activeRow.trial.trialName }}</span>
+        </v-card-title>
+
+        <v-card-text class="px-6">
+          <div v-if="isDialogLoading" class="d-flex justify-center py-6">
+            <v-progress-circular indeterminate color="primary" />
+          </div>
+
+          <template v-else>
+            <v-alert v-if="dialogError" type="error" variant="tonal" class="mb-4">
+              {{ dialogError }}
+            </v-alert>
+
+            <v-checkbox
+              v-model="editForm.lastTrial"
+              :label="t('commissionerResults.lastTrial')"
+              class="mb-2"
+            />
+
+            <v-alert
+              v-if="editForm.rows.length === 0"
+              type="warning"
+              variant="tonal"
+              class="mb-4"
+            >
+              {{ t('commissionerResults.noParticipants') }}
+            </v-alert>
+
+            <v-table v-else density="compact">
+              <thead>
+                <tr>
+                  <th scope="col" style="width: 48px">#</th>
+                  <th scope="col" class="text-left">{{ t('commissionerResults.participant') }}</th>
+                  <th scope="col" class="text-left">{{ t('commissionerResults.score') }}</th>
+                  <th scope="col" style="width: 100px">{{ t('commissionerResults.order') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, index) in editForm.rows" :key="row.id">
+                  <td>
+                    <v-chip color="primary" size="small" variant="tonal">{{ index + 1 }}</v-chip>
+                  </td>
+                  <td>{{ getAthleteName(row.id) }}</td>
+                  <td>
+                    <div class="d-flex align-center">
+                      <v-text-field
+                        v-model="row.scoreValue"
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        class="my-1"
+                        style="min-width: 120px"
+                      />
+                      <span v-if="resultUnit" class="ml-2 text-body-2 text-grey-darken-1 text-no-wrap">
+                        {{ resultUnit }}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <v-btn
+                      icon
+                      size="x-small"
+                      variant="text"
+                      :disabled="index === 0"
+                      @click="moveUp(index)"
+                    >
+                      <v-icon>mdi-arrow-up</v-icon>
+                    </v-btn>
+                    <v-btn
+                      icon
+                      size="x-small"
+                      variant="text"
+                      :disabled="index === editForm.rows.length - 1"
+                      @click="moveDown(index)"
+                    >
+                      <v-icon>mdi-arrow-down</v-icon>
+                    </v-btn>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </template>
+        </v-card-text>
+
+        <v-card-actions class="px-6 pb-4">
+          <v-spacer />
+          <v-btn variant="text" @click="closeDialog">{{ t('commissionerResults.cancel') }}</v-btn>
+          <v-btn
+            color="primary"
+            variant="elevated"
+            :loading="isSaving"
+            :disabled="isDialogLoading || editForm.rows.length === 0"
+            @click="saveResult"
+          >
+            {{ t('commissionerResults.save') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import championshipService from '@/services/championshipService'
+import resultService from '@/services/resultService'
+import userService from '@/services/userService'
+import { Status, type Competition, type Trial } from '@/types/competition'
+import type { User } from '@/types/user'
+import { UserRole } from '@/types/user'
+import type { Ranking } from '@/types/result'
+
+const { t } = useI18n()
+
+interface TrialRow {
+  competition: Competition
+  trial: Trial
+}
+
+interface RankingRow {
+  id: number
+  scoreValue: string
+}
+
+interface EditForm {
+  resultId?: number
+  lastTrial: boolean
+  rows: RankingRow[]
+}
+
+const stripUnit = (score: string, unit: string | null | undefined): string => {
+  if (!unit || !score) return score ?? ''
+  const suffix = ` ${unit}`
+  return score.endsWith(suffix) ? score.slice(0, -suffix.length) : score
+}
+
+const isLoading = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
+const trialRows = ref<TrialRow[]>([])
+const athletes = ref<User[]>([])
+
+const isDialogOpen = ref(false)
+const isDialogLoading = ref(false)
+const isSaving = ref(false)
+const dialogError = ref('')
+const activeRow = ref<TrialRow | null>(null)
+const editForm = ref<EditForm>({ lastTrial: false, rows: [] })
+
+const resultUnit = computed(() => activeRow.value?.competition.competitionResultUnit ?? null)
+
+const moveUp = (index: number) => {
+  if (index === 0) return
+  const rows = editForm.value.rows
+  const moved = rows.splice(index, 1)[0]!
+  rows.splice(index - 1, 0, moved)
+}
+
+const moveDown = (index: number) => {
+  const rows = editForm.value.rows
+  if (index === rows.length - 1) return
+  const moved = rows.splice(index, 1)[0]!
+  rows.splice(index + 1, 0, moved)
+}
+
+const formatTrialDate = (dateStr: string): string => {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleString(undefined, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+const getAthleteName = (userId: number): string => {
+  const athlete = athletes.value.find((a) => a.userId === userId)
+  if (!athlete) return `#${userId}`
+  return `${athlete.firstName} ${athlete.surname}`.trim()
+}
+
+const loadData = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    const [allCompetitions, allAthletes] = await Promise.all([
+      championshipService.getAllCompetitions(),
+      userService.getUsersByRole(UserRole.ATHLETE),
+    ])
+    athletes.value = allAthletes
+
+    const now = new Date()
+
+    const activeCompetitions = allCompetitions.filter(
+      (c) => c.competitionStatus !== Status.CANCELLED,
+    )
+
+    const trialsByComp = await Promise.all(
+      activeCompetitions.map((comp) =>
+        championshipService
+          .getTrialsByCompetition(comp.competitionId!)
+          .then((trials) => ({ comp, trials }))
+          .catch(() => ({ comp, trials: [] as Trial[] })),
+      ),
+    )
+
+    const rows: TrialRow[] = []
+    for (const { comp, trials } of trialsByComp) {
+      for (const trial of trials) {
+        const hasStarted = trial.trialStartDate && new Date(trial.trialStartDate) <= now
+        const isCompleted = trial.trialStatus === Status.COMPLETED
+        if (trial.trialStatus !== Status.CANCELLED && (hasStarted || isCompleted)) {
+          rows.push({ competition: comp, trial })
+        }
+      }
+    }
+    trialRows.value = rows
+  } catch (error) {
+    console.error('Load results error:', error)
+    errorMessage.value = t('commissionerResults.loadError')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const openResultDialog = async (row: TrialRow) => {
+  activeRow.value = row
+  isDialogOpen.value = true
+  isDialogLoading.value = true
+  dialogError.value = ''
+  editForm.value = { lastTrial: false, rows: [] }
+
+  try {
+    const existing = await resultService.getResultByTrialId(row.trial.trialId!)
+    const unit = row.competition.competitionResultUnit ?? null
+    // Sort by position ascending to restore saved order
+    const sorted = [...existing.rankings].sort((a, b) => a.position - b.position)
+    editForm.value = {
+      resultId: existing.resultId,
+      lastTrial: existing.lastTrial,
+      rows: sorted.map((r) => ({ id: r.id, scoreValue: stripUnit(r.score, unit) })),
+    }
+  } catch {
+    // No result yet — initialize rows from trial participants
+    editForm.value = {
+      lastTrial: false,
+      rows: (row.trial.participantIds ?? []).map((id) => ({ id, scoreValue: '' })),
+    }
+  } finally {
+    isDialogLoading.value = false
+  }
+}
+
+const closeDialog = () => {
+  isDialogOpen.value = false
+  activeRow.value = null
+  editForm.value = { lastTrial: false, rows: [] }
+  dialogError.value = ''
+}
+
+const saveResult = async () => {
+  if (!activeRow.value) return
+  isSaving.value = true
+  dialogError.value = ''
+  try {
+    const unit = activeRow.value.competition.competitionResultUnit
+    const rankings: Ranking[] = editForm.value.rows.map((row, index) => ({
+      id: row.id,
+      position: index + 1,
+      score: unit && row.scoreValue ? `${row.scoreValue} ${unit}` : row.scoreValue,
+    }))
+    const payload = {
+      resultId: editForm.value.resultId,
+      trialId: activeRow.value.trial.trialId!,
+      lastTrial: editForm.value.lastTrial,
+      rankings,
+    }
+    if (editForm.value.resultId !== undefined) {
+      await resultService.updateResult(payload)
+    } else {
+      await resultService.saveResult(payload)
+    }
+    successMessage.value = t('commissionerResults.saveSuccess')
+    closeDialog()
+  } catch (error) {
+    console.error('Save result error:', error)
+    dialogError.value = t('commissionerResults.saveError')
+  } finally {
+    isSaving.value = false
+  }
+}
+
+onMounted(() => {
+  loadData()
+})
+</script>
