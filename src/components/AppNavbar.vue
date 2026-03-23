@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { UserRole } from '@/types/user'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import UserSearchBar from '@/components/UserSearchBar.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -45,12 +46,13 @@ const logout = async () => {
       @click.stop="drawer = !drawer"
       class="d-md-none"
     ></v-app-bar-nav-icon>
-    <v-toolbar-title class="text-h5 font-weight-bold d-flex align-center">
+    <v-toolbar-title class="text-h5 font-weight-bold d-flex align-center title-shell mr-4">
       <router-link to="/" class="app-title">
         <v-icon icon="mdi-medal" class="mr-2"></v-icon>
-        CiblOrgaSport - {{ t('nav.home') }}
+        <span class="d-none d-md-inline">CiblOrgaSport - {{ t('nav.home') }}</span>
       </router-link>
     </v-toolbar-title>
+    <UserSearchBar />
     <v-spacer></v-spacer>
     <div class="d-none d-md-flex app-nav-spacer"></div>
     <v-btn
@@ -151,5 +153,16 @@ const logout = async () => {
 
 .app-nav-spacer {
   width: 16px;
+}
+
+.title-shell {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+@media (max-width: 959px) {
+  .app-title {
+    min-width: 24px;
+  }
 }
 </style>

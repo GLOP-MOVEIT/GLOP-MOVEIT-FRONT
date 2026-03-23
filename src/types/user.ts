@@ -16,6 +16,7 @@ export interface Role {
 // Interface User complète (API user-service /users/{id})
 export interface User {
   userId: number
+  nickname?: string
   firstName: string
   surname: string
   email: string
