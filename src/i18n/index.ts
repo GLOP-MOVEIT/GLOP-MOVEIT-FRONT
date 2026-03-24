@@ -731,6 +731,7 @@ const messages = {
     },
     publicProfile: {
       identitySection: 'Public profile',
+      identityDetailsSection: 'Identity',
       infoSection: 'Information',
       sportSection: 'Sports summary',
       userIdLabel: 'User ID:',
@@ -1596,6 +1597,7 @@ const messages = {
     },
     publicProfile: {
       identitySection: 'Profil public',
+      identityDetailsSection: 'Identité',
       infoSection: 'Informations',
       sportSection: 'Résumé sportif',
       userIdLabel: 'ID utilisateur :',

@@ -26,9 +26,7 @@ const medalCounts = computed(() => ({
 </script>
 
 <template>
-  <v-divider class="my-6" />
-
-  <div class="text-overline mb-3">{{ t('publicProfile.resultsSection') }}</div>
+  <div class="text-overline mb-3 section-label">{{ t('publicProfile.resultsSection') }}</div>
 
   <v-alert
     v-if="error"
@@ -89,7 +87,7 @@ const medalCounts = computed(() => ({
         :key="entry.trialId"
         cols="12"
       >
-        <v-card variant="outlined" class="pa-4">
+        <v-card variant="outlined" class="pa-4 result-card">
           <div class="d-flex flex-wrap justify-space-between ga-3">
             <div>
               <div class="text-h6">{{ entry.trialName }}</div>
@@ -115,6 +113,7 @@ const medalCounts = computed(() => ({
 <style scoped>
 .medal-card {
   border-radius: 16px;
+  border-color: rgba(15, 23, 42, 0.08);
 }
 
 .medal-card-gold {
@@ -139,5 +138,20 @@ const medalCounts = computed(() => ({
 
 .medal-icon-bronze {
   color: rgb(146, 64, 14);
+}
+
+.result-card {
+  border-radius: 18px;
+  border-color: rgba(15, 23, 42, 0.08);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.result-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.section-label {
+  color: rgb(25, 118, 210);
 }
 </style>
