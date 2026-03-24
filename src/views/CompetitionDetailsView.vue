@@ -146,6 +146,16 @@
                     <v-icon size="14" class="mr-2">mdi-door-open</v-icon>
                     <span>{{ getEntrance(getLocation(trial.locationId)!) }}</span>
                   </div>
+                  <v-btn
+                    size="x-small"
+                    variant="tonal"
+                    color="info"
+                    class="mt-2 align-self-start"
+                    prepend-icon="mdi-directions"
+                    @click="openMapItinerary(trial.locationId)"
+                  >
+                    {{ t('commissionerCompetition.openMapTitle') }}
+                  </v-btn>
                 </div>
                 <div v-else class="d-flex align-center">
                   <v-icon size="14" class="mr-2" color="warning">mdi-alert</v-icon>
@@ -239,6 +249,14 @@ const statusColor = (status: Status) => {
 const getAthleteName = (athleteId: number) => {
   const athlete = athletes.value.find((a) => a.userId === athleteId)
   return athlete ? getUserDisplayName(athlete) : `#${athleteId}`
+}
+
+const openMapItinerary = (locationId: number | null | undefined) => {
+  const location = getLocation(locationId)
+  if (!location) return
+
+  const mapsUrl = `https://www.google.com/maps/@${location.latitude},${location.longitude},15z`
+  window.open(mapsUrl, '_blank')
 }
 
 onMounted(async () => {

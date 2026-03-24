@@ -177,6 +177,16 @@
                       {{ t('commissionerCompetition.editLocationTitle') }}
                     </v-btn>
                     <v-btn
+                      v-if="trial.locationId"
+                      variant="outlined"
+                      color="info"
+                      prepend-icon="mdi-directions"
+                      block
+                      @click="openMapItinerary(trial.locationId)"
+                    >
+                      {{ t('commissionerCompetition.openMapTitle') }}
+                    </v-btn>
+                    <v-btn
                       variant="outlined"
                       color="success"
                       prepend-icon="mdi-clipboard-list-outline"
@@ -510,6 +520,19 @@ const getLocationName = (locationId: number | null | undefined): string | null =
   return allLocations.value.find((l) => l.locationId === locationId)?.name ?? String(locationId)
 }
 
+const getLocationById = (locationId: number | null | undefined) => {
+  if (!locationId) return null
+  return allLocations.value.find((l) => l.locationId === locationId)
+}
+
+const openMapItinerary = (locationId: number | null | undefined) => {
+  const location = getLocationById(locationId)
+  if (!location) return
+
+  const mapsUrl = `https://www.google.com/maps/@${location.latitude},${location.longitude},15z`
+  window.open(mapsUrl, '_blank')
+}
+
 const loadCompetition = async () => {
   competition.value = await championshipService.getCompetitionById(competitionId.value)
 }
@@ -703,8 +726,11 @@ onMounted(async () => {
 
   try {
     await Promise.all([loadCompetition(), loadAthletes()])
+
+    const locations = await locationService.getAllLocations().catch(() => [])
+    allLocations.value = locations
+
     await loadTrials()
-    allLocations.value = await locationService.getAllLocations().catch(() => [])
   } catch {
     errorMessage.value = t('commissionerCompetition.loadError')
   } finally {
