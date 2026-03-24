@@ -243,7 +243,7 @@ export const championshipService = {
   /**
    * Générer l'arbre de la compétition
    */
-  async generateCompetitionTree(competitionId: number, participantIds: number[]): Promise<CompetitionTreeResult> {
+  async generateCompetitionTree(competitionId: number, participantIds: number[] | number[][]): Promise<CompetitionTreeResult> {
     try {
       const response = await axios.post<CompetitionTreeResult>(
         `${API_URL}/championships/competitions/${competitionId}/generate-tree`,

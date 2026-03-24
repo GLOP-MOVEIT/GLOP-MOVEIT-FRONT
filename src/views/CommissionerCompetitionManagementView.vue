@@ -76,27 +76,27 @@
               </v-btn>
             </div>
 
-            <div v-if="selectedAthletes.length === 0" class="text-body-2 text-grey-darken-1 mb-4">
-              {{ t('commissionerCompetition.noAthletesSelected') }}
+            <div v-if="competition?.participantType === 'INDIVIDUAL'">
+              <AthleteSelectionDisplay
+                :selected-athlete-ids="selectedAthleteIds"
+                :athletes="athletes"
+                @remove="removeAthlete"
+              />
             </div>
 
-            <div v-else class="d-flex flex-wrap gap-2 mb-4">
-              <v-chip
-                v-for="athlete in selectedAthletes"
-                :key="athlete.userId"
-                color="primary"
-                variant="tonal"
-                closable
-                @click:close="removeAthlete(athlete.userId)"
-              >
-                {{ getUserDisplayName(athlete) }}
-              </v-chip>
+            <div v-else>
+              <TeamSelectionDisplay
+                :teams="teams"
+                :athletes="athletes"
+                @removeTeam="removeTeam"
+                @removeAthleteFromTeam="removeAthleteFromTeamDisplay"
+              />
             </div>
 
             <v-btn
               color="success"
               :loading="isGeneratingTree"
-              :disabled="selectedAthleteIds.length === 0"
+              :disabled="competition?.participantType === 'TEAM' ? teams.length === 0 : selectedAthleteIds.length === 0"
               @click="generateTree"
             >
               <v-icon icon="mdi-source-branch" class="mr-1" />
@@ -195,60 +195,46 @@
         <v-col cols="12" md="5">
           <v-card variant="outlined" class="pa-4">
             <div class="text-subtitle-1 font-weight-medium mb-3">{{ t('commissionerCompetition.selectionSummaryTitle') }}</div>
-            <div class="text-body-2 text-grey-darken-1 mb-2">
-              {{ t('commissionerCompetition.selectionCount', { count: selectedAthleteIds.length }) }}
-            </div>
+            <template v-if="competition?.participantType === 'TEAM'">
+              <div class="text-body-2 text-grey-darken-1 mb-2">
+                {{ t('commissionerCompetition.teamsCount', { count: teams.length }) }}
+              </div>
+              <div v-if="teams.length > 0" class="text-caption text-grey-darken-2 space-y-1">
+                <div v-for="(team, idx) in teams" :key="idx">
+                  {{ t('commissionerCompetition.teamNumber', { number: idx + 1 }) }}: {{ team.length }} {{ t('commissionerCompetition.athletesLabel') }}
+                </div>
+              </div>
+            </template>
+            <template v-else>
+              <div class="text-body-2 text-grey-darken-1 mb-2">
+                {{ t('commissionerCompetition.selectionCount', { count: selectedAthleteIds.length }) }}
+              </div>
+            </template>
           </v-card>
         </v-col>
       </v-row>
 
-      <v-dialog v-model="isAthleteDialogOpen" max-width="720">
-        <v-card>
-          <v-card-title>{{ t('commissionerCompetition.dialogTitle') }}</v-card-title>
-          <v-card-text>
-            <v-text-field
-              v-model="athleteSearch"
-              :label="t('commissionerCompetition.searchAthletes')"
-              prepend-inner-icon="mdi-magnify"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              clearable
-              class="mb-4"
-            />
+      <AthleteSelectionDialog
+        v-if="competition?.participantType === 'INDIVIDUAL'"
+        :is-open="isAthleteDialogOpen"
+        :selected-athlete-ids="selectedAthleteIds"
+        :athlete-search="athleteSearch"
+        :athletes="athletes"
+        @update:is-open="isAthleteDialogOpen = $event"
+        @update:selected-athlete-ids="selectedAthleteIds = $event"
+        @update:athlete-search="athleteSearch = $event"
+      />
 
-            <div v-if="filteredAthletes.length === 0" class="text-body-2 text-grey-darken-1">
-              {{ t('commissionerCompetition.noAthletesFound') }}
-            </div>
-
-            <v-list v-else density="comfortable">
-              <v-list-item
-                v-for="athlete in filteredAthletes"
-                :key="athlete.userId"
-                @click="toggleAthleteSelection(athlete.userId)"
-              >
-                <template #prepend>
-                  <v-checkbox-btn
-                    :model-value="selectedAthleteIds.includes(athlete.userId)"
-                    @click.stop="toggleAthleteSelection(athlete.userId)"
-                  />
-                </template>
-
-                <template #title>
-                  {{ getUserDisplayName(athlete) }}
-                </template>
-
-                <template #subtitle>
-                  <span>{{ athlete.email }}</span>
-                </template>
-              </v-list-item>
-            </v-list>
-          </v-card-text>
-          <v-card-actions class="justify-end">
-            <v-btn variant="text" @click="isAthleteDialogOpen = false">{{ t('commissionerCompetition.closeDialog') }}</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <TeamSelectionDialog
+        v-else-if="competition?.participantType === 'TEAM'"
+        :is-open="isAthleteDialogOpen"
+        :teams="teams"
+        :team-searches="teamSearches"
+        :athletes="athletes"
+        @update:is-open="isAthleteDialogOpen = $event"
+        @update:teams="teams = $event"
+        @update:team-searches="teamSearches = $event"
+      />
 
       <v-dialog v-model="isDateDialogOpen" max-width="500">
         <v-card>
@@ -327,8 +313,9 @@
             {{ t('commissionerCompetition.editLocationTitle') }}
           </v-card-title>
           <v-card-text>
-            <v-select
+            <v-autocomplete
               v-model="editLocationForm.locationId"
+              v-model:search="locationSearch"
               :items="availableLocations"
               item-title="name"
               item-value="locationId"
@@ -337,7 +324,27 @@
               density="comfortable"
               :loading="isLoadingLocations"
               clearable
-            />
+              prepend-inner-icon="mdi-magnify"
+              :custom-filter="(item, queryText) => {
+                if (!queryText) return true
+                const query = queryText.toLowerCase()
+                return (
+                  item.raw?.name?.toLowerCase().includes(query) ||
+                  item.raw?.mainEntrance?.toLowerCase().includes(query) ||
+                  item.raw?.description?.toLowerCase().includes(query)
+                )
+              }"
+            >
+              <template #item="{ props, item }">
+                <v-list-item v-bind="props" :subtitle="`${item.raw?.mainEntrance || 'Adresse non disponible'}`" />
+              </template>
+              <template #selection="{ item }">
+                <div v-if="item.raw" class="d-flex flex-column">
+                  <span class="font-weight-medium">{{ item.raw.name }}</span>
+                  <span class="text-caption" style="color: #666;">{{ item.raw.mainEntrance || 'Adresse non disponible' }}</span>
+                </div>
+              </template>
+            </v-autocomplete>
           </v-card-text>
           <v-card-actions class="justify-end">
             <v-btn variant="text" @click="isLocationDialogOpen = false">{{ t('commissionerCompetition.cancel') }}</v-btn>
@@ -367,6 +374,10 @@ import { getUserDisplayName, UserRole } from '@/types/user'
 import type { Location } from '@/types/location'
 import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 import { isAxiosError } from 'axios'
+import AthleteSelectionDialog from '@/components/commissioner/AthleteSelectionDialog.vue'
+import TeamSelectionDialog from '@/components/commissioner/TeamSelectionDialog.vue'
+import AthleteSelectionDisplay from '@/components/commissioner/AthleteSelectionDisplay.vue'
+import TeamSelectionDisplay from '@/components/commissioner/TeamSelectionDisplay.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -380,6 +391,8 @@ const athletes = ref<User[]>([])
 const trials = ref<Trial[]>([])
 const allLocations = ref<Location[]>([])
 const selectedAthleteIds = ref<number[]>([])
+const teams = ref<number[][]>([]) // Pour le mode TEAM
+const teamSearches = ref<string[]>([]) // Pour les recherches par équipe
 const athleteSearch = ref('')
 const errorMessage = ref('')
 const infoMessage = ref('')
@@ -402,6 +415,7 @@ const isLocationDialogOpen = ref(false)
 const editLocationForm = ref({ locationId: null as number | null })
 const availableLocations = ref<Location[]>([])
 const isLoadingLocations = ref(false)
+const locationSearch = ref('')
 
 // Dialog date - validation error
 const dateOrderError = ref(false)
@@ -410,19 +424,6 @@ const isSavingTrial = ref(false)
 
 const competitionId = computed(() => Number(route.params.id))
 const championshipDetailsId = computed(() => competition.value?.championshipId ?? competition.value?.championship?.id ?? null)
-const filteredAthletes = computed(() => {
-  const query = athleteSearch.value.trim().toLowerCase()
-
-  if (!query) {
-    return athletes.value
-  }
-
-  return athletes.value.filter((athlete) => {
-    const fullName = getUserDisplayName(athlete).toLowerCase()
-    return fullName.includes(query) || athlete.email.toLowerCase().includes(query)
-  })
-})
-const selectedAthletes = computed(() => athletes.value.filter((athlete) => selectedAthleteIds.value.includes(athlete.userId)))
 
 const statusColor = (status: Status) => {
   if (status === Status.PLANNED) return 'grey'
@@ -453,29 +454,56 @@ const extractApiErrorMessage = (err: unknown, fallback: string) => {
   return fallback
 }
 
-const toggleAthleteSelection = (athleteId: number) => {
-  if (selectedAthleteIds.value.includes(athleteId)) {
-    selectedAthleteIds.value = selectedAthleteIds.value.filter((id) => id !== athleteId)
-    return
-  }
-
-  selectedAthleteIds.value = [...selectedAthleteIds.value, athleteId]
-}
 
 const removeAthlete = (athleteId: number) => {
   selectedAthleteIds.value = selectedAthleteIds.value.filter((id) => id !== athleteId)
 }
 
-const formatParticipantNames = (participantIds: number[]) => {
+const removeTeam = (teamIndex: number) => {
+  teams.value.splice(teamIndex, 1)
+  teamSearches.value.splice(teamIndex, 1)
+}
+
+const removeAthleteFromTeamDisplay = (teamIdx: number, athleteId: number) => {
+  const team = teams.value[teamIdx]
+  if (team) {
+    const idx = team.indexOf(athleteId)
+    if (idx > -1) team.splice(idx, 1)
+  }
+}
+
+const formatParticipantNames = (participantIds: number[] | number[][]): string => {
+  // Check if it's a list of lists (teams) or a simple list (individuals)
   if (participantIds.length === 0) {
     return t('commissionerCompetition.noParticipantsInTrial')
   }
 
-  return participantIds
+  // If first element is an array, it's teams
+  if (Array.isArray(participantIds[0])) {
+    const teams = participantIds as number[][]
+    return teams
+      .map((team, idx) => {
+        const names = team
+          .map((participantId) => athletes.value.find((athlete) => athlete.userId === participantId))
+          .map((athlete, index) => athlete ? getUserDisplayName(athlete) : `#${team[index]}`)
+          .join(', ')
+        return `${t('commissionerCompetition.teamNumber', { number: idx + 1 })}: ${names}`
+      })
+      .join(' | ')
+  }
+
+  // Otherwise it's individuals
+  return (participantIds as number[])
     .map((participantId) => athletes.value.find((athlete) => athlete.userId === participantId))
-    .map((athlete, index) => athlete ? getUserDisplayName(athlete) : `#${participantIds[index]}`)
+    .map((athlete, index) => athlete ? getUserDisplayName(athlete) : `#${(participantIds as number[])[index]}`)
     .join(', ')
 }
+
+const getUserDisplayNameById = (userId: number): string => {
+  const athlete = athletes.value.find((a) => a.userId === userId)
+  return athlete ? getUserDisplayName(athlete) : `#${userId}`
+}
+
 
 const getLocationName = (locationId: number | null | undefined): string | null => {
   if (!locationId) return null
@@ -632,7 +660,14 @@ const saveLocationDialog = async () => {
 }
 
 const generateTree = async () => {
-  if (!competition.value || selectedAthleteIds.value.length === 0) {
+  if (!competition.value) {
+    return
+  }
+
+  const isTeamCompetition = competition.value.participantType === 'TEAM'
+  const participantData = isTeamCompetition ? teams.value : selectedAthleteIds.value
+
+  if (participantData.length === 0) {
     return
   }
 
@@ -643,9 +678,16 @@ const generateTree = async () => {
   try {
     competition.value = await championshipService.generateCompetitionTree(
       competition.value.competitionId,
-      selectedAthleteIds.value,
+      participantData,
     )
     await loadTrials()
+    // Réinitialiser les données après génération réussie
+    if (isTeamCompetition) {
+      teams.value = []
+      teamSearches.value = []
+    } else {
+      selectedAthleteIds.value = []
+    }
   } catch (err) {
     const fallback = t('commissionerCompetition.generateError')
     const apiMessage = extractApiErrorMessage(err, fallback)

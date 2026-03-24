@@ -102,7 +102,7 @@
             <v-checkbox
               v-model="editForm.lastTrial"
               :label="t('commissionerResults.lastTrial')"
-              :disabled="hasQualifiedParticipantsInTrial"
+              :disabled="hasQualifiedParticipantsInTrial || !activeRow?.trial.locationId"
               class="mb-2"
             />
 
@@ -142,7 +142,7 @@
                         hide-details
                         class="my-1"
                         style="min-width: 120px"
-                        :disabled="hasQualifiedParticipantsInTrial"
+                        :disabled="hasQualifiedParticipantsInTrial || hasNoLocation"
                       />
                       <span v-if="resultUnit" class="ml-2 text-body-2 text-grey-darken-1 text-no-wrap">
                         {{ resultUnit }}
@@ -154,7 +154,7 @@
                       icon
                       size="x-small"
                       variant="text"
-                      :disabled="index === 0 || hasQualifiedParticipantsInTrial"
+                      :disabled="index === 0 || hasQualifiedParticipantsInTrial || hasNoLocation"
                       @click="moveUp(index)"
                     >
                       <v-icon>mdi-arrow-up</v-icon>
@@ -163,7 +163,7 @@
                       icon
                       size="x-small"
                       variant="text"
-                      :disabled="index === editForm.rows.length - 1 || hasQualifiedParticipantsInTrial"
+                      :disabled="index === editForm.rows.length - 1 || hasQualifiedParticipantsInTrial || hasNoLocation"
                       @click="moveDown(index)"
                     >
                       <v-icon>mdi-arrow-down</v-icon>
@@ -174,7 +174,7 @@
                       v-model="row.qualified"
                       hide-details
                       density="compact"
-                      :disabled="hasQualifiedParticipantsInTrial"
+                      :disabled="hasQualifiedParticipantsInTrial || hasNoLocation"
                     />
                   </td>
                 </tr>
@@ -191,7 +191,7 @@
             color="success"
             variant="elevated"
             :loading="isAdvancing"
-            :disabled="isDialogLoading || editForm.rows.length === 0"
+            :disabled="isDialogLoading || editForm.rows.length === 0 || hasNoLocation"
             @click="advanceQualified"
             class="mr-2"
           >
@@ -202,7 +202,7 @@
             color="primary"
             variant="elevated"
             :loading="isSaving"
-            :disabled="isDialogLoading || editForm.rows.length === 0 || hasQualifiedParticipantsInTrial"
+            :disabled="isDialogLoading || editForm.rows.length === 0 || hasQualifiedParticipantsInTrial || hasNoLocation"
             @click="saveResult"
           >
             {{ t('commissionerResults.save') }}
@@ -272,6 +272,8 @@ const hasQualifiedParticipants = computed(() =>
 const hasQualifiedParticipantsInTrial = computed(() =>
   activeRow.value?.trial.qualifiedParticipantIds && activeRow.value.trial.qualifiedParticipantIds.length > 0
 )
+
+const hasNoLocation = computed(() => !activeRow.value?.trial.locationId)
 
 const moveUp = (index: number) => {
   if (index === 0) return

@@ -102,7 +102,7 @@ export interface Trial {
   position: number
   nextTrialId: number | null
   competitionId: number
-  participantIds: number[]
+  participantIds: number[] | number[][] // number[] for INDIVIDUAL, number[][] for TEAM
   qualifiedParticipantIds?: number[]
 }
 
