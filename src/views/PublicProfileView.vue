@@ -2,24 +2,29 @@
   <v-container class="py-8">
     <v-row justify="center">
       <v-col cols="12" md="10" lg="8">
-        <v-card elevation="3" class="pa-6">
+        <v-card elevation="4" class="profile-shell pa-6 pa-md-8">
           <div v-if="isLoading" class="d-flex justify-center py-8">
             <v-progress-circular indeterminate color="primary" />
           </div>
 
           <template v-else-if="profile">
-            <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-6">
-              <div>
-                <h1 class="text-h4 font-weight-bold">{{ displayName }}</h1>
+            <div class="profile-hero mb-6">
+              <div class="profile-hero__identity">
+                <div class="profile-avatar">
+                  {{ displayInitials }}
+                </div>
+                <div>
+                  <div class="text-overline profile-kicker">{{ t('publicProfile.identitySection') }}</div>
+                  <h1 class="text-h4 font-weight-bold">{{ displayName }}</h1>
+                  <div class="text-body-2 text-medium-emphasis">
+                    {{ t('publicProfile.userIdLabel') }} #{{ profile.userId }}
+                  </div>
+                </div>
               </div>
-              <v-chip color="primary" variant="elevated">
+              <v-chip color="primary" variant="elevated" size="large" class="profile-role-chip">
                 {{ formatRoleLabel(profile.role?.name) }}
               </v-chip>
             </div>
-
-            <PublicProfileSummarySection
-              :profile="profile"
-            />
 
             <template v-if="isAthlete">
               <PublicProfileResultsSection
@@ -60,7 +65,6 @@ import PublicProfileLocationSection from '@/components/profile/PublicProfileLoca
 import PublicProfileResultsSection, {
   type AthleteResultEntry,
 } from '@/components/profile/PublicProfileResultsSection.vue'
-import PublicProfileSummarySection from '@/components/profile/PublicProfileSummarySection.vue'
 import locationService from '@/services/locationService'
 import userService from '@/services/userService'
 import { useUserStore } from '@/stores/user'
@@ -118,6 +122,15 @@ const userId = computed(() => {
 const displayName = computed(() => {
   if (!profile.value) return '-'
   return `${profile.value.firstName} ${profile.value.surname}`.trim() || '-'
+})
+const displayInitials = computed(() => {
+  if (!profile.value) return '--'
+
+  const firstInitial = profile.value.firstName?.trim().charAt(0) ?? ''
+  const lastInitial = profile.value.surname?.trim().charAt(0) ?? ''
+  const initials = `${firstInitial}${lastInitial}`.toUpperCase()
+
+  return initials || '--'
 })
 
 const isAthlete = computed(() => {
@@ -247,3 +260,61 @@ watch(userId, () => {
   isLoading.value = false
 }, { immediate: true })
 </script>
+
+<style scoped>
+.profile-shell {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(25, 118, 210, 0.04), rgba(255, 255, 255, 0) 180px),
+    white;
+}
+
+.profile-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.08), rgba(25, 118, 210, 0.02));
+  border: 1px solid rgba(25, 118, 210, 0.08);
+}
+
+.profile-hero__identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: rgb(255, 255, 255);
+  background: linear-gradient(135deg, rgb(25, 118, 210), rgb(66, 165, 245));
+  box-shadow: 0 12px 28px rgba(25, 118, 210, 0.22);
+}
+
+.profile-kicker {
+  color: rgb(25, 118, 210);
+}
+
+.profile-role-chip {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 767px) {
+  .profile-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+</style>

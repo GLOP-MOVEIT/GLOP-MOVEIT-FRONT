@@ -18,7 +18,7 @@ const mapCenter = computed<[number, number]>(() => props.coordinates ?? [46.6033
 <template>
   <v-divider class="my-6" />
 
-  <div class="text-overline mb-3">{{ t('publicProfile.locationSection') }}</div>
+  <div class="text-overline mb-3 section-label">{{ t('publicProfile.locationSection') }}</div>
 
   <v-alert
     v-if="error"
@@ -41,7 +41,7 @@ const mapCenter = computed<[number, number]>(() => props.coordinates ?? [46.6033
       {{ t('publicProfile.locationHint') }}
     </div>
     <div
-      style="height: 320px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(0,0,0,0.12);"
+      class="location-map-frame"
     >
       <l-map
         v-model:zoom="mapZoom"
@@ -59,3 +59,17 @@ const mapCenter = computed<[number, number]>(() => props.coordinates ?? [46.6033
     </div>
   </div>
 </template>
+
+<style scoped>
+.section-label {
+  color: rgb(25, 118, 210);
+}
+
+.location-map-frame {
+  height: 320px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+</style>
