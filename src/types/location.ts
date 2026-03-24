@@ -10,3 +10,14 @@ export interface Location {
 }
 
 export type LocationPayload = Omit<Location, 'locationId'>
+
+export interface LocateRequest {
+  requesterId: number
+  targetId: number
+  trialId?: number | null
+}
+
+export interface LocateResponse {
+  latitude: number
+  longitude: number
+}

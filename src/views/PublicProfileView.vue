@@ -17,69 +17,24 @@
               </v-chip>
             </div>
 
-            <v-row>
-              <v-col cols="12" md="6">
-                <div class="text-overline mb-2">{{ t('publicProfile.identitySection') }}</div>
-                <div class="text-body-1">
-                  {{ displayName }}
-                </div>
-                <div class="text-body-2 text-grey-darken-1 mt-2">
-                  <strong>{{ t('publicProfile.userIdLabel') }}</strong>
-                  #{{ profile.userId }}
-                </div>
-              </v-col>
-              <v-col cols="12" md="6">
-                <div class="text-overline mb-2">{{ t('publicProfile.sportSection') }}</div>
-                <div class="text-body-2 text-grey-darken-1">
-                  <strong>{{ t('publicProfile.roleLabel') }}</strong>
-                  {{ formatRoleLabel(profile.role?.name) }}
-                </div>
-                <div class="text-body-2 text-grey-darken-1">
-                  <strong>{{ t('publicProfile.resultsCountLabel') }}</strong>
-                  {{ athleteResults.length }}
-                </div>
-              </v-col>
-            </v-row>
+            <PublicProfileSummarySection
+              :profile="profile"
+            />
 
             <template v-if="isAthlete">
-              <v-divider class="my-6" />
+              <PublicProfileResultsSection
+                :entries="athleteResults"
+                :format-date="formatDate"
+                :error="resultsError"
+              />
+            </template>
 
-              <div class="text-overline mb-3">{{ t('publicProfile.resultsSection') }}</div>
-
-              <v-alert
-                v-if="athleteResults.length === 0"
-                type="info"
-                variant="tonal"
-              >
-                {{ t('publicProfile.noResults') }}
-              </v-alert>
-
-              <v-row v-else>
-                <v-col
-                  v-for="entry in athleteResults"
-                  :key="entry.trialId"
-                  cols="12"
-                >
-                  <v-card variant="outlined" class="pa-4">
-                    <div class="d-flex flex-wrap justify-space-between ga-3">
-                      <div>
-                        <div class="text-h6">{{ entry.trialName }}</div>
-                        <div class="text-body-2 text-grey-darken-1">
-                          {{ formatDate(entry.trialStartDate) }}
-                        </div>
-                      </div>
-                      <div class="text-right">
-                        <div class="text-body-1 font-weight-bold">
-                          {{ t('publicProfile.positionLabel', { position: entry.positionLabel }) }}
-                        </div>
-                        <div class="text-body-2 text-grey-darken-1">
-                          {{ t('publicProfile.scoreLabel', { score: entry.scoreLabel }) }}
-                        </div>
-                      </div>
-                    </div>
-                  </v-card>
-                </v-col>
-              </v-row>
+            <template v-if="showLocationSection">
+              <PublicProfileLocationSection
+                :is-loading="isLoadingLocation"
+                :error="locationError"
+                :coordinates="locationCoordinates"
+              />
             </template>
           </template>
 
@@ -101,28 +56,59 @@ import axios from 'axios'
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import championshipService from '@/services/championshipService'
-import resultService from '@/services/resultService'
+import PublicProfileLocationSection from '@/components/profile/PublicProfileLocationSection.vue'
+import PublicProfileResultsSection, {
+  type AthleteResultEntry,
+} from '@/components/profile/PublicProfileResultsSection.vue'
+import PublicProfileSummarySection from '@/components/profile/PublicProfileSummarySection.vue'
+import locationService from '@/services/locationService'
 import userService from '@/services/userService'
-import { matchesUserRole, type User } from '@/types/user'
-import type { Trial } from '@/types/competition'
-import type { ParticipantResult } from '@/types/result'
-
-interface AthleteResultEntry {
-  trialId: number
-  trialName: string
-  trialStartDate: string
-  positionLabel: string
-  scoreLabel: string
-}
+import { useUserStore } from '@/stores/user'
+import { matchesUserRole, UserRole, type User } from '@/types/user'
 
 const route = useRoute()
+const userStore = useUserStore()
 const { t, d, locale } = useI18n()
 
+const demoAthleteResults: AthleteResultEntry[] = [
+  {
+    trialId: 12,
+    trialName: 'Trial 12',
+    trialStartDate: '2026-03-24T14:00:00',
+    positionLabel: '#1',
+    scoreLabel: '9.82',
+  },
+  {
+    trialId: 14,
+    trialName: 'Trial 14',
+    trialStartDate: '2026-03-24T16:00:00',
+    positionLabel: '#2',
+    scoreLabel: '9.95',
+  },
+  {
+    trialId: 18,
+    trialName: 'Trial 18',
+    trialStartDate: '2026-03-25T10:00:00',
+    positionLabel: '#3',
+    scoreLabel: '10.11',
+  },
+  {
+    trialId: 21,
+    trialName: 'Trial 21',
+    trialStartDate: '2026-03-26T11:30:00',
+    positionLabel: '#4',
+    scoreLabel: '10.20',
+  },
+]
+
 const isLoading = ref(true)
+const isLoadingLocation = ref(false)
 const profile = ref<User | null>(null)
 const athleteResults = ref<AthleteResultEntry[]>([])
 const errorMessage = ref('')
+const resultsError = ref('')
+const locationError = ref('')
+const locationCoordinates = ref<[number, number] | null>(null)
 
 const userId = computed(() => {
   const parsedId = Number(route.params.id)
@@ -137,6 +123,27 @@ const displayName = computed(() => {
 const isAthlete = computed(() => {
   return matchesUserRole(profile.value?.role?.name, 'ATHLETE') ||
     matchesUserRole(profile.value?.role?.name, 'SPORTIF')
+})
+
+const requesterId = computed(() => userStore.user?.userId ?? null)
+const requesterCanLocateSpectator = computed(() => {
+  return userStore.hasRole(UserRole.SPECTATOR) ||
+    userStore.hasRole(UserRole.ADMIN) ||
+    userStore.hasRole(UserRole.REFEREE)
+})
+const requesterCanLocateAthlete = computed(() => {
+  return userStore.hasRole(UserRole.ADMIN) || userStore.hasRole(UserRole.REFEREE)
+})
+const showLocationSection = computed(() => {
+  if (!profile.value || !requesterId.value) {
+    return false
+  }
+
+  if (isAthlete.value) {
+    return requesterCanLocateAthlete.value
+  }
+
+  return profile.value.acceptsLocationSharing && requesterCanLocateSpectator.value
 })
 
 const formatRoleLabel = (role?: string) => {
@@ -159,35 +166,53 @@ const formatDate = (value: string) => {
   }
 }
 
-const buildAthleteResults = (trials: Trial[], results: ParticipantResult[], athleteId: number) => {
-  const trialsById = new Map(trials.map((trial) => [trial.trialId, trial]))
+const loadLocation = async (targetProfile: User) => {
+  locationCoordinates.value = null
+  locationError.value = ''
 
-  return results
-    .map((result) => {
-      const ranking = result.rankings.find((entry) => entry.id === athleteId)
-      const trial = trialsById.get(result.trialId)
+  if (!requesterId.value || !showLocationSection.value) {
+    return
+  }
 
-      if (!ranking || !trial) {
-        return null
-      }
+  isLoadingLocation.value = true
 
-      return {
-        trialId: trial.trialId,
-        trialName: trial.trialName,
-        trialStartDate: trial.trialStartDate,
-        positionLabel: ranking.position ? `#${ranking.position}` : '-',
-        scoreLabel: ranking.score || '-',
-      }
+  try {
+    const location = await locationService.locateUser({
+      requesterId: requesterId.value,
+      targetId: targetProfile.userId,
+      trialId: null,
     })
-    .filter((entry): entry is AthleteResultEntry => entry !== null)
-    .sort((left, right) => right.trialStartDate.localeCompare(left.trialStartDate))
+
+    locationCoordinates.value = [location.latitude, location.longitude]
+  } catch (error) {
+    console.error('Load profile location error:', error)
+    locationError.value = t('publicProfile.locationLoadError')
+  } finally {
+    isLoadingLocation.value = false
+  }
+}
+
+const loadAthleteResults = async (targetProfile: User) => {
+  athleteResults.value = []
+  resultsError.value = ''
+
+  if (!matchesUserRole(targetProfile.role?.name, 'ATHLETE') &&
+    !matchesUserRole(targetProfile.role?.name, 'SPORTIF')) {
+    return
+  }
+
+  athleteResults.value = demoAthleteResults
 }
 
 const loadProfile = async () => {
   isLoading.value = true
+  isLoadingLocation.value = false
   profile.value = null
   athleteResults.value = []
   errorMessage.value = ''
+  resultsError.value = ''
+  locationError.value = ''
+  locationCoordinates.value = null
 
   try {
     if (!userId.value) {
@@ -198,15 +223,8 @@ const loadProfile = async () => {
     const loadedProfile = await userService.getUserProfile(userId.value)
     profile.value = loadedProfile
 
-    if (matchesUserRole(loadedProfile.role?.name, 'ATHLETE') ||
-      matchesUserRole(loadedProfile.role?.name, 'SPORTIF')) {
-      const [trials, results] = await Promise.all([
-        championshipService.getTrialsByAthlete(loadedProfile.userId),
-        resultService.getResultsByParticipant(loadedProfile.userId),
-      ])
-
-      athleteResults.value = buildAthleteResults(trials, results, loadedProfile.userId)
-    }
+    await loadAthleteResults(loadedProfile)
+    await loadLocation(loadedProfile)
   } catch (error) {
     console.error('Load public profile error:', error)
     errorMessage.value = axios.isAxiosError(error) && error.response?.status === 404
