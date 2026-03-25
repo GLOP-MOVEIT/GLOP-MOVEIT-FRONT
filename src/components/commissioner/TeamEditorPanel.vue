@@ -42,7 +42,6 @@
         </v-col>
       </v-row>
 
-      <!-- Liste des athlètes de l'équipe -->
       <div v-if="team.athletes.length === 0" class="text-caption text-grey-darken-1 py-2">
         {{ t('teamManagement.noAthletesInTeam') }}
       </div>
@@ -70,7 +69,6 @@
         </v-list-item>
       </v-list>
 
-      <!-- Bouton supprimer l'équipe -->
       <v-btn
         variant="outlined"
         color="error"
