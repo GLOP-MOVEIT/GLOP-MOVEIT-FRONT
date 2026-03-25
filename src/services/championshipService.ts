@@ -459,6 +459,50 @@ export const championshipService = {
       throw error
     }
   },
+
+  /**
+   * Vérifier si une compétition a au moins un résultat enregistré
+   */
+  async hasCompetitionResults(competitionId: number): Promise<boolean> {
+    try {
+      const trials = await this.getTrialsByCompetition(competitionId)
+      if (trials.length === 0) return false
+      for (const trial of trials) {
+        try {
+          const response = await axios.get(
+            `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/results/trial/${trial.trialId}`,
+            { headers: this.getAuthHeaders() }
+          )
+          if (response.data) {
+            return true
+          }
+        } catch {
+          continue
+        }
+      }
+      return false
+    } catch (error) {
+      console.error(`Check competition ${competitionId} results error:`, error)
+      return false
+    }
+  },
+
+  /**
+   * Vérifier si les manches précédentes d'une épreuve ont des résultats
+   * (pour single_elimination uniquement)
+   */
+  async canEnterResultsForTrial(trial: Trial, allTrials: Trial[]): Promise<boolean> {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/results/trial/${trial.trialId}`,
+        { headers: this.getAuthHeaders() }
+      )
+
+      return !response.data?.rankings || response.data.rankings.length === 0
+    } catch {
+      return true
+    }
+  },
 }
 
 export default championshipService

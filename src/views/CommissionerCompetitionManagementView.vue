@@ -28,6 +28,10 @@
       {{ infoMessage }}
     </v-alert>
 
+    <v-alert v-if="hasExistingResults" type="warning" variant="tonal" class="mb-4" icon="mdi-lock">
+      {{ t('commissionerCompetition.resultsExistWarning') }}
+    </v-alert>
+
     <v-skeleton-loader v-if="isLoading" type="card, list-item-three-line" />
 
     <template v-else-if="competition">
@@ -37,12 +41,9 @@
             <div class="text-subtitle-1 font-weight-medium mb-3">{{ t('commissionerCompetition.detailsTitle') }}</div>
 
             <div class="d-flex flex-wrap gap-2 mb-3">
-              <v-chip color="primary" variant="tonal">{{ competition.competitionSport }}</v-chip>
-              <v-chip color="secondary" variant="tonal">{{ competition.competitionType }}</v-chip>
+              <v-chip color="primary" variant="tonal">{{ getSportLabel(competition.competitionSport) }}</v-chip>
+              <v-chip color="secondary" variant="tonal">{{ getCompetitionTypeLabel(competition.competitionType) }}</v-chip>
               <v-chip color="info" variant="tonal">{{ t(`admin.participantType.${competition.participantType}`) }}</v-chip>
-              <v-chip :color="statusColor(competition.competitionStatus)" variant="tonal">
-                {{ t(`admin.competitionStatus.${competition.competitionStatus}`) }}
-              </v-chip>
             </div>
 
             <div class="text-body-2 text-grey-darken-1 mb-2">
@@ -70,7 +71,7 @@
                 </div>
               </div>
 
-              <v-btn color="primary" variant="outlined" @click="isAthleteDialogOpen = true">
+              <v-btn color="primary" variant="outlined" :disabled="hasExistingResults" @click="isAthleteDialogOpen = true">
                 <v-icon icon="mdi-account-plus" class="mr-1" />
                 {{ t('commissionerCompetition.addAthletes') }}
               </v-btn>
@@ -96,7 +97,7 @@
             <v-btn
               color="success"
               :loading="isGeneratingTree"
-              :disabled="competition?.participantType === 'TEAM' ? teams.length === 0 : selectedAthleteIds.length === 0"
+              :disabled="(competition?.participantType === 'TEAM' ? teams.length === 0 : selectedAthleteIds.length === 0) || hasExistingResults"
               @click="generateTree"
             >
               <v-icon icon="mdi-source-branch" class="mr-1" />
@@ -143,6 +144,10 @@
                         {{ formatDateRange(trial.trialStartDate, trial.trialEndDate) }}
                       </span>
                       <span>
+                        <v-icon size="13" class="mr-1">mdi-clock-outline</v-icon>
+                        {{ formatTimeRange(trial.trialStartDate, trial.trialEndDate) }}
+                      </span>
+                      <span>
                         <v-icon size="13" class="mr-1">mdi-counter</v-icon>
                         {{ t('commissionerCompetition.trialRoundLabel', { round: trial.roundNumber, position: trial.position }) }}
                       </span>
@@ -184,7 +189,7 @@
                       block
                       @click="openMapItinerary(trial.locationId)"
                     >
-                      {{ t('commissionerCompetition.openMapTitle') }}
+                      {{ t('common.itinerary') }}
                     </v-btn>
                     <v-btn
                       variant="outlined"
@@ -306,6 +311,9 @@
             <v-alert v-if="dateOrderError" type="error" variant="tonal" class="mt-3" density="compact">
               {{ t('commissionerCompetition.dateOrderError') }}
             </v-alert>
+            <v-alert v-if="dateDialogError" type="error" variant="tonal" class="mt-3" density="compact">
+              {{ dateDialogError }}
+            </v-alert>
           </v-card-text>
           <v-card-actions class="justify-end">
             <v-btn variant="text" @click="isDateDialogOpen = false">{{ t('commissionerCompetition.cancel') }}</v-btn>
@@ -365,6 +373,30 @@
         </v-card>
       </v-dialog>
     </template>
+
+    <v-snackbar
+      v-model="showQualifiedWarning"
+      location="center"
+      color="warning"
+      :timeout="6000"
+      multi-line
+    >
+      <div class="d-flex align-center">
+        <v-icon icon="mdi-lock-alert" class="mr-3" size="24" />
+        <div>
+          <div class="font-weight-bold mb-1">{{ t('commissionerCompetition.cannotEditTitle') }}</div>
+          <div class="text-body-2">{{ t('commissionerCompetition.cannotEditQualifiedTrial') }}</div>
+        </div>
+      </div>
+      <template #actions>
+        <v-btn
+          variant="text"
+          @click="showQualifiedWarning = false"
+        >
+          {{ t('commissionerCompetition.cancel') }}
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -375,6 +407,7 @@ import { useI18n } from 'vue-i18n'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import locationService from '@/services/locationService'
+import resultService from '@/services/resultService'
 import volunteerService from '@/services/volunteerService'
 import type { VolunteerTask } from '@/services/volunteerService'
 import type { CompetitionTreeResult, Trial } from '@/types/competition'
@@ -382,7 +415,7 @@ import { Status } from '@/types/competition'
 import type { User } from '@/types/user'
 import { getUserDisplayName, UserRole } from '@/types/user'
 import type { Location } from '@/types/location'
-import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
+import { formatDateRange as formatDateRangeUtil, formatTimeRange as formatTimeRangeUtil } from '@/utils/date'
 import { isAxiosError } from 'axios'
 import AthleteSelectionDialog from '@/components/commissioner/AthleteSelectionDialog.vue'
 import TeamSelectionDialog from '@/components/commissioner/TeamSelectionDialog.vue'
@@ -395,6 +428,9 @@ const { t, locale } = useI18n()
 
 const formatDateRange = (start: string | Date, end: string | Date) =>
   formatDateRangeUtil(start, end, locale.value)
+
+const formatTimeRange = (start: string | Date, end: string | Date) =>
+  formatTimeRangeUtil(start, end, locale.value)
 
 const competition = ref<CompetitionTreeResult | null>(null)
 const athletes = ref<User[]>([])
@@ -409,6 +445,7 @@ const infoMessage = ref('')
 const isLoading = ref(false)
 const isGeneratingTree = ref(false)
 const isAthleteDialogOpen = ref(false)
+const hasExistingResults = ref(false)
 
 // Dialog date
 const isDateDialogOpen = ref(false)
@@ -429,6 +466,8 @@ const locationSearch = ref('')
 
 // Dialog date - validation error
 const dateOrderError = ref(false)
+const dateDialogError = ref('')
+const showQualifiedWarning = ref(false)
 
 const isSavingTrial = ref(false)
 
@@ -514,6 +553,21 @@ const getUserDisplayNameById = (userId: number): string => {
   return athlete ? getUserDisplayName(athlete) : `#${userId}`
 }
 
+const getCompetitionTypeLabel = (type: string): string => {
+  const labels: Record<string, string> = {
+    'SINGLE_ELIMINATION': t('competitionType.singleElimination'),
+    'ROUND_ROBIN': t('competitionType.roundRobin'),
+    'HEATS': t('competitionType.heats'),
+  }
+  return labels[type] || type
+}
+
+const getSportLabel = (sport: string): string => {
+  // Normaliser le sport en majuscules avec underscores
+  const normalized = sport.toUpperCase().replace(/\s+/g, '_')
+  return t(`admin.sport.${normalized}`)
+}
+
 
 const getLocationName = (locationId: number | null | undefined): string | null => {
   if (!locationId) return null
@@ -529,7 +583,8 @@ const openMapItinerary = (locationId: number | null | undefined) => {
   const location = getLocationById(locationId)
   if (!location) return
 
-  const mapsUrl = `https://www.google.com/maps/@${location.latitude},${location.longitude},15z`
+  // Utiliser les coordonnées GPS pour ouvrir Google Maps en mode itinéraire
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`
   window.open(mapsUrl, '_blank')
 }
 
@@ -549,9 +604,21 @@ const loadTrials = async () => {
   }
 }
 
-// Un trial est "PRÊT" si il a une date de début, une date de fin ET un lieu renseignés
 const isTrialReady = (trial: Trial): boolean =>
   !!trial.trialStartDate && !!trial.trialEndDate && !!trial.locationId
+
+const hasQualifiedParticipants = async (trialId: number): Promise<boolean> => {
+  try {
+    const result = await resultService.getResultByTrialId(trialId)
+    if (result && result.rankings && result.rankings.length > 0 && !result.lastTrial) {
+      return true
+    }
+
+    return false
+  } catch {
+    return false
+  }
+}
 
 const splitDateTime = (dateTimeStr: string | null | undefined): { date: string; time: string } => {
   if (!dateTimeStr) return { date: '', time: '' }
@@ -568,8 +635,17 @@ const combineDateTime = (date: string, time: string): string => {
   return `${date}T${time}:00` // Format ISO avec secondes
 }
 
-const openDateDialog = (trial: Trial) => {
+const openDateDialog = async (trial: Trial) => {
+  // Vérifier si cette épreuve a déjà qualifié des participants vers la manche suivante
+  const hasQualified = await hasQualifiedParticipants(trial.trialId!)
+  if (hasQualified) {
+    showQualifiedWarning.value = true
+    return
+  }
+
   editingTrialId.value = trial.trialId
+  dateOrderError.value = false
+  dateDialogError.value = ''
   const start = splitDateTime(trial.trialStartDate)
   const end = splitDateTime(trial.trialEndDate)
   editDateForm.value = {
@@ -582,6 +658,12 @@ const openDateDialog = (trial: Trial) => {
 }
 
 const openLocationDialog = async (trial: Trial) => {
+  const hasQualified = await hasQualifiedParticipants(trial.trialId!)
+  if (hasQualified) {
+    showQualifiedWarning.value = true
+    return
+  }
+
   editingTrialId.value = trial.trialId
   editLocationForm.value = { locationId: trial.locationId ?? null }
   isLoadingLocations.value = true
@@ -598,6 +680,7 @@ const openLocationDialog = async (trial: Trial) => {
 const saveDateDialog = async () => {
   if (!editingTrialId.value) return
   dateOrderError.value = false
+  dateDialogError.value = ''
 
   const startDateTime = combineDateTime(editDateForm.value.startDate, editDateForm.value.startTime)
   const endDateTime = combineDateTime(editDateForm.value.endDate, editDateForm.value.endTime)
@@ -612,8 +695,8 @@ const saveDateDialog = async () => {
     const trial = trials.value.find((t) => t.trialId === editingTrialId.value)
     if (!trial) return
 
-
-    const updated = await championshipService.updateTrial(editingTrialId.value, {
+    const updated = await championshipService.updateTrial({
+      trialId: trial.trialId,
       trialName: trial.trialName,
       trialStartDate: startDateTime,
       trialEndDate: endDateTime,
@@ -622,14 +705,24 @@ const saveDateDialog = async () => {
       locationId: trial.locationId,
       roundNumber: trial.roundNumber,
       position: trial.position,
+      nextTrialId: trial.nextTrialId,
+      competitionId: trial.competitionId,
       participantIds: trial.participantIds,
     })
     const idx = trials.value.findIndex((t) => t.trialId === editingTrialId.value)
     if (idx !== -1) trials.value[idx] = updated
     isDateDialogOpen.value = false
     infoMessage.value = t('commissionerCompetition.updateSuccess')
-  } catch {
-    errorMessage.value = t('commissionerCompetition.updateError')
+  } catch (err) {
+    const fallback = t('commissionerCompetition.updateError')
+    const apiMessage = extractApiErrorMessage(err, fallback)
+
+    // Check if it's a scheduling conflict error
+    if (apiMessage.includes('Conflit d\'emploi du temps') || apiMessage.includes('emploi du temps')) {
+      dateDialogError.value = t('commissionerCompetition.scheduleConflictError')
+    } else {
+      dateDialogError.value = apiMessage
+    }
   } finally {
     isSavingTrial.value = false
   }
@@ -647,7 +740,8 @@ const saveLocationDialog = async () => {
     const trial = trials.value.find((t) => t.trialId === editingTrialId.value)
     if (!trial) return
     const newLocationId = editLocationForm.value.locationId ?? 0
-    const updated = await championshipService.updateTrial(editingTrialId.value, {
+    const updated = await championshipService.updateTrial({
+      trialId: trial.trialId,
       trialName: trial.trialName,
       trialStartDate: trial.trialStartDate,
       trialEndDate: trial.trialEndDate,
@@ -656,6 +750,8 @@ const saveLocationDialog = async () => {
       locationId: newLocationId,
       roundNumber: trial.roundNumber,
       position: trial.position,
+      nextTrialId: trial.nextTrialId,
+      competitionId: trial.competitionId,
       participantIds: trial.participantIds,
     })
     const idx = trials.value.findIndex((t) => t.trialId === editingTrialId.value)
@@ -682,6 +778,31 @@ const saveLocationDialog = async () => {
   }
 }
 
+const checkExistingResults = async () => {
+  hasExistingResults.value = false
+  try {
+    // Vérifier si au moins une épreuve a des résultats
+    if (trials.value.length === 0) {
+      return
+    }
+
+    for (const trial of trials.value) {
+      try {
+        const result = await resultService.getResultByTrialId(trial.trialId!)
+        if (result && result.rankings && result.rankings.length > 0) {
+          hasExistingResults.value = true
+          return
+        }
+      } catch {
+        // Si la requête échoue, il n'y a pas de résultat pour cette épreuve
+        continue
+      }
+    }
+  } catch {
+    // Erreur lors de la vérification, on continue sans bloquer
+  }
+}
+
 const generateTree = async () => {
   if (!competition.value) {
     return
@@ -704,6 +825,7 @@ const generateTree = async () => {
       participantData,
     )
     await loadTrials()
+    await checkExistingResults()
     // Réinitialiser les données après génération réussie
     if (isTeamCompetition) {
       teams.value = []
@@ -731,6 +853,7 @@ onMounted(async () => {
     allLocations.value = locations
 
     await loadTrials()
+    await checkExistingResults()
   } catch {
     errorMessage.value = t('commissionerCompetition.loadError')
   } finally {

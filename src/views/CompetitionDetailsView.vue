@@ -15,16 +15,13 @@
           <h1 class="text-h4 font-weight-bold mb-2">{{ competition.competitionName }}</h1>
           <div class="d-flex align-center gap-2 flex-wrap">
             <v-chip color="primary" variant="tonal" prepend-icon="mdi-trophy">
-              {{ competition.competitionSport }}
+              {{ getSportLabel(competition.competitionSport) }}
             </v-chip>
             <v-chip color="secondary" variant="tonal" prepend-icon="mdi-tournament">
-              {{ competition.competitionType }}
+              {{ getCompetitionTypeLabel(competition.competitionType) }}
             </v-chip>
             <v-chip color="info" variant="tonal" prepend-icon="mdi-account-group">
               {{ t(`admin.participantType.${competition.participantType}`) }}
-            </v-chip>
-            <v-chip :color="statusColor(competition.competitionStatus)" variant="tonal">
-              {{ t(`admin.competitionStatus.${competition.competitionStatus}`) }}
             </v-chip>
           </div>
         </div>
@@ -38,7 +35,7 @@
           {{ t('competitionDetails.backToChampionship') }}
         </v-btn>
       </div>
-      <v-row dense class="mb-6">
+      <v-row dense class="mb-12">
         <v-col cols="12" md="6">
           <v-card variant="outlined" class="pa-4 h-100">
             <div class="text-subtitle-1 font-weight-medium mb-3">
@@ -134,28 +131,11 @@
                   <span class="font-weight-medium mr-1">{{ t('competitionDetails.round') }} :</span>
                   <span>{{ trial.roundNumber }} - {{ t('competitionDetails.position') }} {{ trial.position }}</span>
                 </div>
-                <div v-if="trial.locationId" class="d-flex flex-column gap-1">
-                  <div class="d-flex align-start">
-                    <v-icon size="14" class="mr-2 mt-1" color="primary">mdi-map-marker</v-icon>
-                    <div>
-                      <span class="font-weight-medium">{{ t('competitionDetails.location') }} :</span>
-                      <div class="text-body-2">{{ getLocation(trial.locationId)?.name ?? trial.locationId }}</div>
-                    </div>
-                  </div>
-                  <div v-if="getLocation(trial.locationId) && getEntrance(getLocation(trial.locationId)!)" class="d-flex align-center pl-4">
-                    <v-icon size="14" class="mr-2">mdi-door-open</v-icon>
-                    <span>{{ getEntrance(getLocation(trial.locationId)!) }}</span>
-                  </div>
-                  <v-btn
-                    size="x-small"
-                    variant="tonal"
-                    color="info"
-                    class="mt-2 align-self-start"
-                    prepend-icon="mdi-directions"
-                    @click="openMapItinerary(trial.locationId)"
-                  >
-                    {{ t('commissionerCompetition.openMapTitle') }}
-                  </v-btn>
+                <div v-if="trial.locationId">
+                  <TrialLocationCard
+                    :location="getLocation(trial.locationId)"
+                    :is-referee="isReferee"
+                  />
                 </div>
                 <div v-else class="d-flex align-center">
                   <v-icon size="14" class="mr-2" color="warning">mdi-alert</v-icon>
@@ -200,6 +180,7 @@ import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import locationService from '@/services/locationService'
 import { useUserStore } from '@/stores/user'
+import TrialLocationCard from '@/components/TrialLocationCard.vue'
 import type { CompetitionTreeResult, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
 import type { User } from '@/types/user'
@@ -225,10 +206,6 @@ const getLocation = (locationId: number | null | undefined): Location | null => 
   return locations.value.find((l) => l.locationId === locationId) ?? null
 }
 
-const getEntrance = (location: Location): string | null => {
-  if (isReferee.value) return location.refereeEntrance || location.mainEntrance || null
-  return location.mainEntrance || null
-}
 
 const competitionId = computed(() => Number(route.params.id))
 
@@ -251,11 +228,28 @@ const getAthleteName = (athleteId: number) => {
   return athlete ? getUserDisplayName(athlete) : `#${athleteId}`
 }
 
+const getCompetitionTypeLabel = (type: string): string => {
+  const labels: Record<string, string> = {
+    'SINGLE_ELIMINATION': t('competitionType.singleElimination'),
+    'ROUND_ROBIN': t('competitionType.roundRobin'),
+    'HEATS': t('competitionType.heats'),
+  }
+  return labels[type] || type
+}
+
+const getSportLabel = (sport: string): string => {
+  // Normaliser le sport en majuscules avec underscores
+  const normalized = sport.toUpperCase().replace(/\s+/g, '_')
+  return t(`admin.sport.${normalized}`)
+}
+
 const openMapItinerary = (locationId: number | null | undefined) => {
   const location = getLocation(locationId)
   if (!location) return
 
-  const mapsUrl = `https://www.google.com/maps/@${location.latitude},${location.longitude},15z`
+  // Ouvrir Google Maps avec l'adresse du lieu en tant qu'itinéraire
+  const address = encodeURIComponent(location.mainEntrance || location.name)
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${address}`
   window.open(mapsUrl, '_blank')
 }
 

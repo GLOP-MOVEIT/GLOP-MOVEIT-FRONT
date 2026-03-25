@@ -48,3 +48,23 @@ export function formatDateRange(startDate: string | Date, endDate: string | Date
   return `${formatDate(startDate, locale)} → ${formatDate(endDate, locale)}`
 }
 
+/**
+ * Formate une plage d'horaires pour l'affichage (ex: "14:30 → 16:00")
+ */
+export function formatTimeRange(startDate: string | Date, endDate: string | Date, locale = 'fr-FR'): string {
+  const startDateTime = typeof startDate === 'string' ? new Date(startDate) : startDate
+  const endDateTime = typeof endDate === 'string' ? new Date(endDate) : endDate
+
+  const localeString = locale === 'fr' || locale === 'fr-FR' ? 'fr-FR' : 'en-US'
+  const startTime = startDateTime.toLocaleTimeString(localeString, {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const endTime = endDateTime.toLocaleTimeString(localeString, {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  return `${startTime} → ${endTime}`
+}
+

@@ -55,7 +55,12 @@
             </v-chip>
           </td>
           <td>
+            <div v-if="!row.trial.locationId" class="text-caption text-warning">
+              <v-icon size="16" class="mr-1">mdi-alert-circle-outline</v-icon>
+              {{ t('commissionerResults.noLocationAssigned') }}
+            </div>
             <v-btn
+              v-else
               size="small"
               color="primary"
               variant="outlined"
@@ -202,7 +207,7 @@
             color="primary"
             variant="elevated"
             :loading="isSaving"
-            :disabled="isDialogLoading || editForm.rows.length === 0 || hasQualifiedParticipantsInTrial || hasNoLocation"
+            :disabled="isDialogLoading || editForm.rows.length === 0 || hasQualifiedParticipantsInTrial || hasNoLocation || previousRoundMissingResults"
             @click="saveResult"
           >
             {{ t('commissionerResults.save') }}
@@ -274,6 +279,48 @@ const hasQualifiedParticipantsInTrial = computed(() =>
 )
 
 const hasNoLocation = computed(() => !activeRow.value?.trial.locationId)
+
+const previousRoundMissingResults = ref(false)
+
+const getPreviousRoundTrials = (currentTrial: Trial, allTrials: Trial[]): Trial[] => {
+  // Trouver toutes les manches du round précédent
+  const currentRound = currentTrial.roundNumber
+  if (currentRound <= 1) return [] // Pas de manches précédentes pour la première manche
+
+  return allTrials.filter((trial) => trial.roundNumber === currentRound - 1)
+}
+
+const canEnterResultsForTrial = async (trial: Trial, allTrials: Trial[]): Promise<boolean> => {
+  // Si ce n'est pas une compétition single_elimination, autoriser toujours
+  const competition = trialRows.value.find((row) => row.trial.trialId === trial.trialId)?.competition
+  if (!competition || competition.competitionType !== 'single_elimination') {
+    return true
+  }
+
+  // Si c'est la première manche, on peut toujours entrer des résultats
+  if (trial.roundNumber <= 1) {
+    return true
+  }
+
+  // Vérifier que toutes les manches précédentes ont des résultats
+  const previousTrials = getPreviousRoundTrials(trial, allTrials)
+  if (previousTrials.length === 0) return true
+
+  for (const prevTrial of previousTrials) {
+    try {
+      const response = await resultService.getResultByTrialId(prevTrial.trialId!)
+      // Si une manche précédente n'a pas de résultats, on ne peut pas continuer
+      if (!response || !response.rankings || response.rankings.length === 0) {
+        return false
+      }
+    } catch {
+      // Si on ne peut pas récupérer les résultats de la manche précédente, on bloque
+      return false
+    }
+  }
+
+  return true
+}
 
 const moveUp = (index: number) => {
   if (index === 0) return
@@ -363,8 +410,16 @@ const openResultDialog = async (row: TrialRow) => {
   isDialogLoading.value = true
   dialogError.value = ''
   editForm.value = { lastTrial: false, rows: [] }
+  previousRoundMissingResults.value = false
 
   try {
+    // Vérifier la cascade pour single_elimination
+    const canEnter = await canEnterResultsForTrial(row.trial, trialRows.value.map((r) => r.trial))
+    if (!canEnter) {
+      previousRoundMissingResults.value = true
+      dialogError.value = t('commissionerResults.previousRoundMissingResults')
+    }
+
     const existing = await resultService.getResultByTrialId(row.trial.trialId!)
     const unit = row.competition.competitionResultUnit ?? null
     // Sort by position ascending to restore saved order

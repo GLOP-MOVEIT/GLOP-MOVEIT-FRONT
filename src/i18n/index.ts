@@ -2,6 +2,14 @@ import { createI18n } from 'vue-i18n'
 
 const messages = {
   en: {
+    common: {
+      itinerary: 'Itinerary',
+    },
+    competitionType: {
+      singleElimination: 'Single Elimination',
+      roundRobin: 'Round Robin',
+      heats: 'Heats',
+    },
     nav: {
       home: 'Home',
       profile: 'My profile',
@@ -30,6 +38,7 @@ const messages = {
       searchPlaceholder: 'Search championships',
       ongoingTitle: 'Ongoing championships',
       upcomingTitle: 'Upcoming championships',
+      completedTitle: 'Completed championships',
       latestResults: 'Latest results',
       viewDetails: 'View details',
       viewResults: 'View all results',
@@ -37,6 +46,7 @@ const messages = {
       competitionsCount: '{count} competitions',
       noOngoing: 'No ongoing championships at the moment.',
       noUpcoming: 'No upcoming championships at the moment.',
+      noCompleted: 'No completed championships at the moment.',
       noResults: 'No completed competitions yet.',
       noTrialsCompleted: 'No completed trials',
       completedTrials: 'Completed trials',
@@ -297,6 +307,11 @@ const messages = {
         INDIVIDUAL: 'Individual',
         TEAM: 'Team',
       },
+      competitionTypeInfo: {
+        singleElimination: 'Competition tree 1 vs 1: losers are eliminated at each round until the final.',
+        heats: 'Heat competitions: participants are divided into several heats that run in parallel.',
+        roundRobin: 'Round-robin: each participant will face all other participants.',
+      },
       competitionFormat: {
         SOLO: 'Solo',
         TEAM: 'Team',
@@ -443,6 +458,9 @@ const messages = {
       saveLocation: 'Save location',
       updateSuccess: 'Trial updated successfully.',
       updateError: 'Unable to update this trial.',
+      scheduleConflictError: 'Schedule conflict: this trial must take place after the previous trials. Participants already have a trial scheduled at the same time.',
+      cannotEditTitle: 'Modification not allowed',
+      cannotEditQualifiedTrial: 'Cannot edit schedule and location: participants have been qualified to the next round from this trial.',
       cancel: 'Cancel',
       dateOrderError: 'End date and time must be after start date and time.',
       teamsLabel: 'Teams',
@@ -453,6 +471,8 @@ const messages = {
       teamsCount: '{count} team(s) created',
       athletesLabel: 'athletes',
       noTeamsSelected: 'No team selected.',
+      resultsExistWarning: 'This competition already has results recorded. You cannot add more athletes or regenerate the trials.',
+      lockedByResults: 'Locked - competition has results',
     },
     trialTasks: {
       title: 'Task management',
@@ -544,9 +564,11 @@ const messages = {
       advanceError: 'Unable to advance qualified participants.',
       noQualifiedSelected: 'Please select at least one participant to qualify.',
       resultsLocked: 'Results locked: participants have been advanced to the next round. You can no longer modify these results.',
+      noLocationAssigned: 'No location assigned',
       noLocationWarning: 'A location must be assigned to this trial before entering results.',
       noLocation: 'No location assigned to this trial. Please assign a location before entering results.',
       noLocationError: 'Unable to manage results: this trial must have a location assigned.',
+      previousRoundMissingResults: 'You cannot enter results for this round yet. Previous rounds must have results first.',
     },
     about: {
       tagline:
@@ -733,6 +755,14 @@ const messages = {
     },
   },
   fr: {
+    common: {
+      itinerary: 'Itinéraire',
+    },
+    competitionType: {
+      singleElimination: 'Élimination directe',
+      roundRobin: 'Toutes les combinaisons',
+      heats: 'Séries',
+    },
     nav: {
       home: 'Accueil',
       profile: 'Mon profil',
@@ -761,6 +791,7 @@ const messages = {
       searchPlaceholder: 'Rechercher un championnat',
       ongoingTitle: 'Championnats en cours',
       upcomingTitle: 'Championnats à venir',
+      completedTitle: 'Championnats terminés',
       latestResults: 'Derniers résultats',
       viewDetails: 'Voir les détails',
       viewResults: 'Voir tous les résultats',
@@ -768,6 +799,7 @@ const messages = {
       competitionsCount: '{count} compétitions',
       noOngoing: 'Aucun championnat en cours pour le moment.',
       noUpcoming: 'Aucun championnat à venir pour le moment.',
+      noCompleted: 'Aucun championnat terminé pour le moment.',
       noResults: 'Aucune compétition terminée pour le moment.',
       noTrialsCompleted: 'Aucune épreuve terminée',
       completedTrials: 'Épreuves terminées',
@@ -1031,6 +1063,11 @@ const messages = {
         INDIVIDUAL: 'Individuel',
         TEAM: 'Équipe',
       },
+      competitionTypeInfo: {
+        singleElimination: 'Arbre de compétition 1 vs 1 : les perdants sont éliminés à chaque manche jusqu\'à la finale.',
+        heats: 'Épreuves en séries : les participants sont répartis en plusieurs séries qui se déroulent en parallèle.',
+        roundRobin: 'Toutes les combinaisons : chaque participant affrontera tous les autres participants.',
+      },
       competitionFormat: {
         SOLO: 'Solo',
         TEAM: 'Équipe',
@@ -1177,6 +1214,9 @@ const messages = {
       saveLocation: 'Enregistrer le lieu',
       updateSuccess: 'Manche mise à jour avec succès.',
       updateError: 'Impossible de mettre à jour cette manche.',
+      scheduleConflictError: 'Conflit d\'emploi du temps : cette épreuve doit avoir lieu après les épreuves précédentes. Les participants ont déjà une épreuve programmée au même moment.',
+      cannotEditTitle: 'Modification interdite',
+      cannotEditQualifiedTrial: 'Impossible de modifier l\'horaire et le lieu : des participants ont été qualifiés vers la manche suivante depuis cette épreuve.',
       cancel: 'Annuler',
       dateOrderError: 'La date et heure de fin doivent être après la date et heure de début.',
       teamsLabel: 'Équipes',
@@ -1187,6 +1227,8 @@ const messages = {
       teamsCount: '{count} équipe(s) créée(s)',
       athletesLabel: 'athlètes',
       noTeamsSelected: 'Aucune équipe sélectionnée.',
+      resultsExistWarning: 'Cette compétition a déjà des résultats enregistrés. Vous ne pouvez pas ajouter plus d\'athlètes ou régénérer les épreuves.',
+      lockedByResults: 'Bloqué - compétition a des résultats',
     },
     trialTasks: {
       title: 'Gestion des tâches',
@@ -1278,9 +1320,11 @@ const messages = {
       advanceError: 'Impossible de qualifier les participants.',
       noQualifiedSelected: 'Veuillez sélectionner au moins un participant à qualifier.',
       resultsLocked: 'Résultats verrouillés : des participants ont été avancés à la manche suivante. Vous ne pouvez plus modifier ces résultats.',
+      noLocationAssigned: 'Aucun lieu assigné',
       noLocationWarning: 'Un lieu doit être assigné à cette épreuve avant d\'entrer les résultats.',
       noLocation: 'Aucun lieu assigné à cette épreuve. Veuillez assigner un lieu avant d\'entrer les résultats.',
       noLocationError: 'Impossible de gérer les résultats : cette épreuve doit avoir un lieu assigné.',
+      previousRoundMissingResults: 'Vous ne pouvez pas entrer de résultats pour cette manche. Les manches précédentes doivent avoir des résultats d\'abord.',
     },
     about: {
       tagline:
