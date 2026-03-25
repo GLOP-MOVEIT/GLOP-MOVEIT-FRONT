@@ -87,9 +87,9 @@
               <v-table density="compact" class="text-caption">
                 <thead>
                   <tr>
-                    <th class="text-left">{{ t('results.position') }}</th>
-                    <th class="text-left">{{ t('results.participant') }}</th>
-                    <th class="text-left">{{ t('results.score') }}</th>
+                    <th scope="col" class="text-left">{{ t('results.position') }}</th>
+                    <th scope="col" class="text-left">{{ t('results.participant') }}</th>
+                    <th scope="col" class="text-left">{{ t('results.score') }}</th>
                   </tr>
                 </thead>
                 <tbody>
