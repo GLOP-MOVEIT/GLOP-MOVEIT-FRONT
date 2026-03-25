@@ -517,8 +517,19 @@ const saveResult = async () => {
     const trialId = activeRow.value.trial.trialId
     if (!trialId) throw new Error('Trial ID is missing')
 
+    const trial = activeRow.value.trial
     await championshipService.updateTrial(trialId, {
+      trialName: trial.trialName,
+      trialStartDate: trial.trialStartDate,
+      trialEndDate: trial.trialEndDate,
+      trialDescription: trial.trialDescription,
       trialStatus: Status.COMPLETED,
+      locationId: trial.locationId,
+      roundNumber: trial.roundNumber,
+      position: trial.position,
+      nextTrialId: trial.nextTrialId,
+      competitionId: trial.competitionId,
+      participantIds: trial.participantIds,
     })
 
     successMessage.value = t('commissionerResults.saveSuccess')
