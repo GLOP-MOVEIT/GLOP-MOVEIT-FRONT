@@ -36,7 +36,6 @@
         :key="`comp-${index}`"
         class="mb-8"
       >
-        <!-- En-tête de compétition -->
         <div class="mb-4 pb-3 border-bottom">
           <div class="d-flex align-center justify-space-between">
             <div>
@@ -57,7 +56,6 @@
           </div>
         </div>
 
-        <!-- Épreuves avec résultats -->
         <div class="space-y-3">
           <div
             v-for="trial in trialGroup.trials"

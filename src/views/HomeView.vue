@@ -135,7 +135,6 @@
         </v-alert>
       </div>
 
-      <!-- UPCOMING CHAMPIONSHIPS CAROUSEL -->
       <div class="mb-8">
         <div class="d-flex align-center justify-space-between mb-4">
           <h2 class="text-h5 font-weight-bold">{{ t('home.upcomingTitle') }}</h2>
@@ -194,7 +193,6 @@
         </v-alert>
       </div>
 
-      <!-- COMPLETED CHAMPIONSHIPS CAROUSEL -->
       <div class="mb-8">
         <div class="d-flex align-center justify-space-between mb-4">
           <h2 class="text-h5 font-weight-bold">{{ t('home.completedTitle') }}</h2>
@@ -253,7 +251,6 @@
         </v-alert>
       </div>
 
-      <!-- RESULTS SECTION (FULL WIDTH) -->
       <div class="mb-8">
         <div class="d-flex align-center justify-space-between mb-4">
           <h2 class="text-h5 font-weight-bold">{{ t('home.latestResults') }}</h2>
