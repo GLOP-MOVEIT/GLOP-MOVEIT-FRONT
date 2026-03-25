@@ -148,15 +148,33 @@
               <div class="text-caption">
                 <div class="font-weight-medium mb-2">
                   <v-icon size="14" class="mr-1">mdi-account-group</v-icon>
-                  {{ t('competitionDetails.athletes') }} :
+                  {{ competition?.participantType === 'TEAM' ? t('competitionDetails.teams') : t('competitionDetails.athletes') }} :
                 </div>
                 <div v-if="trial.participantIds && trial.participantIds.length > 0" class="pl-5">
-                  <div v-for="participantId in trial.participantIds" :key="participantId" class="text-body-2 mb-1">
-                    • {{ getAthleteName(participantId) }}
-                  </div>
+                  <template v-if="competition?.participantType === 'TEAM'">
+                    <div v-for="(participantId, idx) in trial.participantIds" :key="`participant-${idx}`" class="mb-2">
+                      <template v-if="typeof participantId === 'number'">
+                        <div class="text-body-2 font-weight-medium">
+                          • {{ typeof getParticipantDisplay(participantId) === 'object' ? (getParticipantDisplay(participantId) as { teamName: string }).teamName : getParticipantDisplay(participantId) }}
+                        </div>
+                        <div v-if="typeof getParticipantDisplay(participantId) === 'object'" class="pl-4 text-caption text-grey-darken-1">
+                          <div v-for="(athleteName, aIdx) in (getParticipantDisplay(participantId) as { athletes: string[] }).athletes" :key="`athlete-${aIdx}`">
+                            - {{ athleteName }}
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <div v-for="(participantId, idx) in trial.participantIds" :key="`participant-${idx}`" class="text-body-2 mb-1">
+                      <template v-if="typeof participantId === 'number'">
+                        • {{ getAthleteName(participantId) }}
+                      </template>
+                    </div>
+                  </template>
                 </div>
                 <div v-else class="text-grey pl-5">
-                  {{ t('competitionDetails.noAthletes') }}
+                  {{ competition?.participantType === 'TEAM' ? t('competitionDetails.noTeams') : t('competitionDetails.noAthletes') }}
                 </div>
               </div>
 
@@ -179,12 +197,14 @@ import { useI18n } from 'vue-i18n'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import locationService from '@/services/locationService'
+import teamService from '@/services/teamService'
 import { useUserStore } from '@/stores/user'
 import TrialLocationCard from '@/components/TrialLocationCard.vue'
 import type { CompetitionTreeResult, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
 import type { User } from '@/types/user'
 import type { Location } from '@/types/location'
+import type { Team } from '@/types/team'
 import { getUserDisplayName, UserRole } from '@/types/user'
 import { formatDateRange as formatDateRangeUtil, formatDateTime as formatDateTimeUtil } from '@/utils/date'
 
@@ -195,6 +215,7 @@ const competition = ref<CompetitionTreeResult | null>(null)
 const trials = ref<Trial[]>([])
 const athletes = ref<User[]>([])
 const locations = ref<Location[]>([])
+const loadedTeams = ref<Team[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 
@@ -228,6 +249,22 @@ const getAthleteName = (athleteId: number) => {
   return athlete ? getUserDisplayName(athlete) : `#${athleteId}`
 }
 
+const getParticipantDisplay = (participantId: number) => {
+  // Si c'est une compétition TEAM, participantId est un teamId
+  if (competition.value?.participantType === 'TEAM') {
+    const team = loadedTeams.value.find(t => t.teamId === participantId)
+    if (!team) return `Team #${participantId}`
+
+    return {
+      teamName: team.name,
+      athletes: team.athletes.map(a => getUserDisplayName(a)),
+    }
+  }
+
+  // Sinon c'est un athlète individuel
+  return getAthleteName(participantId)
+}
+
 const getCompetitionTypeLabel = (type: string): string => {
   const labels: Record<string, string> = {
     'SINGLE_ELIMINATION': t('competitionType.singleElimination'),
@@ -243,15 +280,6 @@ const getSportLabel = (sport: string): string => {
   return t(`admin.sport.${normalized}`)
 }
 
-const openMapItinerary = (locationId: number | null | undefined) => {
-  const location = getLocation(locationId)
-  if (!location) return
-
-  // Ouvrir Google Maps avec l'adresse du lieu en tant qu'itinéraire
-  const address = encodeURIComponent(location.mainEntrance || location.name)
-  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${address}`
-  window.open(mapsUrl, '_blank')
-}
 
 onMounted(async () => {
   isLoading.value = true
@@ -265,6 +293,15 @@ onMounted(async () => {
       athletes.value = await userService.getUsersByRole(UserRole.ATHLETE)
     } catch {
       athletes.value = []
+    }
+
+    // Si c'est une compétition TEAM, charger les équipes
+    if (competition.value?.participantType === 'TEAM') {
+      try {
+        loadedTeams.value = await teamService.getAllTeams()
+      } catch {
+        loadedTeams.value = []
+      }
     }
   } catch (error) {
     console.error('Error loading competition details:', error)

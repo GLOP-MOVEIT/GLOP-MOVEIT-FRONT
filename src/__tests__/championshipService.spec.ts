@@ -296,7 +296,12 @@ describe('championshipService', () => {
             expect(mockedAxios.put).toHaveBeenCalledWith(
                 `${apiBaseUrl}/trials/12`,
                 patch,
-                expect.objectContaining({ headers: expect.objectContaining({ ...authHeader, ...jsonHeader }) }),
+                expect.objectContaining({
+                    headers: expect.objectContaining({
+                        ...authHeader,
+                        'Content-Type': 'application/json'
+                    })
+                }),
             )
             expect(result).toEqual(updated)
         })

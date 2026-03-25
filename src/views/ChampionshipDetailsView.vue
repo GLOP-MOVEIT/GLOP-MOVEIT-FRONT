@@ -144,7 +144,6 @@ import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import { useUserStore } from '@/stores/user'
 import type { Championship, Competition } from '@/types/competition'
-import { Status } from '@/types/competition'
 import { getUserDisplayName, UserRole } from '@/types/user'
 import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 
@@ -176,13 +175,6 @@ const canManageCompetition = (competition: Competition) => {
   return competition.assignedCommissaireId === currentUserId.value
 }
 
-const statusColor = (status: Status) => {
-  if (status === Status.PLANNED) return 'grey'
-  if (status === Status.ONGOING) return 'primary'
-  if (status === Status.COMPLETED) return 'success'
-  if (status === Status.CANCELLED) return 'error'
-  return 'primary'
-}
 
 const getSportLabel = (sport: string): string => {
   const normalized = sport.toUpperCase().replace(/\s+/g, '_')

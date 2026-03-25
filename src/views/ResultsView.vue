@@ -6,8 +6,12 @@
           <v-icon icon="mdi-arrow-left" class="mr-2" />
           {{ t('results.back') }}
         </v-btn>
-        <h1 class="text-h4 font-weight-bold mt-4">{{ t('results.title') }}</h1>
-        <p class="text-body-1 text-grey-darken-1 mt-2">{{ t('results.subtitle') }}</p>
+        <h1 class="text-h4 font-weight-bold mt-4">
+          {{ competitionIdFilter ? filteredCompetitionName : t('results.title') }}
+        </h1>
+        <p class="text-body-1 text-grey-darken-1 mt-2">
+          {{ competitionIdFilter ? t('results.subtitleFiltered') : t('results.subtitle') }}
+        </p>
       </div>
     </div>
 
@@ -100,7 +104,7 @@
                         {{ ranking.position }}
                       </v-chip>
                     </td>
-                    <td>{{ getAthleteNameById(ranking.id) }}</td>
+                    <td>{{ getAthleteNameById(ranking.id, trial.trialId) }}</td>
                     <td>{{ ranking.score }}</td>
                   </tr>
                 </tbody>
@@ -120,18 +124,32 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import championshipService from '@/services/championshipService'
 import resultService from '@/services/resultService'
 import userService from '@/services/userService'
+import teamService from '@/services/teamService'
 import type { Competition, Trial } from '@/types/competition'
-import type { Result, Ranking } from '@/types/result'
+import type { Result } from '@/types/result'
 import type { User } from '@/types/user'
-import { UserRole, Status } from '@/types/user'
+import type { Team } from '@/types/team'
+import { UserRole } from '@/types/user'
 import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 
 const { t, locale } = useI18n()
-const router = useRouter()
+const route = useRoute()
+
+// Récupérer le competitionId depuis les params de la route (optionnel)
+const competitionIdFilter = computed(() => {
+  const id = route.params.competitionId
+  return id ? Number(id) : null
+})
+
+const filteredCompetitionName = computed(() => {
+  if (!competitionIdFilter.value) return ''
+  const comp = competitions.value.find(c => c.competitionId === competitionIdFilter.value)
+  return comp ? comp.competitionName : t('results.title')
+})
 
 const isLoading = ref(false)
 const errorMessage = ref('')
@@ -139,6 +157,7 @@ const competitions = ref<Competition[]>([])
 const allTrials = ref<Trial[]>([])
 const championships = ref<Map<number, string>>(new Map())
 const athletes = ref<User[]>([])
+const loadedTeams = ref<Team[]>([])
 const allResults = ref<Result[]>([])
 
 const formatDateRange = (start: string | Date, end: string | Date) =>
@@ -162,47 +181,12 @@ const statusColor = (status: string) => {
   return 'grey'
 }
 
-const completedCompetitions = computed(() => {
-  // Get competitions that have at least one trial with results
-  const competitionsWithResults = new Set<number>()
-  allResults.value.forEach((result) => {
-    const trial = allTrials.value.find((t) => t.trialId === result.trialId)
-    if (trial) {
-      competitionsWithResults.add(trial.competitionId)
-    }
-  })
-
-  // Filter competitions that have at least one result
-  const compsWithResults = competitions.value.filter((c) =>
-    competitionsWithResults.has(c.competitionId!)
-  )
-
-  // Sort by most recently ended (by end date, descending)
-  return compsWithResults.sort((a, b) => {
-    const dateA = new Date(a.competitionEndDate).getTime()
-    const dateB = new Date(b.competitionEndDate).getTime()
-    return dateB - dateA
-  })
-})
 
 const getChampionshipName = (championshipId: number | undefined): string => {
   if (!championshipId) return ''
   return championships.value.get(championshipId) ?? ''
 }
 
-const getCompletedTrials = (competitionId: number): Trial[] =>
-  allTrials.value.filter((t) => t.competitionId === competitionId && t.trialStatus === 'COMPLETED')
-
-const getTrialsWithResults = (competitionId: number): Trial[] => {
-  const trialsWithResults = new Set<number>()
-  allResults.value.forEach((result) => {
-    trialsWithResults.add(result.trialId)
-  })
-  return allTrials.value.filter((t) => t.competitionId === competitionId && trialsWithResults.has(t.trialId))
-}
-
-const getTrialResult = (trialId: number): Result | undefined =>
-  allResults.value.find((r) => r.trialId === trialId)
 
 const resultsMap = computed(() => {
   const map = new Map<number, Result>()
@@ -215,7 +199,21 @@ const resultsMap = computed(() => {
 const getTrialResultComputed = (trialId: number): Result | undefined =>
   resultsMap.value.get(trialId)
 
-const getAthleteNameById = (athleteId: number): string => {
+const getAthleteNameById = (athleteId: number, trialId?: number): string => {
+  const trial = allTrials.value.find(t => t.trialId === trialId)
+  const competition = trial ? competitions.value.find(c => c.competitionId === trial.competitionId) : null
+
+  if (competition?.participantType === 'TEAM') {
+    const team = loadedTeams.value.find(t => t.teamId === athleteId)
+    if (!team) return `Équipe #${athleteId}`
+
+    const athleteNames = team.athletes
+      .map(athlete => `${athlete.firstName} ${athlete.surname}`.trim())
+      .join(', ')
+
+    return `${team.name}${athleteNames ? ` (${athleteNames})` : ''}`
+  }
+
   const athlete = athletes.value.find((a) => a.userId === athleteId)
   if (!athlete) return `#${athleteId}`
   return `${athlete.firstName} ${athlete.surname}`.trim()
@@ -225,14 +223,16 @@ const loadData = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const [allCompetitions, allChampionships, allAthletes] = await Promise.all([
+    const [allCompetitions, allChampionships, allAthletes, allTeams] = await Promise.all([
       championshipService.getAllCompetitions(),
       championshipService.getAllChampionships(),
       userService.getUsersByRole(UserRole.ATHLETE),
+      teamService.getAllTeams().catch(() => []),
     ])
 
     competitions.value = allCompetitions
     athletes.value = allAthletes
+    loadedTeams.value = allTeams
 
     // Map championships by ID
     const chMap = new Map<number, string>()
@@ -311,8 +311,12 @@ const groupedTrialsByCompetition = computed(() => {
   const grouped: Array<{ competition: Competition; trials: Trial[] }> = []
   const competitionMap = new Map<number, Trial[]>()
 
+  const trialsToGroup = competitionIdFilter.value
+    ? trialsWithResultsSorted.value.filter(t => t.competitionId === competitionIdFilter.value)
+    : trialsWithResultsSorted.value
+
   // Group trials by competition
-  trialsWithResultsSorted.value.forEach((trial) => {
+  trialsToGroup.forEach((trial) => {
     if (!competitionMap.has(trial.competitionId)) {
       competitionMap.set(trial.competitionId, [])
     }

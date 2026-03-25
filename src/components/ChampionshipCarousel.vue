@@ -72,7 +72,7 @@ interface Props {
   emptyMessage: string
   chipColor?: string
   buttonColor?: string
-  buttonVariant?: string
+  buttonVariant?: 'flat' | 'text' | 'outlined' | 'elevated' | 'tonal' | 'plain'
 }
 
 withDefaults(defineProps<Props>(), {

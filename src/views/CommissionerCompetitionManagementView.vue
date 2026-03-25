@@ -71,9 +71,26 @@
                 </div>
               </div>
 
-              <v-btn color="primary" variant="outlined" :disabled="hasExistingResults" @click="isAthleteDialogOpen = true">
+              <v-btn
+                v-if="competition?.participantType === 'INDIVIDUAL'"
+                color="primary"
+                variant="outlined"
+                :disabled="hasExistingResults"
+                @click="isAthleteDialogOpen = true"
+              >
                 <v-icon icon="mdi-account-plus" class="mr-1" />
                 {{ t('commissionerCompetition.addAthletes') }}
+              </v-btn>
+
+              <v-btn
+                v-else
+                color="primary"
+                variant="outlined"
+                :disabled="hasExistingResults"
+                @click="isTeamManagementDialogOpen = true"
+              >
+                <v-icon icon="mdi-account-group-outline" class="mr-1" />
+                {{ t('commissionerCompetition.manageTeams') }}
               </v-btn>
             </div>
 
@@ -86,7 +103,24 @@
             </div>
 
             <div v-else>
+              <div v-if="managedTeams.length > 0">
+                <div class="d-flex flex-wrap gap-2">
+                  <v-chip
+                    v-for="team in managedTeams"
+                    :key="team.teamId"
+                    closable
+                    color="primary"
+                    variant="tonal"
+                    :disabled="hasExistingResults"
+                    @click:close="removeTeamFromManaged(team.teamId!)"
+                  >
+                    <v-icon icon="mdi-account-group" class="mr-1" size="small" />
+                    {{ team.name }} ({{ team.athletes.length }} {{ t('commissionerCompetition.athletesLabel') }})
+                  </v-chip>
+                </div>
+              </div>
               <TeamSelectionDisplay
+                v-else
                 :teams="teams"
                 :athletes="athletes"
                 @removeTeam="removeTeam"
@@ -97,7 +131,7 @@
             <v-btn
               color="success"
               :loading="isGeneratingTree"
-              :disabled="(competition?.participantType === 'TEAM' ? teams.length === 0 : selectedAthleteIds.length === 0) || hasExistingResults"
+              :disabled="(competition?.participantType === 'TEAM' ? (managedTeams.length === 0 && teams.length === 0) : selectedAthleteIds.length === 0) || hasExistingResults"
               @click="generateTree"
             >
               <v-icon icon="mdi-source-branch" class="mr-1" />
@@ -211,13 +245,28 @@
           <v-card variant="outlined" class="pa-4">
             <div class="text-subtitle-1 font-weight-medium mb-3">{{ t('commissionerCompetition.selectionSummaryTitle') }}</div>
             <template v-if="competition?.participantType === 'TEAM'">
-              <div class="text-body-2 text-grey-darken-1 mb-2">
-                {{ t('commissionerCompetition.teamsCount', { count: teams.length }) }}
-              </div>
-              <div v-if="teams.length > 0" class="text-caption text-grey-darken-2 space-y-1">
-                <div v-for="(team, idx) in teams" :key="idx">
-                  {{ t('commissionerCompetition.teamNumber', { number: idx + 1 }) }}: {{ team.length }} {{ t('commissionerCompetition.athletesLabel') }}
+              <div v-if="managedTeams.length > 0">
+                <div class="text-body-2 text-grey-darken-1 mb-2">
+                  {{ t('commissionerCompetition.teamsCount', { count: managedTeams.length }) }}
                 </div>
+                <div class="text-caption text-grey-darken-2 space-y-1">
+                  <div v-for="team in managedTeams" :key="team.teamId">
+                    {{ team.name }}: {{ team.athletes.length }} {{ t('commissionerCompetition.athletesLabel') }}
+                  </div>
+                </div>
+              </div>
+              <div v-else-if="teams.length > 0">
+                <div class="text-body-2 text-grey-darken-1 mb-2">
+                  {{ t('commissionerCompetition.teamsCount', { count: teams.length }) }}
+                </div>
+                <div class="text-caption text-grey-darken-2 space-y-1">
+                  <div v-for="(team, idx) in teams" :key="idx">
+                    {{ t('commissionerCompetition.teamNumber', { number: idx + 1 }) }}: {{ team.length }} {{ t('commissionerCompetition.athletesLabel') }}
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-body-2 text-grey-darken-1">
+                {{ t('commissionerCompetition.noTeamsSelected') }}
               </div>
             </template>
             <template v-else>
@@ -249,6 +298,15 @@
         @update:is-open="isAthleteDialogOpen = $event"
         @update:teams="teams = $event"
         @update:team-searches="teamSearches = $event"
+      />
+
+      <TeamManagementDialog
+        v-if="competition?.participantType === 'TEAM'"
+        :is-open="isTeamManagementDialogOpen"
+        :teams="managedTeams"
+        :athletes="athletes"
+        @update:is-open="isTeamManagementDialogOpen = $event"
+        @update:teams="managedTeams = $event"
       />
 
       <v-dialog v-model="isDateDialogOpen" max-width="500">
@@ -311,6 +369,12 @@
             <v-alert v-if="dateOrderError" type="error" variant="tonal" class="mt-3" density="compact">
               {{ t('commissionerCompetition.dateOrderError') }}
             </v-alert>
+            <v-alert v-if="dateOutOfRangeError" type="error" variant="tonal" class="mt-3" density="compact">
+              {{ t('commissionerCompetition.dateOutOfRangeError', {
+                start: formatDate(competition.competitionStartDate),
+                end: formatDate(competition.competitionEndDate)
+              }) }}
+            </v-alert>
             <v-alert v-if="dateDialogError" type="error" variant="tonal" class="mt-3" density="compact">
               {{ dateDialogError }}
             </v-alert>
@@ -343,7 +407,7 @@
               :loading="isLoadingLocations"
               clearable
               prepend-inner-icon="mdi-magnify"
-              :custom-filter="(item, queryText) => {
+              :custom-filter="(item: any, queryText: string) => {
                 if (!queryText) return true
                 const query = queryText.toLowerCase()
                 return (
@@ -408,6 +472,7 @@ import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import locationService from '@/services/locationService'
 import resultService from '@/services/resultService'
+import teamService from '@/services/teamService'
 import volunteerService from '@/services/volunteerService'
 import type { VolunteerTask } from '@/services/volunteerService'
 import type { CompetitionTreeResult, Trial } from '@/types/competition'
@@ -415,10 +480,12 @@ import { Status } from '@/types/competition'
 import type { User } from '@/types/user'
 import { getUserDisplayName, UserRole } from '@/types/user'
 import type { Location } from '@/types/location'
-import { formatDateRange as formatDateRangeUtil, formatTimeRange as formatTimeRangeUtil } from '@/utils/date'
+import type { Team } from '@/types/team'
+import { formatDateRange as formatDateRangeUtil, formatTimeRange as formatTimeRangeUtil, formatDate as formatDateUtil } from '@/utils/date'
 import { isAxiosError } from 'axios'
 import AthleteSelectionDialog from '@/components/commissioner/AthleteSelectionDialog.vue'
 import TeamSelectionDialog from '@/components/commissioner/TeamSelectionDialog.vue'
+import TeamManagementDialog from '@/components/commissioner/TeamManagementDialog.vue'
 import AthleteSelectionDisplay from '@/components/commissioner/AthleteSelectionDisplay.vue'
 import TeamSelectionDisplay from '@/components/commissioner/TeamSelectionDisplay.vue'
 
@@ -432,12 +499,17 @@ const formatDateRange = (start: string | Date, end: string | Date) =>
 const formatTimeRange = (start: string | Date, end: string | Date) =>
   formatTimeRangeUtil(start, end, locale.value)
 
+const formatDate = (date: string | Date) =>
+  formatDateUtil(date, locale.value)
+
 const competition = ref<CompetitionTreeResult | null>(null)
 const athletes = ref<User[]>([])
 const trials = ref<Trial[]>([])
 const allLocations = ref<Location[]>([])
 const selectedAthleteIds = ref<number[]>([])
-const teams = ref<number[][]>([]) // Pour le mode TEAM
+const teams = ref<number[][]>([]) // Pour le mode TEAM (ancien système)
+const managedTeams = ref<Team[]>([]) // Pour le mode TEAM (nouveau système avec API)
+const loadedTeams = ref<Team[]>([]) // Teams chargées depuis l'API pour affichage
 const teamSearches = ref<string[]>([]) // Pour les recherches par équipe
 const athleteSearch = ref('')
 const errorMessage = ref('')
@@ -445,6 +517,7 @@ const infoMessage = ref('')
 const isLoading = ref(false)
 const isGeneratingTree = ref(false)
 const isAthleteDialogOpen = ref(false)
+const isTeamManagementDialogOpen = ref(false)
 const hasExistingResults = ref(false)
 
 // Dialog date
@@ -467,6 +540,7 @@ const locationSearch = ref('')
 // Dialog date - validation error
 const dateOrderError = ref(false)
 const dateDialogError = ref('')
+const dateOutOfRangeError = ref(false)
 const showQualifiedWarning = ref(false)
 
 const isSavingTrial = ref(false)
@@ -513,6 +587,10 @@ const removeTeam = (teamIndex: number) => {
   teamSearches.value.splice(teamIndex, 1)
 }
 
+const removeTeamFromManaged = (teamId: number) => {
+  managedTeams.value = managedTeams.value.filter(team => team.teamId !== teamId)
+}
+
 const removeAthleteFromTeamDisplay = (teamIdx: number, athleteId: number) => {
   const team = teams.value[teamIdx]
   if (team) {
@@ -522,12 +600,19 @@ const removeAthleteFromTeamDisplay = (teamIdx: number, athleteId: number) => {
 }
 
 const formatParticipantNames = (participantIds: number[] | number[][]): string => {
-  // Check if it's a list of lists (teams) or a simple list (individuals)
+  // Check if it's a list of lists (teams) or a simple list (individuals or team IDs)
   if (participantIds.length === 0) {
     return t('commissionerCompetition.noParticipantsInTrial')
   }
 
-  // If first element is an array, it's teams
+  console.log('formatParticipantNames:', {
+    participantIds,
+    participantType: competition.value?.participantType,
+    loadedTeamsCount: loadedTeams.value.length,
+    isArray: Array.isArray(participantIds[0]),
+  })
+
+  // If first element is an array, it's teams (old system)
   if (Array.isArray(participantIds[0])) {
     const teams = participantIds as number[][]
     return teams
@@ -541,6 +626,26 @@ const formatParticipantNames = (participantIds: number[] | number[][]): string =
       .join(' | ')
   }
 
+  // Check if it's a TEAM competition (new system with managedTeams)
+  if (competition.value?.participantType === 'TEAM') {
+    // participantIds contains team IDs, fetch the teams and display their athletes
+    return (participantIds as number[])
+      .map((teamId) => {
+        const team = loadedTeams.value.find(t => t.teamId === teamId)
+        if (!team) {
+          // Team not loaded yet or doesn't exist
+          return `Équipe #${teamId}`
+        }
+
+        const athleteNames = team.athletes
+          .map(athlete => getUserDisplayName(athlete))
+          .join(', ')
+
+        return `${team.name}: ${athleteNames || t('teamManagement.noAthletesInTeam')}`
+      })
+      .join(' | ')
+  }
+
   // Otherwise it's individuals
   return (participantIds as number[])
     .map((participantId) => athletes.value.find((athlete) => athlete.userId === participantId))
@@ -548,10 +653,6 @@ const formatParticipantNames = (participantIds: number[] | number[][]): string =
     .join(', ')
 }
 
-const getUserDisplayNameById = (userId: number): string => {
-  const athlete = athletes.value.find((a) => a.userId === userId)
-  return athlete ? getUserDisplayName(athlete) : `#${userId}`
-}
 
 const getCompetitionTypeLabel = (type: string): string => {
   const labels: Record<string, string> = {
@@ -599,8 +700,24 @@ const loadAthletes = async () => {
 const loadTrials = async () => {
   try {
     trials.value = await championshipService.getTrialsByCompetition(competitionId.value)
+    // Si c'est une compétition TEAM, charger les équipes pour afficher les athlètes
+    if (competition.value?.participantType === 'TEAM') {
+      await loadTeamsFromApi()
+    }
   } catch {
     trials.value = []
+  }
+}
+
+const loadTeamsFromApi = async () => {
+  try {
+    // Récupérer toutes les équipes
+    const allTeams = await teamService.getAllTeams()
+    loadedTeams.value = allTeams
+    console.log('Équipes chargées:', allTeams)
+  } catch (error) {
+    console.error('Erreur lors du chargement des équipes:', error)
+    loadedTeams.value = []
   }
 }
 
@@ -681,22 +798,37 @@ const saveDateDialog = async () => {
   if (!editingTrialId.value) return
   dateOrderError.value = false
   dateDialogError.value = ''
+  dateOutOfRangeError.value = false
 
   const startDateTime = combineDateTime(editDateForm.value.startDate, editDateForm.value.startTime)
   const endDateTime = combineDateTime(editDateForm.value.endDate, editDateForm.value.endTime)
+
+  // Vérifier que la date de fin est après la date de début
   if (startDateTime && endDateTime && endDateTime <= startDateTime) {
     dateOrderError.value = true
     return
+  }
+
+  // Vérifier que les dates de l'épreuve sont dans les dates de la compétition
+  if (competition.value && startDateTime && endDateTime) {
+    const compStart = new Date(competition.value.competitionStartDate)
+    const compEnd = new Date(competition.value.competitionEndDate)
+    const trialStart = new Date(startDateTime)
+    const trialEnd = new Date(endDateTime)
+
+    if (trialStart < compStart || trialEnd > compEnd) {
+      dateOutOfRangeError.value = true
+      return
+    }
   }
 
   isSavingTrial.value = true
   errorMessage.value = ''
   try {
     const trial = trials.value.find((t) => t.trialId === editingTrialId.value)
-    if (!trial) return
+    if (!trial || !trial.trialId) return
 
-    const updated = await championshipService.updateTrial({
-      trialId: trial.trialId,
+    const updated = await championshipService.updateTrial(trial.trialId, {
       trialName: trial.trialName,
       trialStartDate: startDateTime,
       trialEndDate: endDateTime,
@@ -738,10 +870,9 @@ const saveLocationDialog = async () => {
   errorMessage.value = ''
   try {
     const trial = trials.value.find((t) => t.trialId === editingTrialId.value)
-    if (!trial) return
+    if (!trial || !trial.trialId) return
     const newLocationId = editLocationForm.value.locationId ?? 0
-    const updated = await championshipService.updateTrial({
-      trialId: trial.trialId,
+    const updated = await championshipService.updateTrial(trial.trialId, {
       trialName: trial.trialName,
       trialStartDate: trial.trialStartDate,
       trialEndDate: trial.trialEndDate,
@@ -809,9 +940,21 @@ const generateTree = async () => {
   }
 
   const isTeamCompetition = competition.value.participantType === 'TEAM'
-  const participantData = isTeamCompetition ? teams.value : selectedAthleteIds.value
 
-  if (participantData.length === 0) {
+  let participantData
+  if (isTeamCompetition) {
+    // Si on a des équipes gérées avec l'API, utiliser leurs IDs
+    if (managedTeams.value.length > 0) {
+      participantData = managedTeams.value.map(team => team.teamId!)
+    } else {
+      // Sinon utiliser l'ancien système avec tableaux d'IDs
+      participantData = teams.value
+    }
+  } else {
+    participantData = selectedAthleteIds.value
+  }
+
+  if (!participantData || participantData.length === 0) {
     return
   }
 
@@ -826,10 +969,12 @@ const generateTree = async () => {
     )
     await loadTrials()
     await checkExistingResults()
-    // Réinitialiser les données après génération réussie
+
     if (isTeamCompetition) {
-      teams.value = []
-      teamSearches.value = []
+      if (teams.value.length > 0) {
+        teams.value = []
+        teamSearches.value = []
+      }
     } else {
       selectedAthleteIds.value = []
     }
@@ -854,6 +999,24 @@ onMounted(async () => {
 
     await loadTrials()
     await checkExistingResults()
+
+    if (competition.value?.participantType === 'TEAM') {
+      try {
+        const allTeams = await teamService.getAllTeams()
+        if (trials.value.length > 0) {
+          const usedTeamIds = new Set<number>()
+          trials.value.forEach(trial => {
+            trial.participantIds.forEach(id => {
+              if (typeof id === 'number') {
+                usedTeamIds.add(id)
+              }
+            })
+          })
+          managedTeams.value = allTeams.filter(team => usedTeamIds.has(team.teamId!))
+        }
+      } catch {
+      }
+    }
   } catch {
     errorMessage.value = t('commissionerCompetition.loadError')
   } finally {

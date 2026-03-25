@@ -312,7 +312,7 @@
                 <v-btn
                   variant="text"
                   color="success"
-                  to="/resultats"
+                  :to="{ name: 'competition-results', params: { competitionId: competition.competitionId } }"
                 >
                   {{ t('home.viewResults') }}
                   <v-icon icon="mdi-arrow-right" class="ml-2" />

@@ -224,9 +224,11 @@ import { useI18n } from 'vue-i18n'
 import championshipService from '@/services/championshipService'
 import resultService from '@/services/resultService'
 import userService from '@/services/userService'
+import teamService from '@/services/teamService'
 import { Status, type Competition, type Trial } from '@/types/competition'
 import type { User } from '@/types/user'
 import { UserRole } from '@/types/user'
+import type { Team } from '@/types/team'
 import type { Ranking } from '@/types/result'
 
 const { t } = useI18n()
@@ -259,6 +261,7 @@ const errorMessage = ref('')
 const successMessage = ref('')
 const trialRows = ref<TrialRow[]>([])
 const athletes = ref<User[]>([])
+const loadedTeams = ref<Team[]>([])
 
 const isDialogOpen = ref(false)
 const isDialogLoading = ref(false)
@@ -283,7 +286,6 @@ const hasNoLocation = computed(() => !activeRow.value?.trial.locationId)
 const previousRoundMissingResults = ref(false)
 
 const getPreviousRoundTrials = (currentTrial: Trial, allTrials: Trial[]): Trial[] => {
-  // Trouver toutes les manches du round précédent
   const currentRound = currentTrial.roundNumber
   if (currentRound <= 1) return [] // Pas de manches précédentes pour la première manche
 
@@ -291,25 +293,21 @@ const getPreviousRoundTrials = (currentTrial: Trial, allTrials: Trial[]): Trial[
 }
 
 const canEnterResultsForTrial = async (trial: Trial, allTrials: Trial[]): Promise<boolean> => {
-  // Si ce n'est pas une compétition single_elimination, autoriser toujours
   const competition = trialRows.value.find((row) => row.trial.trialId === trial.trialId)?.competition
   if (!competition || competition.competitionType !== 'single_elimination') {
     return true
   }
 
-  // Si c'est la première manche, on peut toujours entrer des résultats
   if (trial.roundNumber <= 1) {
     return true
   }
 
-  // Vérifier que toutes les manches précédentes ont des résultats
   const previousTrials = getPreviousRoundTrials(trial, allTrials)
   if (previousTrials.length === 0) return true
 
   for (const prevTrial of previousTrials) {
     try {
       const response = await resultService.getResultByTrialId(prevTrial.trialId!)
-      // Si une manche précédente n'a pas de résultats, on ne peut pas continuer
       if (!response || !response.rankings || response.rankings.length === 0) {
         return false
       }
@@ -355,6 +353,17 @@ const statusColor = (status: string) => {
 }
 
 const getAthleteName = (userId: number): string => {
+  if (activeRow.value?.competition.participantType === 'TEAM') {
+    const team = loadedTeams.value.find(t => t.teamId === userId)
+    if (!team) return `Équipe #${userId}`
+
+    const athleteNames = team.athletes
+      .map(athlete => `${athlete.firstName} ${athlete.surname}`.trim())
+      .join(', ')
+
+    return `${team.name}${athleteNames ? ` (${athleteNames})` : ''}`
+  }
+
   const athlete = athletes.value.find((a) => a.userId === userId)
   if (!athlete) return `#${userId}`
   return `${athlete.firstName} ${athlete.surname}`.trim()
@@ -364,11 +373,13 @@ const loadData = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const [allCompetitions, allAthletes] = await Promise.all([
+    const [allCompetitions, allAthletes, allTeams] = await Promise.all([
       championshipService.getAllCompetitions(),
       userService.getUsersByRole(UserRole.ATHLETE),
+      teamService.getAllTeams().catch(() => []),
     ])
     athletes.value = allAthletes
+    loadedTeams.value = allTeams
 
     const now = new Date()
 
@@ -413,7 +424,6 @@ const openResultDialog = async (row: TrialRow) => {
   previousRoundMissingResults.value = false
 
   try {
-    // Vérifier la cascade pour single_elimination
     const canEnter = await canEnterResultsForTrial(row.trial, trialRows.value.map((r) => r.trial))
     if (!canEnter) {
       previousRoundMissingResults.value = true
@@ -431,9 +441,15 @@ const openResultDialog = async (row: TrialRow) => {
     }
   } catch {
     // No result yet — initialize rows from trial participants
+    const participantIds = (row.trial.participantIds ?? [])
+      .filter((id): id is number => typeof id === 'number')
+
     editForm.value = {
       lastTrial: false,
-      rows: (row.trial.participantIds ?? []).map((id) => ({ id, scoreValue: '' })),
+      rows: participantIds.map((id) => ({
+        id,
+        scoreValue: ''
+      })),
     }
   } finally {
     isDialogLoading.value = false
@@ -498,11 +514,12 @@ const saveResult = async () => {
     }
 
     // Update trial status to COMPLETED with all fields
-    const updatedTrial = {
-      ...activeRow.value.trial,
+    const trialId = activeRow.value.trial.trialId
+    if (!trialId) throw new Error('Trial ID is missing')
+
+    await championshipService.updateTrial(trialId, {
       trialStatus: Status.COMPLETED,
-    }
-    await championshipService.updateTrial(updatedTrial)
+    })
 
     successMessage.value = t('commissionerResults.saveSuccess')
     closeDialog()

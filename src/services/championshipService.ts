@@ -442,23 +442,6 @@ export const championshipService = {
     }
   },
 
-  /**
-   * Mettre à jour une épreuve
-   */
-  async updateTrial(trial: Trial): Promise<Trial> {
-    try {
-      const response = await axios.put<Trial>(`${API_URL}/trials/${trial.trialId}`, trial, {
-        headers: {
-          ...this.getAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-      })
-      return response.data
-    } catch (error) {
-      console.error(`Update trial ${trial.trialId} error:`, error)
-      throw error
-    }
-  },
 
   /**
    * Vérifier si une compétition a au moins un résultat enregistré
@@ -491,7 +474,7 @@ export const championshipService = {
    * Vérifier si les manches précédentes d'une épreuve ont des résultats
    * (pour single_elimination uniquement)
    */
-  async canEnterResultsForTrial(trial: Trial, allTrials: Trial[]): Promise<boolean> {
+  async canEnterResultsForTrial(trial: Trial): Promise<boolean> {
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/results/trial/${trial.trialId}`,
