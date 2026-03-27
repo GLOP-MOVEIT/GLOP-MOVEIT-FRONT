@@ -23,7 +23,6 @@ const mapApiTicket = (ticket: TicketApiModel, email?: string): Ticket => {
     id: ticket.id,
     ticketNumber: ticket.ticketNumber,
     email,
-    eventType: null,
     seatInfo: ticket.seatInformation,
     eventDate: ticket.eventDate,
     qrData: buildTicketQrData(ticket, email),

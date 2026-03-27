@@ -205,10 +205,6 @@ const openTicket = (ticket: Ticket) => {
                     </v-card-subtitle>
                   </v-card-item>
                   <v-card-text>
-                    <div class="text-body-2 mb-2">
-                      {{ t('ticketing.eventType') }}:
-                      <strong>{{ ticket.eventType ?? t('ticketing.notAvailable') }}</strong>
-                    </div>
                     <div class="text-body-2 mb-4">
                       {{ t('ticketing.seatInfo') }}:
                       <strong>{{ ticket.seatInfo ?? t('ticketing.notAvailable') }}</strong>
@@ -236,10 +232,6 @@ const openTicket = (ticket: Ticket) => {
           <div v-if="selectedTicket" class="mb-4 text-body-2">
             <div class="mb-2">
               {{ selectedTicket.email ?? t('ticketing.notAvailable') }}
-            </div>
-            <div class="mb-2">
-              {{ t('ticketing.eventType') }}:
-              <strong>{{ selectedTicket.eventType ?? t('ticketing.notAvailable') }}</strong>
             </div>
             <div class="mb-2">
               {{ t('ticketing.seatInfo') }}:

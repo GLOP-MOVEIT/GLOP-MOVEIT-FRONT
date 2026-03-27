@@ -150,9 +150,6 @@ watch(
 
 const ticketNumberPreview = computed(() => formState.value.ticketNumber || '—')
 const emailPreview = computed(() => importedTicket.value?.email ?? (formState.value.email || '—'))
-const eventPreview = computed(() =>
-  importedTicket.value ? importedTicket.value.eventType ?? t('ticketing.notAvailable') : ''
-)
 const seatPreview = computed(() => importedTicket.value?.seatInfo ?? '')
 const datePreview = computed(() => formatTicketDate(importedTicket.value?.eventDate))
 </script>
@@ -245,11 +242,6 @@ const datePreview = computed(() => formatTicketDate(importedTicket.value?.eventD
                   type="email"
                   readonly
                 ></v-text-field>
-              </div>
-              <div class="ticket-field">
-                <span class="label">{{ t('ticketing.form.eventType') }}</span>
-                <span v-if="eventPreview" class="value">{{ eventPreview }}</span>
-                <span v-else class="value ghost" aria-hidden="true"></span>
               </div>
               <div class="ticket-field">
                 <span class="label">{{ t('ticketing.form.seatInfo') }}</span>

@@ -2,7 +2,6 @@ export interface Ticket {
   id?: number
   ticketNumber: string
   email?: string
-  eventType?: string | null
   seatInfo?: string | null
   eventDate?: string | null
   qrData?: string | null

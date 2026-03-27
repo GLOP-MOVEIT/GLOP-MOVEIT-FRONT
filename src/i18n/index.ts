@@ -102,7 +102,6 @@ const messages = {
       importedTitle: 'My tickets',
       noTickets: 'No tickets found for this account yet.',
       ticketLabel: 'Ticket #{number}',
-      eventType: 'Event type',
       seatInfo: 'Seat(s)',
       eventDate: 'Date',
       notAvailable: 'Not available',
@@ -142,7 +141,6 @@ const messages = {
       form: {
         ticketNumber: 'Ticket number',
         email: 'Email address',
-        eventType: 'Event',
         seatInfo: 'Seat(s)',
         eventDate: 'Date',
         placeholders: {
@@ -940,7 +938,6 @@ const messages = {
       importedTitle: 'Mes billets',
       noTickets: 'Aucun billet trouvé pour ce compte pour le moment.',
       ticketLabel: 'Billet n°{number}',
-      eventType: 'Type d’événement',
       seatInfo: 'Place(s)',
       eventDate: 'Date',
       notAvailable: 'Non renseigné',
@@ -980,7 +977,6 @@ const messages = {
       form: {
         ticketNumber: 'Numéro de billet',
         email: 'Adresse email',
-        eventType: 'Épreuve',
         seatInfo: 'Place(s)',
         eventDate: 'Date',
         placeholders: {
