@@ -45,7 +45,7 @@ const toIsoDate = (value: string) => {
   const parsedDate = new Date(value)
 
   if (Number.isNaN(parsedDate.getTime())) {
-    throw new Error('ticket-invalid-date')
+    throw new TypeError('ticket-invalid-date')
   }
 
   return parsedDate.toISOString()
@@ -74,7 +74,7 @@ export const importTicket = async (
     userEmail &&
     payload.email.trim().toLowerCase() !== userEmail.trim().toLowerCase()
   ) {
-    throw new Error('ticket-email-mismatch')
+    throw new TypeError('ticket-email-mismatch')
   }
 
   const { data } = await apiClient.post<TicketApiModel>(`/tickets/${userId}`, {

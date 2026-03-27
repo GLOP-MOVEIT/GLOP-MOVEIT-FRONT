@@ -16,11 +16,10 @@ export const getStoredTickets = (): Ticket[] => {
     if (Array.isArray(parsed)) {
       return parsed as Ticket[]
     }
+    return []
   } catch {
     return []
   }
-
-  return []
 }
 
 export const storeTickets = (tickets: Ticket[]) => {

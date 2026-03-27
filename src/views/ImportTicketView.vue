@@ -6,8 +6,7 @@ import type { VForm } from 'vuetify/components'
 import QRCode from 'qrcode'
 import { importTicket } from '@/services/ticketService'
 import { useUserStore } from '@/stores/user'
-import type { Ticket } from '@/types/ticket'
-import type { TicketImportPayload } from '@/types/ticket'
+import type { Ticket, TicketImportPayload } from '@/types/ticket'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -23,7 +22,6 @@ const isFailed = ref(false)
 const importedTicket = ref<Ticket | null>(null)
 const qrImageData = ref('')
 const qrState = ref<'idle' | 'generating' | 'ready'>('idle')
-const isVerifying = ref(false)
 
 const formState = ref<TicketImportPayload>({
   ticketNumber: '',
@@ -72,7 +70,6 @@ const handleImport = async () => {
   }
 
   isImporting.value = true
-  isVerifying.value = true
   qrState.value = 'generating'
   const minimumDelay = new Promise((resolve) => {
     setTimeout(resolve, 3000)
@@ -99,9 +96,9 @@ const handleImport = async () => {
     triggerColorize()
   } catch (error) {
     await minimumDelay
-    if (error instanceof Error && error.message === 'ticket-email-mismatch') {
+    if (error instanceof TypeError && error.message === 'ticket-email-mismatch') {
       errorMessage.value = t('ticketing.validation.emailMismatch')
-    } else if (error instanceof Error && error.message === 'ticket-invalid-date') {
+    } else if (error instanceof TypeError && error.message === 'ticket-invalid-date') {
       errorMessage.value = t('ticketing.validation.invalidDate')
     } else {
       errorMessage.value = t('ticketing.importError')
@@ -110,7 +107,6 @@ const handleImport = async () => {
     qrState.value = 'idle'
   } finally {
     isImporting.value = false
-    isVerifying.value = false
   }
 }
 
@@ -177,12 +173,6 @@ const datePreview = computed(() => formatTicketDate(importedTicket.value?.eventD
           class="ticket-shell"
           :class="{ colored: isColored, failed: isFailed }"
         >
-          <div v-if="isVerifying" class="ticket-loader" aria-live="polite">
-            <div class="loader-bar"></div>
-            <div class="loader-text">
-              {{ t('ticketing.verifying') }}
-            </div>
-          </div>
           <div class="ticket-header">
             <div>
               <div class="text-overline">CiblOrgaSport</div>
