@@ -1,12 +1,36 @@
 <template>
   <div>
-    <div class="d-flex flex-wrap align-center justify-space-between mb-4">
+    <section v-if="competition" class="competition-hero mb-4">
+      <div class="d-flex flex-wrap align-center justify-space-between ga-4">
+        <div>
+          <div class="text-overline section-label mb-1">{{ t('commissionerCompetition.title') }}</div>
+          <h2 class="text-h4 font-weight-bold">{{ competition.competitionName }}</h2>
+          <div class="text-body-2 text-grey-darken-1 mt-2">
+            {{ formatDateRange(competition.competitionStartDate, competition.competitionEndDate) }}
+          </div>
+          <div class="d-flex flex-wrap ga-2 mt-3">
+            <v-chip color="primary" variant="tonal">{{ getSportLabel(competition.competitionSport) }}</v-chip>
+            <v-chip color="secondary" variant="tonal">{{ getCompetitionTypeLabel(competition.competitionType) }}</v-chip>
+            <v-chip color="info" variant="tonal">{{ t(`admin.participantType.${competition.participantType}`) }}</v-chip>
+          </div>
+        </div>
+
+        <v-btn
+          v-if="championshipDetailsId"
+          variant="text"
+          color="primary"
+          :to="{ name: 'championship-details', params: { id: championshipDetailsId } }"
+        >
+          <v-icon icon="mdi-arrow-left" class="mr-1" />
+          {{ t('commissionerCompetition.backToChampionship') }}
+        </v-btn>
+      </div>
+    </section>
+
+    <div v-else class="d-flex flex-wrap align-center justify-space-between mb-4">
       <div>
         <div class="text-overline mb-1">{{ t('commissionerCompetition.title') }}</div>
-        <h2 class="text-h5 font-weight-bold">{{ competition?.competitionName ?? t('commissionerCompetition.subtitle') }}</h2>
-        <div v-if="competition" class="text-body-2 text-grey-darken-1">
-          {{ formatDateRange(competition.competitionStartDate, competition.competitionEndDate) }}
-        </div>
+        <h2 class="text-h5 font-weight-bold">{{ t('commissionerCompetition.subtitle') }}</h2>
       </div>
 
       <v-btn
@@ -153,7 +177,7 @@
               <v-card
                 v-for="trial in trials"
                 :key="trial.trialId"
-                class="rounded-lg mb-3 pa-4"
+                class="rounded-xl mb-3 pa-4 trial-card"
                 variant="outlined"
               >
                 <div class="d-flex align-start gap-4">
@@ -196,7 +220,7 @@
                       </span>
                     </div>
                   </div>
-                  <div class="d-flex flex-column flex-shrink-0" style="min-width: 190px; gap: 16px;">
+                  <div class="d-flex flex-column flex-shrink-0 trial-actions">
                     <v-btn
                       variant="outlined"
                       color="primary"
@@ -1077,3 +1101,31 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.section-label {
+  color: rgb(25, 118, 210);
+}
+
+.competition-hero {
+  padding: 28px;
+  border-radius: 30px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    radial-gradient(circle at top left, rgba(25, 118, 210, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.96));
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+}
+
+.trial-card {
+  border-color: rgba(25, 118, 210, 0.12);
+  background:
+    linear-gradient(180deg, rgba(25, 118, 210, 0.04), rgba(255, 255, 255, 0.98) 120px),
+    white;
+}
+
+.trial-actions {
+  min-width: 220px;
+  gap: 12px;
+}
+</style>

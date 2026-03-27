@@ -1,63 +1,69 @@
 <template>
-  <v-container class="py-8">
-    <v-row class="mb-8" justify="center">
-      <v-col cols="12" md="10">
-        <v-img
-          :src="bannerUrl"
-          :alt="t('home.bannerAlt')"
-          height="240"
-          class="rounded-lg"
-          cover
-        />
-      </v-col>
-    </v-row>
+  <v-container class="py-8 home-view">
+    <section class="hero-banner mb-6">
+      <v-img
+        :src="bannerUrl"
+        :alt="t('home.bannerAlt')"
+        height="340"
+        class="hero-banner__image"
+        cover
+      />
+    </section>
 
-    <v-row align="center" justify="center" class="mb-8">
-      <v-col cols="12" md="8" class="text-center">
-        <h1 class="text-h3 font-weight-bold mb-4">
-          {{ t('home.title') }}
-        </h1>
+    <section class="hero-copy-panel mb-8">
+      <div class="text-overline hero-kicker mb-3">{{ t('about.tagline') }}</div>
+      <div class="d-flex flex-column flex-md-row align-md-end justify-space-between ga-4">
+        <div>
+          <h1 class="text-h3 text-md-h2 font-weight-bold mb-4">
+            {{ t('home.title') }}
+          </h1>
 
-        <p class="text-h6 text-grey-darken-1 mb-8">
-          {{ t('home.subtitle') }}
-        </p>
+          <p class="text-h6 text-grey-darken-1 hero-copy">
+            {{ t('home.subtitle') }}
+          </p>
+        </div>
 
-        <v-btn
-          v-if="!userStore.isAuthenticated"
-          to="/login"
-          color="primary"
-          size="large"
-          class="mr-4"
-        >
-          <v-icon icon="mdi-login" class="mr-2"></v-icon>
-          {{ t('home.signIn') }}
-        </v-btn>
+        <div class="d-flex flex-wrap ga-3">
+          <v-btn
+            v-if="!userStore.isAuthenticated"
+            to="/login"
+            color="primary"
+            size="large"
+            class="hero-button"
+          >
+            <v-icon icon="mdi-login" class="mr-2"></v-icon>
+            {{ t('home.signIn') }}
+          </v-btn>
 
-        <v-btn
-          v-else-if="isAdmin"
-          to="/admin"
-          color="primary"
-          size="large"
-          variant="outlined"
-        >
-          <v-icon icon="mdi-view-dashboard" class="mr-2"></v-icon>
-          {{ t('home.dashboard') }}
-        </v-btn>
-        <v-btn
-          v-else-if="isReferee"
-          to="/referee"
-          color="primary"
-          size="large"
-          variant="outlined"
-        >
-          <v-icon icon="mdi-view-dashboard" class="mr-2"></v-icon>
-          {{ t('home.dashboard') }}
-        </v-btn>
-      </v-col>
-    </v-row>
+          <v-btn
+            v-else-if="isAdmin"
+            to="/admin"
+            color="primary"
+            size="large"
+            variant="outlined"
+            class="hero-button"
+          >
+            <v-icon icon="mdi-view-dashboard" class="mr-2"></v-icon>
+            {{ t('home.dashboard') }}
+          </v-btn>
+          <v-btn
+            v-else-if="isReferee"
+            to="/referee"
+            color="primary"
+            size="large"
+            variant="outlined"
+            class="hero-button"
+          >
+            <v-icon icon="mdi-view-dashboard" class="mr-2"></v-icon>
+            {{ t('home.dashboard') }}
+          </v-btn>
+        </div>
+      </div>
+    </section>
 
-    <v-row class="mb-6" justify="center">
-      <v-col cols="12" md="8">
+    <v-card class="search-panel mb-6" variant="outlined">
+      <v-card-text class="pa-4 pa-md-5">
+        <div class="text-overline hero-kicker mb-2">{{ t('home.searchPlaceholder') }}</div>
         <v-text-field
           v-model="championshipSearchQuery"
           :label="t('home.searchPlaceholder')"
@@ -66,9 +72,10 @@
           density="comfortable"
           hide-details
           clearable
+          class="search-field"
         />
-      </v-col>
-    </v-row>
+      </v-card-text>
+    </v-card>
 
     <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-6">
       {{ errorMessage }}
@@ -76,254 +83,52 @@
 
     <v-skeleton-loader v-if="isLoading" type="table" class="mb-6" />
 
-    <div v-else>
-      <div class="mb-8">
-        <div class="d-flex align-center justify-space-between mb-4">
-          <h2 class="text-h5 font-weight-bold">{{ t('home.ongoingTitle') }}</h2>
-          <v-chip size="small" variant="tonal" color="primary" label>{{ ongoingChampionships.length }}</v-chip>
-        </div>
+    <template v-else>
+      <v-alert
+        v-if="hasNoVisibleContent"
+        type="info"
+        variant="tonal"
+        class="mb-6"
+      >
+        {{ t('home.noUpcoming') }}
+      </v-alert>
 
-        <div v-if="ongoingChampionships.length" class="championship-carousel">
-          <v-btn
-            icon="mdi-chevron-left"
-            variant="text"
-            size="x-small"
-            class="carousel-nav carousel-nav-left"
-            @click="scrollCarousel('ongoing', -1)"
-          />
-          <div class="carousel-container" ref="ongoingCarousel">
-            <div
-              v-for="championship in ongoingChampionships"
-              :key="championship.id"
-              class="carousel-item"
-            >
-              <v-card
-                class="h-100 d-flex flex-column"
-                variant="outlined"
-                :to="{ name: 'championship-details', params: { id: championship.id } }"
-              >
-                <v-card-item>
-                  <div class="text-subtitle-2 font-weight-medium mb-2">
-                    {{ championship.name }}
-                  </div>
-                  <div class="text-caption text-grey-darken-1">
-                    {{ formatDateRange(championship.startDate, championship.endDate) }}
-                  </div>
-                </v-card-item>
-                <v-spacer />
-                <v-card-actions class="mt-auto">
-                  <v-spacer />
-                  <v-btn variant="text" color="primary" size="small">
-                    {{ t('home.viewDetails') }}
-                    <v-icon icon="mdi-arrow-right" class="ml-2" />
-                  </v-btn>
-                </v-card-actions>
-              </v-card>
-            </div>
-          </div>
-          <v-btn
-            icon="mdi-chevron-right"
-            variant="text"
-            size="x-small"
-            class="carousel-nav carousel-nav-right"
-            @click="scrollCarousel('ongoing', 1)"
-          />
-        </div>
+      <ChampionshipCarousel
+        eyebrow="Live"
+        :title="t('home.ongoingTitle')"
+        :championships="ongoingChampionships"
+        :empty-message="t('home.noOngoing')"
+        chip-color="primary"
+      />
 
-        <v-alert v-else type="info" variant="tonal">
-          {{ t('home.noOngoing') }}
-        </v-alert>
-      </div>
+      <ChampionshipCarousel
+        eyebrow="Soon"
+        :title="t('home.upcomingTitle')"
+        :championships="upcomingChampionships"
+        :empty-message="t('home.noUpcoming')"
+        chip-color="info"
+      />
 
-      <div class="mb-8">
-        <div class="d-flex align-center justify-space-between mb-4">
-          <h2 class="text-h5 font-weight-bold">{{ t('home.upcomingTitle') }}</h2>
-          <v-chip size="small" variant="tonal" color="primary" label>{{ upcomingChampionships.length }}</v-chip>
-        </div>
+      <ChampionshipCarousel
+        eyebrow="Archive"
+        :title="t('home.completedTitle')"
+        :championships="completedChampionships"
+        :empty-message="t('home.noCompleted')"
+        chip-color="success"
+        button-color="success"
+      />
 
-        <div v-if="upcomingChampionships.length" class="championship-carousel">
-          <v-btn
-            icon="mdi-chevron-left"
-            variant="text"
-            size="x-small"
-            class="carousel-nav carousel-nav-left"
-            @click="scrollCarousel('upcoming', -1)"
-          />
-          <div class="carousel-container" ref="upcomingCarousel">
-            <div
-              v-for="championship in upcomingChampionships"
-              :key="championship.id"
-              class="carousel-item"
-            >
-              <v-card
-                class="h-100 d-flex flex-column"
-                variant="outlined"
-                :to="{ name: 'championship-details', params: { id: championship.id } }"
-              >
-                <v-card-item>
-                  <div class="text-subtitle-2 font-weight-medium mb-2">
-                    {{ championship.name }}
-                  </div>
-                  <div class="text-caption text-grey-darken-1">
-                    {{ formatDateRange(championship.startDate, championship.endDate) }}
-                  </div>
-                </v-card-item>
-                <v-spacer />
-                <v-card-actions class="mt-auto">
-                  <v-spacer />
-                  <v-btn variant="text" color="primary" size="small">
-                    {{ t('home.viewDetails') }}
-                    <v-icon icon="mdi-arrow-right" class="ml-2" />
-                  </v-btn>
-                </v-card-actions>
-              </v-card>
-            </div>
-          </div>
-          <v-btn
-            icon="mdi-chevron-right"
-            variant="text"
-            size="x-small"
-            class="carousel-nav carousel-nav-right"
-            @click="scrollCarousel('upcoming', 1)"
-          />
-        </div>
-
-        <v-alert v-else type="info" variant="tonal">
-          {{ t('home.noUpcoming') }}
-        </v-alert>
-      </div>
-
-      <div class="mb-8">
-        <div class="d-flex align-center justify-space-between mb-4">
-          <h2 class="text-h5 font-weight-bold">{{ t('home.completedTitle') }}</h2>
-          <v-chip size="small" variant="tonal" color="success" label>{{ completedChampionships.length }}</v-chip>
-        </div>
-
-        <div v-if="completedChampionships.length" class="championship-carousel">
-          <v-btn
-            icon="mdi-chevron-left"
-            variant="text"
-            size="x-small"
-            class="carousel-nav carousel-nav-left"
-            @click="scrollCarousel('completed', -1)"
-          />
-          <div class="carousel-container" ref="completedCarousel">
-            <div
-              v-for="championship in completedChampionships"
-              :key="championship.id"
-              class="carousel-item"
-            >
-              <v-card
-                class="h-100 d-flex flex-column"
-                variant="outlined"
-                :to="{ name: 'championship-details', params: { id: championship.id } }"
-              >
-                <v-card-item>
-                  <div class="text-subtitle-2 font-weight-medium mb-2">
-                    {{ championship.name }}
-                  </div>
-                  <div class="text-caption text-grey-darken-1">
-                    {{ formatDateRange(championship.startDate, championship.endDate) }}
-                  </div>
-                </v-card-item>
-                <v-spacer />
-                <v-card-actions class="mt-auto">
-                  <v-spacer />
-                  <v-btn variant="text" color="success" size="small">
-                    {{ t('home.viewDetails') }}
-                    <v-icon icon="mdi-arrow-right" class="ml-2" />
-                  </v-btn>
-                </v-card-actions>
-              </v-card>
-            </div>
-          </div>
-          <v-btn
-            icon="mdi-chevron-right"
-            variant="text"
-            size="x-small"
-            class="carousel-nav carousel-nav-right"
-            @click="scrollCarousel('completed', 1)"
-          />
-        </div>
-
-        <v-alert v-else type="info" variant="tonal">
-          {{ t('home.noCompleted') }}
-        </v-alert>
-      </div>
-
-      <div class="mb-8">
-        <div class="d-flex align-center justify-space-between mb-4">
-          <h2 class="text-h5 font-weight-bold">{{ t('home.latestResults') }}</h2>
-          <v-chip size="small" variant="tonal" color="success" label>{{ latestResults.length }}</v-chip>
-        </div>
-
-        <v-row v-if="latestResults.length" dense>
-          <v-col
-            v-for="competition in latestResults"
-            :key="competition.competitionId"
-            cols="12"
-            md="6"
-            lg="4"
-          >
-            <v-card
-              class="h-100 d-flex flex-column"
-              variant="outlined"
-            >
-              <v-card-item>
-                <div class="text-subtitle-1 font-weight-medium mb-2">
-                  {{ competition.competitionName }}
-                </div>
-                <div class="text-caption text-grey-darken-1 mb-2">
-                  {{ getChampionshipName(competition.championshipId) }}
-                </div>
-                <div class="text-caption text-grey-darken-2">
-                  {{ formatDateRange(competition.competitionStartDate, competition.competitionEndDate) }}
-                </div>
-              </v-card-item>
-
-              <v-card-text class="py-2 text-caption">
-                <div v-if="getLatestTrialsInfo(competition.competitionId).length === 0" class="text-grey-darken-1">
-                  {{ t('home.noTrialsCompleted') }}
-                </div>
-                <div v-else>
-                  <div class="font-weight-medium mb-2">{{ t('home.completedTrials') }}:</div>
-                  <div
-                    v-for="trial in getLatestTrialsInfo(competition.competitionId).slice(0, 2)"
-                    :key="trial.trialId"
-                    class="text-grey-darken-1 mb-1"
-                  >
-                    • {{ trial.trialName }}
-                  </div>
-                  <div
-                    v-if="getLatestTrialsInfo(competition.competitionId).length > 2"
-                    class="text-grey-darken-2 mt-2 font-italic"
-                  >
-                    +{{ getLatestTrialsInfo(competition.competitionId).length - 2 }} {{ t('home.moreTrials') }}
-                  </div>
-                </div>
-              </v-card-text>
-
-              <v-spacer />
-              <v-card-actions class="mt-auto">
-                <v-spacer />
-                <v-btn
-                  variant="text"
-                  color="success"
-                  :to="{ name: 'competition-results', params: { competitionId: competition.competitionId } }"
-                >
-                  {{ t('home.viewResults') }}
-                  <v-icon icon="mdi-arrow-right" class="ml-2" />
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-col>
-        </v-row>
-
-        <v-alert v-else type="info" variant="tonal">
-          {{ t('home.noResults') }}
-        </v-alert>
-      </div>
-    </div>
+      <HomeLatestResultsSection
+        eyebrow="Scoreboard"
+        :title="t('home.latestResults')"
+        :competitions="latestResults"
+        :get-championship-name="getChampionshipName"
+        :get-latest-trials-info="getLatestTrialsInfo"
+        :completed-trials-label="`${t('home.completedTrials')}:`"
+        :more-trials-label="t('home.moreTrials')"
+        :view-results-label="t('home.viewResults')"
+      />
+    </template>
   </v-container>
 </template>
 
@@ -336,6 +141,8 @@ import championshipService from '@/services/championshipService'
 import type { Championship, Competition, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
 import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
+import ChampionshipCarousel from '@/components/ChampionshipCarousel.vue'
+import HomeLatestResultsSection from '@/components/home/HomeLatestResultsSection.vue'
 
 const userStore = useUserStore()
 const { t, locale } = useI18n()
@@ -355,26 +162,6 @@ const allTrials = ref<Trial[]>([])
 const championshipsMap = ref<Map<number, string>>(new Map())
 
 const bannerUrl = new URL('@/assets/images/banniere.jpg', import.meta.url).href
-
-const ongoingCarousel = ref<HTMLElement | null>(null)
-const upcomingCarousel = ref<HTMLElement | null>(null)
-const completedCarousel = ref<HTMLElement | null>(null)
-
-const scrollCarousel = (section: string, direction: number) => {
-  let carouselRef: HTMLElement | null = null
-
-  if (section === 'ongoing') carouselRef = ongoingCarousel.value
-  else if (section === 'upcoming') carouselRef = upcomingCarousel.value
-  else if (section === 'completed') carouselRef = completedCarousel.value
-
-  if (carouselRef) {
-    const scrollAmount = 320 * direction // 320px is card width + gap
-    carouselRef.scrollBy({
-      left: scrollAmount,
-      behavior: 'smooth',
-    })
-  }
-}
 
 const normalizedChampionshipQuery = computed(() => championshipSearchQuery.value.trim().toLowerCase())
 
@@ -453,6 +240,12 @@ const latestResults = computed(() => {
   }).slice(0, 6) // Show top 6
 })
 
+const hasNoVisibleContent = computed(() =>
+  ongoingChampionships.value.length === 0 &&
+  upcomingChampionships.value.length === 0 &&
+  completedChampionships.value.length === 0 &&
+  latestResults.value.length === 0)
+
 const getChampionshipName = (championshipId: number | undefined): string => {
   if (!championshipId) return ''
   return championshipsMap.value.get(championshipId) ?? ''
@@ -502,55 +295,52 @@ onMounted(loadChampionships)
 </script>
 
 <style scoped>
-.championship-carousel {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.home-view {
   position: relative;
 }
 
-.carousel-nav {
-  flex-shrink: 0;
-  z-index: 1;
+.hero-banner {
+  position: relative;
 }
 
-.carousel-container {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-behavior: smooth;
-  flex: 1;
-  padding: 4px 0;
-  /* Hide scrollbar */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.hero-banner__image {
+  border-radius: 34px;
+  overflow: hidden;
+  box-shadow: 0 26px 54px rgba(15, 23, 42, 0.16);
 }
 
-.carousel-container::-webkit-scrollbar {
-  display: none;
+.hero-copy-panel {
+  padding: 0 8px;
 }
 
-.carousel-item {
-  flex: 0 0 calc(33.333% - 11px);
-  min-width: 300px;
-  max-width: calc(33.333% - 11px);
+.hero-kicker {
+  color: rgb(25, 118, 210);
+  letter-spacing: 0.12em;
 }
 
-@media (max-width: 1280px) {
-  .carousel-item {
-    flex: 0 0 calc(50% - 8px);
-    min-width: 280px;
-    max-width: calc(50% - 8px);
-  }
+.hero-copy {
+  max-width: 42rem;
+}
+
+.hero-button {
+  min-width: 180px;
+}
+
+.search-panel {
+  border-radius: 24px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background:
+    linear-gradient(180deg, rgba(25, 118, 210, 0.03), rgba(255, 255, 255, 1) 120px),
+    white;
+}
+
+.search-field :deep(.v-field) {
+  border-radius: 18px;
 }
 
 @media (max-width: 768px) {
-  .carousel-item {
-    flex: 0 0 100%;
-    min-width: 280px;
-    max-width: 100%;
+  .hero-banner__image {
+    border-radius: 24px;
   }
 }
 </style>
-

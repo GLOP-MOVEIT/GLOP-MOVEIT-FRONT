@@ -1,7 +1,10 @@
 <template>
-  <div class="mb-8">
-    <div class="d-flex align-center justify-space-between mb-4">
-      <h2 class="text-h5 font-weight-bold">{{ title }}</h2>
+  <section v-if="championships.length || showEmptyState" class="home-section">
+    <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-4">
+      <div>
+        <div v-if="eyebrow" class="text-overline section-eyebrow">{{ eyebrow }}</div>
+        <h2 class="text-h5 font-weight-bold">{{ title }}</h2>
+      </div>
       <v-chip size="small" variant="tonal" :color="chipColor" label>{{ championships.length }}</v-chip>
     </div>
 
@@ -20,16 +23,26 @@
           class="carousel-item"
         >
           <v-card
-            class="h-100 d-flex flex-column"
+            class="h-100 d-flex flex-column championship-card"
             variant="outlined"
             :to="{ name: 'championship-details', params: { id: championship.id } }"
           >
-            <v-card-item>
-              <div class="text-subtitle-2 font-weight-medium mb-2">
+            <v-card-item class="pb-1 pt-4">
+              <div class="d-flex align-center justify-space-between ga-3 mb-3">
+                <v-chip size="small" :color="chipColor" variant="tonal">
+                  {{ formatStatus(championship.status) }}
+                </v-chip>
+              </div>
+              <div class="text-subtitle-1 font-weight-bold mb-2">
                 {{ championship.name }}
               </div>
-              <div class="text-caption text-grey-darken-1">
-                {{ formatDateRange(championship.startDate, championship.endDate) }}
+              <div class="text-body-2 text-grey-darken-1 mb-3 clamp-text">
+                {{ championship.description || t('home.noDescription') }}
+              </div>
+              <div class="championship-meta">
+                <div class="text-caption text-grey-darken-2">
+                  {{ formatDateRange(championship.startDate, championship.endDate) }}
+                </div>
               </div>
             </v-card-item>
             <v-spacer />
@@ -55,7 +68,7 @@
     <v-alert v-else type="info" variant="tonal">
       {{ emptyMessage }}
     </v-alert>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -70,21 +83,31 @@ interface Props {
   title: string
   championships: Championship[]
   emptyMessage: string
+  eyebrow?: string
   chipColor?: string
   buttonColor?: string
   buttonVariant?: 'flat' | 'text' | 'outlined' | 'elevated' | 'tonal' | 'plain'
+  showEmptyState?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   chipColor: 'primary',
   buttonColor: 'primary',
   buttonVariant: 'text',
+  eyebrow: '',
+  showEmptyState: false,
 })
 
 const carouselContainer = ref<HTMLElement | null>(null)
 
 const formatDateRange = (start: string | Date, end: string | Date) =>
   formatDateRangeUtil(start, end, locale.value)
+
+const formatStatus = (status: string) => {
+  const key = `admin.competitionStatus.${status}`
+  const translated = t(key)
+  return translated === key ? status : translated
+}
 
 const scrollCarousel = (direction: number) => {
   if (carouselContainer.value) {
@@ -98,11 +121,43 @@ const scrollCarousel = (direction: number) => {
 </script>
 
 <style scoped>
+.home-section {
+  margin-bottom: 40px;
+}
+
+.section-eyebrow {
+  color: rgb(25, 118, 210);
+}
+
 .championship-carousel {
   display: flex;
   align-items: center;
   gap: 12px;
   position: relative;
+}
+
+.championship-card {
+  position: relative;
+  border-radius: 22px;
+  border-color: rgba(25, 118, 210, 0.16);
+  background:
+    linear-gradient(180deg, rgba(25, 118, 210, 0.06), rgba(255, 255, 255, 0.98) 120px),
+    white;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.championship-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.1);
+  border-color: rgba(25, 118, 210, 0.28);
+}
+
+.championship-meta {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(25, 118, 210, 0.1);
 }
 
 .carousel-nav {
@@ -126,6 +181,13 @@ const scrollCarousel = (direction: number) => {
   display: none;
 }
 
+.clamp-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .carousel-item {
   flex: 0 0 calc(33.333% - 10px);
   min-width: 300px;
@@ -145,4 +207,3 @@ const scrollCarousel = (direction: number) => {
   }
 }
 </style>
-

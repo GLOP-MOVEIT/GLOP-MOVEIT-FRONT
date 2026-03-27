@@ -9,35 +9,53 @@
     </v-alert>
 
     <template v-else-if="competition">
-      <div class="d-flex flex-wrap align-center justify-space-between mb-6">
-        <div>
-          <div class="text-overline mb-1">{{ t('competitionDetails.title') }}</div>
-          <h1 class="text-h4 font-weight-bold mb-2">{{ competition.competitionName }}</h1>
-          <div class="d-flex align-center gap-2 flex-wrap">
-            <v-chip color="primary" variant="tonal" prepend-icon="mdi-trophy">
-              {{ getSportLabel(competition.competitionSport) }}
-            </v-chip>
-            <v-chip color="secondary" variant="tonal" prepend-icon="mdi-tournament">
-              {{ getCompetitionTypeLabel(competition.competitionType) }}
-            </v-chip>
-            <v-chip color="info" variant="tonal" prepend-icon="mdi-account-group">
-              {{ t(`admin.participantType.${competition.participantType}`) }}
-            </v-chip>
+      <section class="competition-hero mb-6">
+        <div class="d-flex flex-wrap align-center justify-space-between mb-4">
+          <div>
+            <div class="text-overline section-label mb-1">{{ t('competitionDetails.title') }}</div>
+            <h1 class="text-h4 font-weight-bold mb-2">{{ competition.competitionName }}</h1>
+            <div class="d-flex align-center gap-2 flex-wrap">
+              <v-chip color="primary" variant="tonal" prepend-icon="mdi-trophy">
+                {{ getSportLabel(competition.competitionSport) }}
+              </v-chip>
+              <v-chip color="secondary" variant="tonal" prepend-icon="mdi-tournament">
+                {{ getCompetitionTypeLabel(competition.competitionType) }}
+              </v-chip>
+              <v-chip color="info" variant="tonal" prepend-icon="mdi-account-group">
+                {{ t(`admin.participantType.${competition.participantType}`) }}
+              </v-chip>
+            </div>
           </div>
+
+          <v-btn
+            variant="text"
+            color="primary"
+            :to="{ name: 'championship-details', params: { id: competition.championshipId ?? competition.championship?.id } }"
+          >
+            <v-icon icon="mdi-arrow-left" class="mr-1" />
+            {{ t('competitionDetails.backToChampionship') }}
+          </v-btn>
         </div>
 
-        <v-btn
-          variant="text"
-          color="primary"
-          :to="{ name: 'championship-details', params: { id: competition.championshipId ?? competition.championship?.id } }"
-        >
-          <v-icon icon="mdi-arrow-left" class="mr-1" />
-          {{ t('competitionDetails.backToChampionship') }}
-        </v-btn>
-      </div>
+        <div class="d-flex flex-wrap ga-2">
+          <v-chip color="primary" variant="tonal">
+            {{ formatDateRange(competition.competitionStartDate, competition.competitionEndDate) }}
+          </v-chip>
+          <v-chip color="info" variant="tonal">
+            {{ competition.nbManches }} {{ t('competitionDetails.rounds') }}
+          </v-chip>
+          <v-chip color="info" variant="tonal">
+            {{ competition.maxPerHeat }} {{ t('competitionDetails.maxPerHeat') }}
+          </v-chip>
+          <v-chip v-if="competition.competitionResultUnit" color="secondary" variant="tonal">
+            {{ t(`admin.resultUnit.${competition.competitionResultUnit}`) }}
+          </v-chip>
+        </div>
+      </section>
+
       <v-row dense class="mb-12">
         <v-col cols="12" md="6">
-          <v-card variant="outlined" class="pa-4 h-100">
+          <v-card variant="outlined" class="pa-4 h-100 info-card">
             <div class="text-subtitle-1 font-weight-medium mb-3">
               <v-icon icon="mdi-information-outline" class="mr-2" />
               {{ t('competitionDetails.generalInfo') }}
@@ -68,7 +86,7 @@
         </v-col>
 
         <v-col cols="12" md="6">
-          <v-card variant="outlined" class="pa-4 h-100">
+          <v-card variant="outlined" class="pa-4 h-100 info-card">
             <div class="text-subtitle-1 font-weight-medium mb-3">
               <v-icon icon="mdi-text-box-outline" class="mr-2" />
               {{ t('competitionDetails.description') }}
@@ -79,8 +97,7 @@
           </v-card>
         </v-col>
       </v-row>
-
-      <v-card variant="outlined" class="pa-4">
+      <section>
         <div class="d-flex align-center justify-space-between mb-4">
           <div class="text-h6 font-weight-medium">
             <v-icon icon="mdi-flag-checkered" class="mr-2" />
@@ -101,7 +118,7 @@
             md="6"
             lg="4"
           >
-            <v-card variant="tonal" class="pa-4 h-100">
+            <v-card variant="outlined" class="pa-4 h-100 trial-card">
               <div class="d-flex align-center justify-space-between mb-3">
                 <div class="text-subtitle-2 font-weight-bold">{{ trial.trialName }}</div>
                 <v-chip
@@ -145,38 +162,24 @@
 
               <v-divider class="my-3" />
 
-              <div class="text-caption">
-                <div class="font-weight-medium mb-2">
-                  <v-icon size="14" class="mr-1">mdi-account-group</v-icon>
-                  {{ competition?.participantType === 'TEAM' ? t('competitionDetails.teams') : t('competitionDetails.athletes') }} :
-                </div>
-                <div v-if="trial.participantIds && trial.participantIds.length > 0" class="pl-5">
-                  <template v-if="competition?.participantType === 'TEAM'">
-                    <div v-for="(participantId, idx) in trial.participantIds" :key="`participant-${idx}`" class="mb-2">
-                      <template v-if="typeof participantId === 'number'">
-                        <div class="text-body-2 font-weight-medium">
-                          • {{ typeof getParticipantDisplay(participantId) === 'object' ? (getParticipantDisplay(participantId) as { teamName: string }).teamName : getParticipantDisplay(participantId) }}
-                        </div>
-                        <div v-if="typeof getParticipantDisplay(participantId) === 'object'" class="pl-4 text-caption text-grey-darken-1">
-                          <div v-for="(athleteName, aIdx) in (getParticipantDisplay(participantId) as { athletes: string[] }).athletes" :key="`athlete-${aIdx}`">
-                            - {{ athleteName }}
-                          </div>
-                        </div>
-                      </template>
-                    </div>
-                  </template>
-                  <template v-else>
-                    <div v-for="(participantId, idx) in trial.participantIds" :key="`participant-${idx}`" class="text-body-2 mb-1">
-                      <template v-if="typeof participantId === 'number'">
-                        • {{ getAthleteName(participantId) }}
-                      </template>
-                    </div>
-                  </template>
-                </div>
-                <div v-else class="text-grey pl-5">
-                  {{ competition?.participantType === 'TEAM' ? t('competitionDetails.noTeams') : t('competitionDetails.noAthletes') }}
-                </div>
-              </div>
+              <TrialParticipantsPanel
+                :participant-type="competition?.participantType ?? 'INDIVIDUAL'"
+                :participant-ids="trial.participantIds?.filter((participantId): participantId is number => typeof participantId === 'number') ?? []"
+                :athletes="athletes"
+                :teams="loadedTeams"
+              />
+
+              <v-btn
+                v-if="trial.trialStatus === Status.COMPLETED"
+                class="mt-3"
+                color="primary"
+                variant="outlined"
+                block
+                :to="{ name: 'competition-results', params: { competitionId: competitionId } }"
+              >
+                <v-icon icon="mdi-podium-gold" class="mr-2" />
+                {{ t('home.viewResults') }}
+              </v-btn>
 
               <div v-if="trial.trialDescription" class="text-caption text-grey-darken-1 mt-3">
                 <v-icon size="14" class="mr-1">mdi-text</v-icon>
@@ -185,7 +188,7 @@
             </v-card>
           </v-col>
         </v-row>
-      </v-card>
+      </section>
     </template>
   </v-container>
 </template>
@@ -200,12 +203,13 @@ import locationService from '@/services/locationService'
 import teamService from '@/services/teamService'
 import { useUserStore } from '@/stores/user'
 import TrialLocationCard from '@/components/TrialLocationCard.vue'
+import TrialParticipantsPanel from '@/components/competition/TrialParticipantsPanel.vue'
 import type { CompetitionTreeResult, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
 import type { User } from '@/types/user'
 import type { Location } from '@/types/location'
 import type { Team } from '@/types/team'
-import { getUserDisplayName, UserRole } from '@/types/user'
+import { UserRole } from '@/types/user'
 import { formatDateRange as formatDateRangeUtil, formatDateTime as formatDateTimeUtil } from '@/utils/date'
 
 const route = useRoute()
@@ -242,24 +246,6 @@ const statusColor = (status: Status) => {
   if (status === Status.COMPLETED) return 'success'
   if (status === Status.CANCELLED) return 'error'
   return 'grey'
-}
-
-const getAthleteName = (athleteId: number) => {
-  const athlete = athletes.value.find((a) => a.userId === athleteId)
-  return athlete ? getUserDisplayName(athlete) : `#${athleteId}`
-}
-
-const getParticipantDisplay = (participantId: number) => {
-  if (competition.value?.participantType === 'TEAM') {
-    const team = loadedTeams.value.find(t => t.teamId === participantId)
-    if (!team) return `Team #${participantId}`
-
-    return {
-      teamName: team.name,
-      athletes: team.athletes.map(a => getUserDisplayName(a)),
-    }
-  }
-  return getAthleteName(participantId)
 }
 
 const getCompetitionTypeLabel = (type: string): string => {
@@ -307,3 +293,45 @@ onMounted(async () => {
 })
 </script>
 
+<style scoped>
+.section-label {
+  color: rgb(25, 118, 210);
+}
+
+.competition-hero {
+  padding: 28px;
+  border-radius: 30px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    radial-gradient(circle at top left, rgba(25, 118, 210, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.96));
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+}
+
+.info-card {
+  border-radius: 24px;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+.info-card {
+  background:
+    linear-gradient(180deg, rgba(25, 118, 210, 0.04), rgba(255, 255, 255, 0) 140px),
+    white;
+}
+
+.trial-card {
+  border-radius: 22px;
+  border-color: rgba(25, 118, 210, 0.14);
+  background:
+    linear-gradient(180deg, rgba(25, 118, 210, 0.04), rgba(255, 255, 255, 0.98) 120px),
+    white;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.trial-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+  border-color: rgba(25, 118, 210, 0.24);
+}
+
+</style>
