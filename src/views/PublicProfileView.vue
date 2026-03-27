@@ -68,9 +68,11 @@ import PublicProfileResultsSection, {
 import championshipService from '@/services/championshipService'
 import locationService from '@/services/locationService'
 import resultService from '@/services/resultService'
+import teamService from '@/services/teamService'
 import userService from '@/services/userService'
 import { useUserStore } from '@/stores/user'
-import type { Trial } from '@/types/competition'
+import { ParticipantType, type Trial } from '@/types/competition'
+import type { Team } from '@/types/team'
 import { matchesUserRole, UserRole, type User } from '@/types/user'
 
 const route = useRoute()
@@ -148,6 +150,10 @@ const formatDate = (value: string) => {
 
 const buildTrialsMap = async () => {
   const competitions = await championshipService.getAllCompetitions()
+  const participantTypesByCompetition = competitions.reduce((map, competition) => {
+    map.set(competition.competitionId, competition.participantType)
+    return map
+  }, new Map<number, ParticipantType>())
   const trialsByCompetition = await Promise.all(
     competitions.map(async (competition) => {
       try {
@@ -158,12 +164,66 @@ const buildTrialsMap = async () => {
     }),
   )
 
-  return trialsByCompetition
-    .flat()
-    .reduce((map, trial) => {
-      map.set(trial.trialId, trial)
-      return map
-    }, new Map<number, Trial>())
+  return {
+    trials: trialsByCompetition
+      .flat()
+      .reduce((map, trial) => {
+        map.set(trial.trialId, trial)
+        return map
+      }, new Map<number, Trial>()),
+    participantTypesByCompetition,
+  }
+}
+
+const loadAthleteTeams = async (athleteId: number): Promise<Team[]> => {
+  try {
+    return await teamService.getTeamsByAthlete(athleteId)
+  } catch (error) {
+    console.error('Load athlete teams error:', error)
+    return []
+  }
+}
+
+const dedupeResults = (results: Awaited<ReturnType<typeof resultService.getAllResultsByParticipantId>>) => {
+  const unique = new Map<string, typeof results[number]>()
+
+  results.forEach((result) => {
+    const key = result.resultId != null ? `result-${result.resultId}` : `trial-${result.trialId}`
+    if (!unique.has(key)) {
+      unique.set(key, result)
+    }
+  })
+
+  return Array.from(unique.values())
+}
+
+const isAthleteResultEntry = (
+  entry: AthleteResultEntry | null,
+): entry is AthleteResultEntry => entry !== null
+
+const resolveResultSource = (
+  trial: Trial | undefined,
+  participantType: ParticipantType | undefined,
+  participantSources: { id: number; teamName: string | null }[],
+  userId: number,
+) => {
+  if (participantType !== ParticipantType.TEAM) {
+    return participantSources.find((source) => source.id === userId) ?? null
+  }
+
+  const trialParticipantIds = Array.isArray(trial?.participantIds) &&
+    !Array.isArray(trial.participantIds[0])
+    ? trial.participantIds as number[]
+    : []
+
+  const teamSourceInTrial = participantSources.find((source) =>
+    source.teamName && trialParticipantIds.includes(source.id))
+
+  if (teamSourceInTrial) {
+    return teamSourceInTrial
+  }
+
+  return participantSources.find((source) => source.id === userId) ?? null
 }
 
 const loadLocation = async (targetProfile: User) => {
@@ -210,15 +270,35 @@ const loadAthleteResults = async (targetProfile: User) => {
   }
 
   try {
-    const [results, trialsMap] = await Promise.all([
-      resultService.getAllResultsByParticipantId(targetProfile.userId),
+    const [teams, trialContext] = await Promise.all([
+      loadAthleteTeams(targetProfile.userId),
       buildTrialsMap(),
     ])
 
-    athleteResults.value = results
-      .map((result) => {
-        const ranking = result.rankings.find((entry) => entry.id === targetProfile.userId)
-        const trial = trialsMap.get(result.trialId)
+    const participantSources = [
+      { id: targetProfile.userId, teamName: null as string | null },
+      ...teams
+        .filter((team): team is Team & { teamId: number } => typeof team.teamId === 'number')
+        .map((team) => ({ id: team.teamId, teamName: team.name })),
+    ]
+
+    const resultsBySource = await Promise.all(
+      participantSources.map(async (source) => ({
+        source,
+        results: await resultService.getAllResultsByParticipantId(source.id),
+      })),
+    )
+
+    const mergedEntries: AthleteResultEntry[] = dedupeResults(resultsBySource.flatMap(({ results }) => results))
+      .map((result): AthleteResultEntry | null => {
+        const trial = trialContext.trials.get(result.trialId)
+        const participantType = trial
+          ? trialContext.participantTypesByCompetition.get(trial.competitionId)
+          : undefined
+        const matchingSource = resolveResultSource(trial, participantType, participantSources, targetProfile.userId)
+        const ranking = matchingSource
+          ? result.rankings.find((entry) => entry.id === matchingSource.id)
+          : null
 
         if (!ranking || !trial) {
           return null
@@ -230,10 +310,13 @@ const loadAthleteResults = async (targetProfile: User) => {
           trialStartDate: trial.trialStartDate,
           positionLabel: `#${ranking.position}`,
           scoreLabel: ranking.score,
+          teamName: matchingSource?.teamName ?? null,
         }
       })
-      .filter((entry): entry is AthleteResultEntry => entry !== null)
+      .filter(isAthleteResultEntry)
       .sort((a, b) => new Date(b.trialStartDate).getTime() - new Date(a.trialStartDate).getTime())
+
+    athleteResults.value = mergedEntries
   } catch (error) {
     console.error('Load athlete results error:', error)
     resultsError.value = t('publicProfile.resultsLoadError')
