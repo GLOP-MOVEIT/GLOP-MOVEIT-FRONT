@@ -710,6 +710,10 @@ const messages = {
     profile: {
       title: 'My profile',
       subtitle: 'Review your account details',
+      privateSection: 'Private information',
+      privateInfoHint: 'These details are only visible to you.',
+      settingsButton: 'Settings',
+      publicProfileButton: 'View public profile',
       primaryRole: 'Main role:',
       identitySection: 'Identity',
       accountSection: 'Account',
@@ -1577,6 +1581,10 @@ const messages = {
     profile: {
       title: 'Mon profil',
       subtitle: 'Retrouvez les informations de votre compte',
+      privateSection: 'Informations privees',
+      privateInfoHint: 'Ces informations ne sont visibles que par vous.',
+      settingsButton: 'Parametres',
+      publicProfileButton: 'Voir le profil public',
       primaryRole: 'Rôle principal :',
       identitySection: 'Identité',
       accountSection: 'Compte',
