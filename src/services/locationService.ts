@@ -1,5 +1,12 @@
 import axios from 'axios'
-import type { Location, LocationPayload, LocateRequest, LocateResponse } from '@/types/location'
+import type {
+  Location,
+  LocationPayload,
+  LocateRequest,
+  LocateResponse,
+  LocateTrialRequest,
+  LocateTrialResponse,
+} from '@/types/location'
 
 const configuredApiUrl = import.meta.env.VITE_API_BASE_URL
 const API_URL = configuredApiUrl === undefined ? 'http://localhost:8080' : configuredApiUrl
@@ -56,6 +63,16 @@ export const locationService = {
 
   async locateUser(request: LocateRequest): Promise<LocateResponse> {
     const response = await axios.post<LocateResponse>(`${API_URL}/locations/locate`, request, {
+      headers: {
+        ...this.getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    })
+    return response.data
+  },
+
+  async locateTrialParticipants(request: LocateTrialRequest): Promise<LocateTrialResponse> {
+    const response = await axios.post<LocateTrialResponse>(`${API_URL}/locations/locate/trial`, request, {
       headers: {
         ...this.getAuthHeaders(),
         'Content-Type': 'application/json',
