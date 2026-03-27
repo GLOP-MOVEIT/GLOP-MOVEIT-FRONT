@@ -4,18 +4,64 @@ import type {
   TicketApiModel,
   TicketImportPayload,
   TicketPageResponse,
+  TicketVerificationResponse,
 } from '@/types/ticket'
 
 const DEFAULT_PAGE_SIZE = 100
 
-const buildTicketQrData = (ticket: TicketApiModel, email?: string) => {
-  return JSON.stringify({
-    ticketId: ticket.id ?? null,
-    ticketNumber: ticket.ticketNumber,
-    seatInformation: ticket.seatInformation,
-    eventDate: ticket.eventDate,
-    email: email ?? null,
+const formatQrDate = (value: string) => {
+  const parsedDate = new Date(value)
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return value
+  }
+
+  return parsedDate.toLocaleString('fr-FR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
   })
+}
+
+const getPublicAppBaseUrl = () => {
+  const configuredBaseUrl = import.meta.env.VITE_PUBLIC_APP_URL?.trim()
+  if (configuredBaseUrl) {
+    return configuredBaseUrl.replace(/\/$/, '')
+  }
+
+  if (typeof window !== 'undefined') {
+    const basePath = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, '')
+    return `${window.location.origin}${basePath}`
+  }
+
+  return ''
+}
+
+const buildTicketVerificationUrl = (validationToken?: string | null) => {
+  if (!validationToken) {
+    return null
+  }
+
+  const publicBaseUrl = getPublicAppBaseUrl()
+  if (!publicBaseUrl) {
+    return null
+  }
+
+  return `${publicBaseUrl}/billetterie/verification/${encodeURIComponent(validationToken)}`
+}
+
+const buildTicketQrData = (ticket: TicketApiModel) => {
+  const verificationUrl = buildTicketVerificationUrl(ticket.validationToken)
+
+  if (verificationUrl) {
+    return verificationUrl
+  }
+
+  return [
+    'MOVEIT_TICKET',
+    `ticketNumber=${ticket.ticketNumber}`,
+    `seat=${ticket.seatInformation}`,
+    `date=${formatQrDate(ticket.eventDate)}`,
+  ].join('\n')
 }
 
 const mapApiTicket = (ticket: TicketApiModel, email?: string): Ticket => {
@@ -25,7 +71,8 @@ const mapApiTicket = (ticket: TicketApiModel, email?: string): Ticket => {
     email,
     seatInfo: ticket.seatInformation,
     eventDate: ticket.eventDate,
-    qrData: buildTicketQrData(ticket, email),
+    validationToken: ticket.validationToken,
+    qrData: buildTicketQrData(ticket),
   }
 }
 
@@ -72,4 +119,12 @@ export const importTicket = async (
   })
 
   return mapApiTicket(data, userEmail ?? payload.email)
+}
+
+export const verifyTicket = async (validationToken: string): Promise<TicketVerificationResponse> => {
+  const { data } = await apiClient.get<TicketVerificationResponse>(
+    `/tickets/verify/${encodeURIComponent(validationToken)}`
+  )
+
+  return data
 }

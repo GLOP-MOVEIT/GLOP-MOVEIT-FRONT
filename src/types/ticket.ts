@@ -4,6 +4,7 @@ export interface Ticket {
   email?: string
   seatInfo?: string | null
   eventDate?: string | null
+  validationToken?: string | null
   qrData?: string | null
 }
 
@@ -19,6 +20,15 @@ export interface TicketApiModel {
   ticketNumber: string
   seatInformation: string
   eventDate: string
+  validationToken?: string | null
+}
+
+export interface TicketVerificationResponse {
+  ticketId: number
+  ticketNumber: string
+  seatInformation: string
+  eventDate: string
+  valid: boolean
 }
 
 export interface TicketPageResponse {

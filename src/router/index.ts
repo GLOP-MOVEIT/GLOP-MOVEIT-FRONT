@@ -76,6 +76,14 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'billetterie/verification/:token',
+        name: 'ticket-verification',
+        component: () => import('@/views/TicketVerificationView.vue'),
+        meta: {
+          requiresAuth: false,
+        },
+      },
+      {
         path: 'championnats/:id',
         name: 'championship-details',
         component: () => import('@/views/ChampionshipDetailsView.vue'),
