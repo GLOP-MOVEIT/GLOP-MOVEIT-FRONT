@@ -62,11 +62,11 @@
             <div class="text-body-2 font-weight-medium">
               {{ formatUserName(request) }}
             </div>
-            <div v-if="request.user.email" class="text-caption text-grey-darken-1">
-              {{ request.user.email }}
+            <div v-if="request.user?.email" class="text-caption text-grey-darken-1">
+              {{ request.user?.email }}
             </div>
-            <div v-if="request.user.phoneNumber" class="text-caption text-grey-darken-1">
-              {{ request.user.phoneNumber }}
+            <div v-if="request.user?.phoneNumber" class="text-caption text-grey-darken-1">
+              {{ request.user?.phoneNumber }}
             </div>
           </td>
           <td class="py-4">{{ formatRoleLabel(request.role) }}</td>
@@ -190,20 +190,21 @@ const processingRequestId = ref<number | null>(null)
 const processingAction = ref<'approve' | 'reject' | null>(null)
 
 const formatUserName = (request: RoleRequestViewModel) => {
-  const firstName = request.user.firstName?.trim() ?? ''
-  const surname = request.user.surname?.trim() ?? ''
+  const user = request.user ?? null
+  const firstName = user?.firstName?.trim() ?? ''
+  const surname = user?.surname?.trim() ?? ''
   const fullName = `${firstName} ${surname}`.trim()
 
   if (fullName) {
     return fullName
   }
 
-  if (request.user.email) {
-    return request.user.email
+  if (user?.email) {
+    return user.email
   }
 
-  if (request.user.id != null) {
-    return `#${request.user.id}`
+  if (user?.id != null) {
+    return `#${user.id}`
   }
 
   return '-'
@@ -315,13 +316,14 @@ const filteredRequests = computed(() => {
   const query = (searchQuery.value || '').trim().toLowerCase()
 
   return requests.value.filter((request) => {
+    const user = request.user ?? null
     const matchesQuery =
         !query ||
         request.reference.toLowerCase().includes(query) ||
         request.role.toLowerCase().includes(query) ||
         formatUserName(request).toLowerCase().includes(query) ||
-        (request.user.email ?? '').toLowerCase().includes(query) ||
-        (request.user.phoneNumber ?? '').toLowerCase().includes(query) ||
+        (user?.email ?? '').toLowerCase().includes(query) ||
+        (user?.phoneNumber ?? '').toLowerCase().includes(query) ||
         (request.coverLetter ?? '').toLowerCase().includes(query)
 
     const matchesRole = !selectedRole.value || request.role === selectedRole.value
