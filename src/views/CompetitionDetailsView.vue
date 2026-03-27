@@ -250,7 +250,6 @@ const getAthleteName = (athleteId: number) => {
 }
 
 const getParticipantDisplay = (participantId: number) => {
-  // Si c'est une compétition TEAM, participantId est un teamId
   if (competition.value?.participantType === 'TEAM') {
     const team = loadedTeams.value.find(t => t.teamId === participantId)
     if (!team) return `Team #${participantId}`
@@ -260,8 +259,6 @@ const getParticipantDisplay = (participantId: number) => {
       athletes: team.athletes.map(a => getUserDisplayName(a)),
     }
   }
-
-  // Sinon c'est un athlète individuel
   return getAthleteName(participantId)
 }
 
@@ -275,7 +272,6 @@ const getCompetitionTypeLabel = (type: string): string => {
 }
 
 const getSportLabel = (sport: string): string => {
-  // Normaliser le sport en majuscules avec underscores
   const normalized = sport.toUpperCase().replace(/\s+/g, '_')
   return t(`admin.sport.${normalized}`)
 }
@@ -295,7 +291,6 @@ onMounted(async () => {
       athletes.value = []
     }
 
-    // Si c'est une compétition TEAM, charger les équipes
     if (competition.value?.participantType === 'TEAM') {
       try {
         loadedTeams.value = await teamService.getAllTeams()

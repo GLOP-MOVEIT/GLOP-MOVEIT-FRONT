@@ -23,7 +23,6 @@ const mockLogin = async (page: Parameters<typeof test>[0]['page'], role: string)
     })
   })
 
-  // Mock getUserProfile endpoint (called after login)
   await page.route('**/users/*', async (route) => {
     const payload = {
       userId: 1,
@@ -62,7 +61,6 @@ test('login as spectator shows no dashboard', async ({ page }) => {
 
   await login(page)
 
-  // Ouvrir le menu utilisateur
   await page.locator('button:has(.mdi-account-circle)').click()
   await page.waitForSelector('.v-list')
 

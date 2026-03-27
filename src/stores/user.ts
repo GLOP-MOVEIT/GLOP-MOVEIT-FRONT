@@ -49,7 +49,6 @@ export const useUserStore = defineStore('user', () => {
       const response = await userService.login(credentials)
       user.value = response.user
 
-      // Récupérer immédiatement le profil complet avec le rôle depuis users/id
       await fetchCurrentUser()
 
       return response

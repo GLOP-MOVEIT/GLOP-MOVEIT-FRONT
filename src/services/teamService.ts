@@ -19,12 +19,10 @@ const teamService = {
 
     const { data } = await apiClient.get<PagedResponse<Team> | Team[]>(`/teams?${params.toString()}`)
 
-    // Si la réponse est paginée (Spring Data Page), extraire le contenu
     if (data && typeof data === 'object' && 'content' in data) {
       return data.content as Team[]
     }
 
-    // Sinon retourner directement les données si c'est déjà un tableau
     return Array.isArray(data) ? data : []
   },
 

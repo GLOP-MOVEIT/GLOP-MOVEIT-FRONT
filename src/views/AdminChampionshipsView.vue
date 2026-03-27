@@ -237,7 +237,6 @@ const statusColor = (status: Status) => {
 }
 
 
-// Load championships on mount
 onMounted(async () => {
   console.log('AdminChampionshipsView mounted')
   isLoading.value = true
@@ -299,8 +298,6 @@ const handleChampionshipSubmit = async () => {
       snackbarMessage.value = t('admin.championshipSuccess')
     }
 
-    // Reload championships
-    console.log('Reloading championships')
     const data = await championshipService.getAllChampionships()
     championships.value = data.map(mapChampionship)
     snackbar.value = true

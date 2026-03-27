@@ -65,7 +65,6 @@ export const championshipService = {
    */
   async createChampionship(championship: Omit<Championship, 'id' | 'competitions'>): Promise<Championship> {
     try {
-      // Formater les dates pour le backend
       const formattedChampionship = {
         ...championship,
         startDate: formatDateForBackend(championship.startDate),

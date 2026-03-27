@@ -137,7 +137,6 @@ import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 const { t, locale } = useI18n()
 const route = useRoute()
 
-// Récupérer le competitionId depuis les params de la route (optionnel)
 const competitionIdFilter = computed(() => {
   const id = route.params.competitionId
   return id ? Number(id) : null

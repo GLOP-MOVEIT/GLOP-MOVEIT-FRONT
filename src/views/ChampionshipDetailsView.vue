@@ -223,7 +223,6 @@ const getCommissaireLabel = (id: number | null | undefined) => {
 }
 
 const loadCommissaireNames = async () => {
-  // Récupère les IDs uniques des commissaires assignés
   const ids = [
     ...new Set(
       competitions.value
@@ -231,7 +230,6 @@ const loadCommissaireNames = async () => {
         .filter((id): id is number => id != null),
     ),
   ]
-  // Appel en parallèle pour chaque ID
   const results = await Promise.allSettled(ids.map((id) => userService.getUserProfile(id)))
   results.forEach((result, index) => {
     if (result.status === 'fulfilled') {
