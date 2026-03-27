@@ -1,14 +1,21 @@
 <template>
   <div>
-    <div class="d-flex align-center justify-space-between mb-4">
-      <div class="d-flex align-center">
-        <v-icon icon="mdi-trophy" size="32" color="primary" class="mr-2" />
+    <section class="results-hero mb-6">
+      <div class="d-flex flex-wrap align-center justify-space-between ga-4">
         <div>
-          <h2 class="text-h5 font-weight-bold">{{ t('commissionerResults.title') }}</h2>
-          <p class="text-body-2 text-grey-darken-1">{{ t('commissionerResults.subtitle') }}</p>
+          <div class="text-overline section-label mb-1">{{ t('commissionerResults.title') }}</div>
+          <h2 class="text-h4 font-weight-bold mb-2">{{ t('commissionerResults.title') }}</h2>
+          <p class="text-body-2 text-grey-darken-1 mb-0">{{ t('commissionerResults.subtitle') }}</p>
+        </div>
+
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-value">{{ trialRows.length }}</span>
+            <span class="hero-stat-label">{{ t('commissionerResults.trial') }}</span>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
     <div v-if="isLoading" class="d-flex justify-center py-10">
       <v-progress-circular indeterminate color="primary" />
@@ -27,51 +34,30 @@
       {{ t('commissionerResults.noTrials') }}
     </v-alert>
 
-    <v-table v-else>
-      <thead>
-        <tr>
-          <th scope="col" class="text-left">{{ t('commissionerResults.competition') }}</th>
-          <th scope="col" class="text-left">{{ t('commissionerResults.trial') }}</th>
-          <th scope="col" class="text-left">{{ t('commissionerResults.round') }}</th>
-          <th scope="col" class="text-left">{{ t('commissionerResults.date') }}</th>
-          <th scope="col" class="text-left">{{ t('commissionerResults.status') }}</th>
-          <th scope="col" class="text-left">{{ t('commissionerResults.actions') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="row in trialRows" :key="row.trial.trialId">
-          <td>{{ row.competition.competitionName }}</td>
-          <td>{{ row.trial.trialName }}</td>
-          <td>{{ t('commissionerResults.roundLabel', { round: row.trial.roundNumber, position: row.trial.position }) }}</td>
-          <td>{{ formatTrialDate(row.trial.trialStartDate) }}</td>
-          <td>
-            <v-chip
-              :color="statusColor(row.trial.trialStatus)"
-              variant="tonal"
-              size="small"
-              label
-            >
-              {{ t(`admin.competitionStatus.${row.trial.trialStatus}`) }}
-            </v-chip>
-          </td>
-          <td>
-            <div v-if="!row.trial.locationId" class="text-caption text-warning">
-              <v-icon size="16" class="mr-1">mdi-alert-circle-outline</v-icon>
-              {{ t('commissionerResults.noLocationAssigned') }}
-            </div>
-            <v-btn
-              v-else
-              size="small"
-              color="primary"
-              variant="outlined"
-              @click="openResultDialog(row)"
-            >
-              {{ t('commissionerResults.manageResults') }}
-            </v-btn>
-          </td>
-        </tr>
-      </tbody>
-    </v-table>
+    <v-row v-else dense>
+      <v-col
+        v-for="row in trialRows"
+        :key="row.trial.trialId"
+        cols="12"
+        md="6"
+        xl="4"
+      >
+        <CommissionerResultsTrialCard
+          :competition-name="row.competition.competitionName"
+          :competition-type="getCompetitionTypeLabel(row.competition.competitionType)"
+          :participant-type="t(`admin.participantType.${row.competition.participantType}`)"
+          :trial-name="row.trial.trialName"
+          :round-label="t('commissionerResults.roundLabel', { round: row.trial.roundNumber, position: row.trial.position })"
+          :formatted-date="formatTrialDate(row.trial.trialStartDate)"
+          :status-label="t(`admin.competitionStatus.${row.trial.trialStatus}`)"
+          :status-color="statusColor(row.trial.trialStatus)"
+          :manage-label="t('commissionerResults.manageResults')"
+          :no-location-label="t('commissionerResults.noLocationAssigned')"
+          :show-no-location="!row.trial.locationId"
+          @manage="openResultDialog(row)"
+        />
+      </v-col>
+    </v-row>
 
     <v-alert v-if="successMessage" type="success" variant="tonal" class="mt-4" closable @click:close="successMessage = ''">
       {{ successMessage }}
@@ -137,7 +123,16 @@
                   <td>
                     <v-chip color="primary" size="small" variant="tonal">{{ index + 1 }}</v-chip>
                   </td>
-                  <td>{{ getAthleteName(row.id) }}</td>
+                  <td>
+                    <RouterLink
+                      v-if="activeRow?.competition.participantType !== 'TEAM'"
+                      :to="{ name: 'public-profile', params: { id: row.id } }"
+                      class="participant-link"
+                    >
+                      {{ getAthleteName(row.id) }}
+                    </RouterLink>
+                    <span v-else>{{ getAthleteName(row.id) }}</span>
+                  </td>
                   <td>
                     <div class="d-flex align-center">
                       <v-text-field
@@ -221,6 +216,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import CommissionerResultsTrialCard from '@/components/results/CommissionerResultsTrialCard.vue'
 import championshipService from '@/services/championshipService'
 import resultService from '@/services/resultService'
 import userService from '@/services/userService'
@@ -350,6 +346,15 @@ const statusColor = (status: string) => {
   if (status === Status.ONGOING) return 'primary'
   if (status === Status.PLANNED) return 'grey'
   return 'grey'
+}
+
+const getCompetitionTypeLabel = (type: string): string => {
+  const labels: Record<string, string> = {
+    'SINGLE_ELIMINATION': t('competitionType.singleElimination'),
+    'ROUND_ROBIN': t('competitionType.roundRobin'),
+    'HEATS': t('competitionType.heats'),
+  }
+  return labels[type] || type
 }
 
 const getAthleteName = (userId: number): string => {
@@ -549,3 +554,57 @@ onMounted(() => {
   loadData()
 })
 </script>
+
+<style scoped>
+.results-hero {
+  padding: 28px;
+  border-radius: 30px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    radial-gradient(circle at top left, rgba(25, 118, 210, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.96));
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+}
+
+.section-label {
+  color: rgb(25, 118, 210);
+}
+
+.hero-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.hero-stat {
+  min-width: 130px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(25, 118, 210, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: rgb(15, 23, 42);
+}
+
+.hero-stat-label {
+  font-size: 0.78rem;
+  color: rgba(15, 23, 42, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.participant-link {
+  color: rgb(25, 118, 210);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.participant-link:hover {
+  text-decoration: underline;
+}
+</style>

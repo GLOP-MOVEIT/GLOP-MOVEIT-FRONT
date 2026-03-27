@@ -1,19 +1,26 @@
 <template>
   <v-container class="py-8">
-    <div class="d-flex align-center justify-space-between mb-8">
+    <v-btn
+      variant="outlined"
+      color="primary"
+      rounded="pill"
+      to="/"
+      class="text-none back-button mb-4"
+    >
+      <v-icon icon="mdi-arrow-left" class="mr-2" />
+      {{ t('results.back') }}
+    </v-btn>
+
+    <section class="results-hero mb-8">
       <div>
-        <v-btn variant="text" to="/" class="text-none">
-          <v-icon icon="mdi-arrow-left" class="mr-2" />
-          {{ t('results.back') }}
-        </v-btn>
-        <h1 class="text-h4 font-weight-bold mt-4">
+        <h1 class="text-h4 font-weight-bold">
           {{ competitionIdFilter ? filteredCompetitionName : t('results.title') }}
         </h1>
-        <p class="text-body-1 text-grey-darken-1 mt-2">
+        <p class="text-body-1 text-grey-darken-1 mt-2 mb-0">
           {{ competitionIdFilter ? t('results.subtitleFiltered') : t('results.subtitle') }}
         </p>
       </div>
-    </div>
+    </section>
 
     <v-skeleton-loader v-if="isLoading" type="table" class="mb-6" />
 
@@ -30,91 +37,62 @@
       {{ t('results.noResults') }}
     </v-alert>
 
-    <div v-else class="space-y-4">
-      <div
+    <div v-else class="results-groups">
+      <section
         v-for="(trialGroup, index) in groupedTrialsByCompetition"
         :key="`comp-${index}`"
-        class="mb-8"
+        class="competition-group"
       >
-        <div class="mb-4 pb-3 border-bottom">
-          <div class="d-flex align-center justify-space-between">
+        <div class="competition-header mb-4">
+          <div class="d-flex flex-wrap align-center justify-space-between ga-3">
             <div>
-              <h3 class="text-h6 font-weight-bold">{{ trialGroup.competition.competitionName }}</h3>
-              <p class="text-caption text-grey-darken-1 mt-1">
+              <div class="text-overline section-label">
                 {{ getChampionshipName(trialGroup.competition.championshipId) }}
-                • {{ formatDateRange(trialGroup.competition.competitionStartDate, trialGroup.competition.competitionEndDate) }}
+              </div>
+              <h3 class="text-h6 font-weight-bold mb-1">{{ trialGroup.competition.competitionName }}</h3>
+              <p class="text-caption text-grey-darken-1 mb-0">
+                {{ formatDateRange(trialGroup.competition.competitionStartDate, trialGroup.competition.competitionEndDate) }}
               </p>
             </div>
-            <v-chip
-              size="small"
-              color="info"
-              variant="tonal"
-              label
-            >
-              {{ trialGroup.trials.length }} {{ t('results.resultsLabel') }}
-            </v-chip>
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-chip size="small" color="info" variant="tonal" label>
+                {{ trialGroup.trials.length }} {{ t('results.resultsLabel') }}
+              </v-chip>
+              <v-btn
+                size="small"
+                variant="text"
+                color="primary"
+                :to="{ name: 'competition-details', params: { id: trialGroup.competition.competitionId } }"
+              >
+                <v-icon icon="mdi-arrow-top-right" class="mr-1" />
+                {{ trialGroup.competition.competitionName }}
+              </v-btn>
+            </div>
           </div>
         </div>
 
-        <div class="space-y-3">
-          <div
+        <v-row dense>
+          <v-col
             v-for="trial in trialGroup.trials"
             :key="trial.trialId"
-            class="border rounded-lg pa-4"
+            cols="12"
+            md="6"
+            xl="4"
           >
-            <div class="d-flex align-center justify-space-between mb-3">
-              <div>
-                <div class="text-subtitle-2 font-weight-medium">{{ trial.trialName }}</div>
-                <div class="text-caption text-grey-darken-1">
-                  {{ t('results.roundLabel', { round: trial.roundNumber }) }} —
-                  {{ formatTrialDate(trial.trialStartDate) }}
-                </div>
-              </div>
-              <v-chip
-                size="small"
-                :color="statusColor(trial.trialStatus)"
-                variant="tonal"
-                label
-              >
-                {{ t(`admin.competitionStatus.${trial.trialStatus}`) }}
-              </v-chip>
-            </div>
-
-            <v-divider class="my-3" />
-
-            <div v-if="getTrialResultComputed(trial.trialId)">
-              <div class="text-caption font-weight-medium mb-2">{{ t('results.rankings') }}:</div>
-              <v-table density="compact" class="text-caption">
-                <thead>
-                  <tr>
-                    <th scope="col" class="text-left">{{ t('results.position') }}</th>
-                    <th scope="col" class="text-left">{{ t('results.participant') }}</th>
-                    <th scope="col" class="text-left">{{ t('results.score') }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="ranking in getTrialResultComputed(trial.trialId)?.rankings"
-                    :key="ranking.id"
-                  >
-                    <td>
-                      <v-chip size="small" color="primary" variant="tonal" label>
-                        {{ ranking.position }}
-                      </v-chip>
-                    </td>
-                    <td>{{ getAthleteNameById(ranking.id, trial.trialId) }}</td>
-                    <td>{{ ranking.score }}</td>
-                  </tr>
-                </tbody>
-              </v-table>
-            </div>
-
-            <div v-else class="text-caption text-grey-darken-1">
-              {{ t('results.noRankingsYet') }}
-            </div>
-          </div>
-        </div>
-      </div>
+            <PublicResultsTrialCard
+              :trial="trial"
+              :result="getTrialResultComputed(trial.trialId)"
+              :round-label="t('results.roundLabel', { round: trial.roundNumber })"
+              :formatted-date="formatTrialDate(trial.trialStartDate)"
+              :status-label="t(`admin.competitionStatus.${trial.trialStatus}`)"
+              :status-color="statusColor(trial.trialStatus)"
+              :empty-label="t('results.noRankingsYet')"
+              :get-participant-name="(participantId) => getAthleteNameById(participantId, trial.trialId)"
+              :get-participant-route="(participantId) => getParticipantRoute(participantId, trial.trialId)"
+            />
+          </v-col>
+        </v-row>
+      </section>
     </div>
   </v-container>
 </template>
@@ -123,6 +101,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
+import PublicResultsTrialCard from '@/components/results/PublicResultsTrialCard.vue'
 import championshipService from '@/services/championshipService'
 import resultService from '@/services/resultService'
 import userService from '@/services/userService'
@@ -215,6 +194,17 @@ const getAthleteNameById = (athleteId: number, trialId?: number): string => {
   const athlete = athletes.value.find((a) => a.userId === athleteId)
   if (!athlete) return `#${athleteId}`
   return `${athlete.firstName} ${athlete.surname}`.trim()
+}
+
+const getParticipantRoute = (participantId: number, trialId?: number) => {
+  const trial = allTrials.value.find(t => t.trialId === trialId)
+  const competition = trial ? competitions.value.find(c => c.competitionId === trial.competitionId) : null
+
+  if (competition?.participantType === 'TEAM') {
+    return null
+  }
+
+  return { name: 'public-profile', params: { id: participantId } }
 }
 
 const loadData = async () => {
@@ -336,12 +326,41 @@ onMounted(loadData)
 </script>
 
 <style scoped>
-.space-y-4 > * + * {
-  margin-top: 1rem;
+.results-hero {
+  padding: 28px;
+  border-radius: 30px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    radial-gradient(circle at top left, rgba(25, 118, 210, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.96));
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
 }
 
-.border {
-  border: 1px solid rgba(0, 0, 0, 0.12);
+.back-button {
+  border-color: rgba(25, 118, 210, 0.2);
+}
+
+.results-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.competition-group {
+  padding: 24px;
+  border-radius: 26px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    linear-gradient(180deg, rgba(25, 118, 210, 0.04), rgba(255, 255, 255, 0.98) 140px),
+    white;
+}
+
+.competition-header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.section-label {
+  color: rgb(25, 118, 210);
 }
 </style>
-
