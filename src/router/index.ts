@@ -60,6 +60,22 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'billetterie',
+        name: 'ticketing',
+        component: () => import('@/views/TicketingView.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'billetterie/import',
+        name: 'ticketing-import',
+        component: () => import('@/views/ImportTicketView.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
         path: 'championnats/:id',
         name: 'championship-details',
         component: () => import('@/views/ChampionshipDetailsView.vue'),

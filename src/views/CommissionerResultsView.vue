@@ -508,10 +508,10 @@ const saveResult = async () => {
       lastTrial: editForm.value.lastTrial,
       rankings,
     }
-    if (editForm.value.resultId === undefined) {
-      await resultService.saveResult(payload)
-    } else {
+    if (editForm.value.resultId) {
       await resultService.updateResult(payload)
+    } else {
+      await resultService.saveResult(payload)
     }
 
     // Update trial status to COMPLETED with all fields
