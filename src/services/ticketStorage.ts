@@ -16,7 +16,7 @@ export const getStoredTickets = (): Ticket[] => {
     if (Array.isArray(parsed)) {
       return parsed as Ticket[]
     }
-  } catch (error) {
+  } catch {
     return []
   }
 
