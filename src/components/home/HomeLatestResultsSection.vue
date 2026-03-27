@@ -74,7 +74,7 @@ import type { Competition, Trial } from '@/types/competition'
 import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 import { useI18n } from 'vue-i18n'
 
-const props = defineProps<{
+defineProps<{
   eyebrow: string
   title: string
   competitions: Competition[]
