@@ -69,6 +69,35 @@
                   required
                 />
               </v-col>
+              <v-col v-if="competitionForm.type" cols="12">
+                <v-alert
+                  v-if="competitionForm.type === 'SINGLE_ELIMINATION'"
+                  type="info"
+                  variant="tonal"
+                  density="compact"
+                  icon="mdi-tournament"
+                >
+                  {{ t('admin.competitionTypeInfo.singleElimination') }}
+                </v-alert>
+                <v-alert
+                  v-else-if="competitionForm.type === 'HEATS'"
+                  type="info"
+                  variant="tonal"
+                  density="compact"
+                  icon="mdi-flag-checkered"
+                >
+                  {{ t('admin.competitionTypeInfo.heats') }}
+                </v-alert>
+                <v-alert
+                  v-else-if="competitionForm.type === 'ROUND_ROBIN'"
+                  type="info"
+                  variant="tonal"
+                  density="compact"
+                  icon="mdi-repeat-variant"
+                >
+                  {{ t('admin.competitionTypeInfo.roundRobin') }}
+                </v-alert>
+              </v-col>
               <v-col v-if="competitionForm.type === 'HEATS'" cols="12" md="6">
                 <v-text-field
                   v-model.number="competitionForm.maxPerHeat"
@@ -583,11 +612,11 @@ const confirmDeleteCompetition = async (competition: Competition) => {
     if (editingCompetitionId.value === competition.competitionId) {
       resetCompetitionForm()
     }
-    snackbarMessage.value = 'Compétition supprimée avec succès'
+    snackbarMessage.value = t('admin.competitionDeleteSuccess')
     snackbar.value = true
   } catch (error) {
     console.error('Error deleting competition:', error)
-    snackbarMessage.value = 'Erreur lors de la suppression'
+    snackbarMessage.value = t('admin.competitionDeleteError')
     snackbar.value = true
   }
 }

@@ -28,6 +28,22 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'resultats',
+        name: 'results',
+        component: () => import('@/views/ResultsView.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'resultats/competition/:competitionId',
+        name: 'competition-results',
+        component: () => import('@/views/ResultsView.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
         path: 'profil',
         name: 'profile',
         component: () => import('@/views/ProfileView.vue'),
@@ -152,6 +168,11 @@ const routes: RouteRecordRaw[] = [
             path: 'epreuves/:id/taches',
             name: 'trial-tasks',
             component: () => import('@/views/TrialTaskManagementView.vue'),
+          },
+          {
+            path: 'resultats',
+            name: 'commissioner-results',
+            component: () => import('@/views/CommissionerResultsView.vue'),
           },
         ],
       },

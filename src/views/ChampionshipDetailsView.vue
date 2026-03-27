@@ -20,9 +20,6 @@
             {{ formatDateRange(championship.startDate, championship.endDate) }}
           </div>
         </div>
-        <v-chip :color="statusColor(championship.status)" variant="tonal" class="mt-2" label>
-          {{ t(`admin.competitionStatus.${championship.status}`) }}
-        </v-chip>
       </div>
 
       <v-card variant="outlined" class="pa-4 mb-6">
@@ -76,19 +73,14 @@
               hover
               :to="{ name: 'competition-details', params: { id: competition.competitionId } }"
             >
-              <div class="d-flex align-center justify-space-between mb-2">
-                <div class="text-subtitle-2 font-weight-bold">{{ competition.competitionName }}</div>
-                <v-chip :color="statusColor(competition.competitionStatus)" variant="tonal" size="x-small" label>
-                  {{ t(`admin.competitionStatus.${competition.competitionStatus}`) }}
-                </v-chip>
-              </div>
+              <div class="text-subtitle-2 font-weight-bold mb-2">{{ competition.competitionName }}</div>
 
               <div class="d-flex align-center gap-2 mb-2 flex-wrap">
                 <v-chip size="x-small" color="primary" variant="outlined" prepend-icon="mdi-trophy-outline">
-                  {{ competition.competitionSport }}
+                  {{ getSportLabel(competition.competitionSport) }}
                 </v-chip>
                 <v-chip size="x-small" color="secondary" variant="outlined" prepend-icon="mdi-tournament">
-                  {{ competition.competitionType }}
+                  {{ getCompetitionTypeLabel(competition.competitionType) }}
                 </v-chip>
                 <v-chip size="x-small" color="info" variant="outlined" prepend-icon="mdi-account-group-outline">
                   {{ t(`admin.participantType.${competition.participantType}`) }}
@@ -152,7 +144,6 @@ import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import { useUserStore } from '@/stores/user'
 import type { Championship, Competition } from '@/types/competition'
-import { Status } from '@/types/competition'
 import { getUserDisplayName, UserRole } from '@/types/user'
 import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 
@@ -184,12 +175,19 @@ const canManageCompetition = (competition: Competition) => {
   return competition.assignedCommissaireId === currentUserId.value
 }
 
-const statusColor = (status: Status) => {
-  if (status === Status.PLANNED) return 'grey'
-  if (status === Status.ONGOING) return 'primary'
-  if (status === Status.COMPLETED) return 'success'
-  if (status === Status.CANCELLED) return 'error'
-  return 'primary'
+
+const getSportLabel = (sport: string): string => {
+  const normalized = sport.toUpperCase().replace(/\s+/g, '_')
+  return t(`admin.sport.${normalized}`)
+}
+
+const getCompetitionTypeLabel = (type: string): string => {
+  const labels: Record<string, string> = {
+    'SINGLE_ELIMINATION': t('competitionType.singleElimination'),
+    'ROUND_ROBIN': t('competitionType.roundRobin'),
+    'HEATS': t('competitionType.heats'),
+  }
+  return labels[type] || type
 }
 
 
@@ -225,7 +223,6 @@ const getCommissaireLabel = (id: number | null | undefined) => {
 }
 
 const loadCommissaireNames = async () => {
-  // Récupère les IDs uniques des commissaires assignés
   const ids = [
     ...new Set(
       competitions.value
@@ -233,7 +230,6 @@ const loadCommissaireNames = async () => {
         .filter((id): id is number => id != null),
     ),
   ]
-  // Appel en parallèle pour chaque ID
   const results = await Promise.allSettled(ids.map((id) => userService.getUserProfile(id)))
   results.forEach((result, index) => {
     if (result.status === 'fulfilled') {

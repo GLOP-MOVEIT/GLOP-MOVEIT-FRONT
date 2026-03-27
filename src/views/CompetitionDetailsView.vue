@@ -15,16 +15,13 @@
           <h1 class="text-h4 font-weight-bold mb-2">{{ competition.competitionName }}</h1>
           <div class="d-flex align-center gap-2 flex-wrap">
             <v-chip color="primary" variant="tonal" prepend-icon="mdi-trophy">
-              {{ competition.competitionSport }}
+              {{ getSportLabel(competition.competitionSport) }}
             </v-chip>
             <v-chip color="secondary" variant="tonal" prepend-icon="mdi-tournament">
-              {{ competition.competitionType }}
+              {{ getCompetitionTypeLabel(competition.competitionType) }}
             </v-chip>
             <v-chip color="info" variant="tonal" prepend-icon="mdi-account-group">
               {{ t(`admin.participantType.${competition.participantType}`) }}
-            </v-chip>
-            <v-chip :color="statusColor(competition.competitionStatus)" variant="tonal">
-              {{ t(`admin.competitionStatus.${competition.competitionStatus}`) }}
             </v-chip>
           </div>
         </div>
@@ -38,7 +35,7 @@
           {{ t('competitionDetails.backToChampionship') }}
         </v-btn>
       </div>
-      <v-row dense class="mb-6">
+      <v-row dense class="mb-12">
         <v-col cols="12" md="6">
           <v-card variant="outlined" class="pa-4 h-100">
             <div class="text-subtitle-1 font-weight-medium mb-3">
@@ -134,18 +131,11 @@
                   <span class="font-weight-medium mr-1">{{ t('competitionDetails.round') }} :</span>
                   <span>{{ trial.roundNumber }} - {{ t('competitionDetails.position') }} {{ trial.position }}</span>
                 </div>
-                <div v-if="trial.locationId" class="d-flex flex-column gap-1">
-                  <div class="d-flex align-start">
-                    <v-icon size="14" class="mr-2 mt-1" color="primary">mdi-map-marker</v-icon>
-                    <div>
-                      <span class="font-weight-medium">{{ t('competitionDetails.location') }} :</span>
-                      <div class="text-body-2">{{ getLocation(trial.locationId)?.name ?? trial.locationId }}</div>
-                    </div>
-                  </div>
-                  <div v-if="getLocation(trial.locationId) && getEntrance(getLocation(trial.locationId)!)" class="d-flex align-center pl-4">
-                    <v-icon size="14" class="mr-2">mdi-door-open</v-icon>
-                    <span>{{ getEntrance(getLocation(trial.locationId)!) }}</span>
-                  </div>
+                <div v-if="trial.locationId">
+                  <TrialLocationCard
+                    :location="getLocation(trial.locationId)"
+                    :is-referee="isReferee"
+                  />
                 </div>
                 <div v-else class="d-flex align-center">
                   <v-icon size="14" class="mr-2" color="warning">mdi-alert</v-icon>
@@ -158,15 +148,33 @@
               <div class="text-caption">
                 <div class="font-weight-medium mb-2">
                   <v-icon size="14" class="mr-1">mdi-account-group</v-icon>
-                  {{ t('competitionDetails.athletes') }} :
+                  {{ competition?.participantType === 'TEAM' ? t('competitionDetails.teams') : t('competitionDetails.athletes') }} :
                 </div>
                 <div v-if="trial.participantIds && trial.participantIds.length > 0" class="pl-5">
-                  <div v-for="participantId in trial.participantIds" :key="participantId" class="text-body-2 mb-1">
-                    • {{ getAthleteName(participantId) }}
-                  </div>
+                  <template v-if="competition?.participantType === 'TEAM'">
+                    <div v-for="(participantId, idx) in trial.participantIds" :key="`participant-${idx}`" class="mb-2">
+                      <template v-if="typeof participantId === 'number'">
+                        <div class="text-body-2 font-weight-medium">
+                          • {{ typeof getParticipantDisplay(participantId) === 'object' ? (getParticipantDisplay(participantId) as { teamName: string }).teamName : getParticipantDisplay(participantId) }}
+                        </div>
+                        <div v-if="typeof getParticipantDisplay(participantId) === 'object'" class="pl-4 text-caption text-grey-darken-1">
+                          <div v-for="(athleteName, aIdx) in (getParticipantDisplay(participantId) as { athletes: string[] }).athletes" :key="`athlete-${aIdx}`">
+                            - {{ athleteName }}
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <div v-for="(participantId, idx) in trial.participantIds" :key="`participant-${idx}`" class="text-body-2 mb-1">
+                      <template v-if="typeof participantId === 'number'">
+                        • {{ getAthleteName(participantId) }}
+                      </template>
+                    </div>
+                  </template>
                 </div>
                 <div v-else class="text-grey pl-5">
-                  {{ t('competitionDetails.noAthletes') }}
+                  {{ competition?.participantType === 'TEAM' ? t('competitionDetails.noTeams') : t('competitionDetails.noAthletes') }}
                 </div>
               </div>
 
@@ -189,11 +197,14 @@ import { useI18n } from 'vue-i18n'
 import championshipService from '@/services/championshipService'
 import userService from '@/services/userService'
 import locationService from '@/services/locationService'
+import teamService from '@/services/teamService'
 import { useUserStore } from '@/stores/user'
+import TrialLocationCard from '@/components/TrialLocationCard.vue'
 import type { CompetitionTreeResult, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
 import type { User } from '@/types/user'
 import type { Location } from '@/types/location'
+import type { Team } from '@/types/team'
 import { getUserDisplayName, UserRole } from '@/types/user'
 import { formatDateRange as formatDateRangeUtil, formatDateTime as formatDateTimeUtil } from '@/utils/date'
 
@@ -204,6 +215,7 @@ const competition = ref<CompetitionTreeResult | null>(null)
 const trials = ref<Trial[]>([])
 const athletes = ref<User[]>([])
 const locations = ref<Location[]>([])
+const loadedTeams = ref<Team[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 
@@ -215,10 +227,6 @@ const getLocation = (locationId: number | null | undefined): Location | null => 
   return locations.value.find((l) => l.locationId === locationId) ?? null
 }
 
-const getEntrance = (location: Location): string | null => {
-  if (isReferee.value) return location.refereeEntrance || location.mainEntrance || null
-  return location.mainEntrance || null
-}
 
 const competitionId = computed(() => Number(route.params.id))
 
@@ -241,6 +249,34 @@ const getAthleteName = (athleteId: number) => {
   return athlete ? getUserDisplayName(athlete) : `#${athleteId}`
 }
 
+const getParticipantDisplay = (participantId: number) => {
+  if (competition.value?.participantType === 'TEAM') {
+    const team = loadedTeams.value.find(t => t.teamId === participantId)
+    if (!team) return `Team #${participantId}`
+
+    return {
+      teamName: team.name,
+      athletes: team.athletes.map(a => getUserDisplayName(a)),
+    }
+  }
+  return getAthleteName(participantId)
+}
+
+const getCompetitionTypeLabel = (type: string): string => {
+  const labels: Record<string, string> = {
+    'SINGLE_ELIMINATION': t('competitionType.singleElimination'),
+    'ROUND_ROBIN': t('competitionType.roundRobin'),
+    'HEATS': t('competitionType.heats'),
+  }
+  return labels[type] || type
+}
+
+const getSportLabel = (sport: string): string => {
+  const normalized = sport.toUpperCase().replace(/\s+/g, '_')
+  return t(`admin.sport.${normalized}`)
+}
+
+
 onMounted(async () => {
   isLoading.value = true
   errorMessage.value = ''
@@ -253,6 +289,14 @@ onMounted(async () => {
       athletes.value = await userService.getUsersByRole(UserRole.ATHLETE)
     } catch {
       athletes.value = []
+    }
+
+    if (competition.value?.participantType === 'TEAM') {
+      try {
+        loadedTeams.value = await teamService.getAllTeams()
+      } catch {
+        loadedTeams.value = []
+      }
     }
   } catch (error) {
     console.error('Error loading competition details:', error)

@@ -33,5 +33,10 @@ const menuItems = computed(() => [
     icon: 'mdi-clipboard-list-outline',
     to: '/referee/taches',
   },
+  {
+    title: t('commissioner.menuResults'),
+    icon: 'mdi-trophy',
+    to: '/referee/resultats',
+  },
 ])
 </script>
