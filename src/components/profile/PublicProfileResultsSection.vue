@@ -8,6 +8,7 @@ export interface AthleteResultEntry {
   trialStartDate: string
   positionLabel: string
   scoreLabel: string
+  teamName?: string | null
 }
 
 const props = defineProps<{
@@ -94,6 +95,15 @@ const medalCounts = computed(() => ({
               <div class="text-body-2 text-grey-darken-1">
                 {{ formatDate(entry.trialStartDate) }}
               </div>
+              <v-chip
+                v-if="entry.teamName"
+                size="small"
+                color="secondary"
+                variant="tonal"
+                class="mt-2"
+              >
+                {{ t('publicProfile.teamResultLabel', { team: entry.teamName }) }}
+              </v-chip>
             </div>
             <div class="text-right">
               <div class="text-body-1 font-weight-bold">
