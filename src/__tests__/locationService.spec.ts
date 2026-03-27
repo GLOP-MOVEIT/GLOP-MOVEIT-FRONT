@@ -167,6 +167,36 @@ describe('locationService', () => {
         })
     })
 
+    describe('locateTrialParticipants', () => {
+        it('posts trial locate payload and returns grouped positions', async () => {
+            localStorage.setItem('authToken', authToken)
+            const payload = { requesterId: 42, trialId: 10 }
+            const response = {
+                trialId: 10,
+                athletes: [{ userId: 1, firstName: 'Alice', surname: 'Athlete', latitude: 48.8566, longitude: 2.3522 }],
+                volunteers: [{ userId: 2, firstName: 'Victor', surname: 'Volunteer', latitude: 48.857, longitude: 2.353 }],
+            }
+            mockedAxios.post.mockResolvedValueOnce({ data: response })
+
+            const result = await locationService.locateTrialParticipants(payload)
+
+            expect(mockedAxios.post).toHaveBeenCalledWith(
+                `${apiBaseUrl}/locations/locate/trial`,
+                payload,
+                expect.objectContaining({
+                    headers: expect.objectContaining({ ...authHeader, ...jsonHeader }),
+                }),
+            )
+            expect(result).toEqual(response)
+        })
+
+        it('throws when trial locate fails', async () => {
+            mockedAxios.post.mockRejectedValueOnce(new Error('Locate failed'))
+            await expect(locationService.locateTrialParticipants({ requesterId: 42, trialId: 10 }))
+                .rejects.toThrow('Locate failed')
+        })
+    })
+
     describe('getAuthHeaders without token', () => {
         it('returns empty object when no token is stored', () => {
             const headers = locationService.getAuthHeaders()

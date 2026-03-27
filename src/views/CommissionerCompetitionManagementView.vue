@@ -227,6 +227,15 @@
                     </v-btn>
                     <v-btn
                       variant="outlined"
+                      color="warning"
+                      prepend-icon="mdi-crosshairs-gps"
+                      block
+                      @click="openTrialLocationDialog(trial)"
+                    >
+                      {{ t('commissionerCompetition.locateTrialAction') }}
+                    </v-btn>
+                    <v-btn
+                      variant="outlined"
                       color="success"
                       prepend-icon="mdi-clipboard-list-outline"
                       block
@@ -307,6 +316,15 @@
         :athletes="athletes"
         @update:is-open="isTeamManagementDialogOpen = $event"
         @update:teams="managedTeams = $event"
+      />
+
+      <TrialParticipantsLocationDialog
+        v-model="isTrialLocationDialogOpen"
+        :trial-name="trialLocationDialogTrialName"
+        :athletes="trialLocations?.athletes ?? []"
+        :volunteers="trialLocations?.volunteers ?? []"
+        :is-loading="isLoadingTrialLocations"
+        :error="trialLocationError"
       />
 
       <v-dialog v-model="isDateDialogOpen" max-width="500">
@@ -477,20 +495,23 @@ import volunteerService from '@/services/volunteerService'
 import type { VolunteerTask } from '@/services/volunteerService'
 import type { CompetitionTreeResult, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
+import type { LocateTrialResponse, Location } from '@/types/location'
 import type { User } from '@/types/user'
 import { getUserDisplayName, UserRole } from '@/types/user'
-import type { Location } from '@/types/location'
 import type { Team } from '@/types/team'
 import { formatDateRange as formatDateRangeUtil, formatTimeRange as formatTimeRangeUtil, formatDate as formatDateUtil } from '@/utils/date'
 import { isAxiosError } from 'axios'
+import { useUserStore } from '@/stores/user'
 import AthleteSelectionDialog from '@/components/commissioner/AthleteSelectionDialog.vue'
 import TeamSelectionDialog from '@/components/commissioner/TeamSelectionDialog.vue'
 import TeamManagementDialog from '@/components/commissioner/TeamManagementDialog.vue'
 import AthleteSelectionDisplay from '@/components/commissioner/AthleteSelectionDisplay.vue'
 import TeamSelectionDisplay from '@/components/commissioner/TeamSelectionDisplay.vue'
+import TrialParticipantsLocationDialog from '@/components/commissioner/TrialParticipantsLocationDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 const { t, locale } = useI18n()
 
 const formatDateRange = (start: string | Date, end: string | Date) =>
@@ -544,9 +565,15 @@ const dateOutOfRangeError = ref(false)
 const showQualifiedWarning = ref(false)
 
 const isSavingTrial = ref(false)
+const isTrialLocationDialogOpen = ref(false)
+const isLoadingTrialLocations = ref(false)
+const trialLocationError = ref('')
+const trialLocationDialogTrialName = ref('')
+const trialLocations = ref<LocateTrialResponse | null>(null)
 
 const competitionId = computed(() => Number(route.params.id))
 const championshipDetailsId = computed(() => competition.value?.championshipId ?? competition.value?.championship?.id ?? null)
+const requesterId = computed(() => userStore.user?.userId ?? null)
 
 const statusColor = (status: Status) => {
   if (status === Status.PLANNED) return 'grey'
@@ -862,6 +889,32 @@ const saveDateDialog = async () => {
 
 const navigateToTrialTasks = (trial: Trial) => {
   router.push({ name: 'trial-tasks', params: { id: trial.trialId } })
+}
+
+const openTrialLocationDialog = async (trial: Trial) => {
+  trialLocationDialogTrialName.value = trial.trialName
+  trialLocations.value = null
+  trialLocationError.value = ''
+  isTrialLocationDialogOpen.value = true
+
+  if (!requesterId.value || !trial.trialId) {
+    trialLocationError.value = t('commissionerCompetition.locateTrialLoadError')
+    return
+  }
+
+  isLoadingTrialLocations.value = true
+
+  try {
+    trialLocations.value = await locationService.locateTrialParticipants({
+      requesterId: requesterId.value,
+      trialId: trial.trialId,
+    })
+  } catch (error) {
+    console.error('Load trial participants location error:', error)
+    trialLocationError.value = t('commissionerCompetition.locateTrialLoadError')
+  } finally {
+    isLoadingTrialLocations.value = false
+  }
 }
 
 const saveLocationDialog = async () => {
