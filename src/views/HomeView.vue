@@ -140,18 +140,13 @@ import { UserRole } from '@/types/user'
 import championshipService from '@/services/championshipService'
 import type { Championship, Competition, Trial } from '@/types/competition'
 import { Status } from '@/types/competition'
-import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
 import ChampionshipCarousel from '@/components/ChampionshipCarousel.vue'
 import HomeLatestResultsSection from '@/components/home/HomeLatestResultsSection.vue'
 
 const userStore = useUserStore()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const isAdmin = computed(() => userStore.hasRole(UserRole.ADMIN))
 const isReferee = computed(() => userStore.hasRole(UserRole.REFEREE))
-
-// Wrapper pour utiliser la locale de l'app
-const formatDateRange = (start: string | Date, end: string | Date) =>
-  formatDateRangeUtil(start, end, locale.value)
 
 const championships = ref<Championship[]>([])
 const isLoading = ref(false)
