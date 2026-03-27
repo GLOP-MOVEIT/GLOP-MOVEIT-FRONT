@@ -24,6 +24,13 @@ const mapRequest = (request: RoleRequestApiModel): RoleRequestViewModel => ({
   reference: `#${request.requestId}`,
   role: normalizeRole(request.role?.name),
   status: request.requestStatus,
+  user: {
+    id: request.user?.userId ?? null,
+    firstName: request.user?.firstName ?? null,
+    surname: request.user?.surname ?? null,
+    email: request.user?.email ?? null,
+    phoneNumber: request.user?.phoneNumber ?? null,
+  },
   rejectionReason: request.requestRejectionReason ?? null,
   coverLetter: request.coverLetter ?? null,
 })
