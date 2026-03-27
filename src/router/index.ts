@@ -65,6 +65,21 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'mentions-legales',
+        name: 'legal-notice',
+        component: () => import('@/views/LegalNoticeView.vue'),
+      },
+      {
+        path: 'confidentialite',
+        name: 'privacy-policy',
+        component: () => import('@/views/PrivacyView.vue'),
+      },
+      {
+        path: 'contact',
+        name: 'contact-page',
+        component: () => import('@/views/ContactView.vue'),
+      },
+      {
         path: 'billetterie',
         name: 'ticketing',
         component: () => import('@/views/TicketingView.vue'),
