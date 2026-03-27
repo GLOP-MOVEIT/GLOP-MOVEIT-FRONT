@@ -38,6 +38,7 @@
       <thead>
         <tr>
           <th scope="col" class="text-left">{{ t('commissioner.requestReference') }}</th>
+          <th scope="col" class="text-left">Utilisateur</th>
           <th scope="col" class="text-left">{{ t('commissioner.requestRole') }}</th>
           <th scope="col" class="text-left">{{ t('commissioner.requestStatus') }}</th>
           <th scope="col" class="text-left">{{ t('commissioner.requestDetails') }}</th>
@@ -46,17 +47,28 @@
       </thead>
       <tbody>
         <tr v-if="isLoading">
-          <td colspan="5" class="text-center text-grey-darken-1 py-6">
+          <td colspan="6" class="text-center text-grey-darken-1 py-6">
             {{ t('commissioner.loading') }}
           </td>
         </tr>
         <tr v-else-if="filteredRequests.length === 0">
-          <td colspan="5" class="text-center text-grey-darken-1 py-6">
+          <td colspan="6" class="text-center text-grey-darken-1 py-6">
             {{ t('commissioner.noRequests') }}
           </td>
         </tr>
         <tr v-for="request in filteredRequests" :key="request.id" class="table-row">
           <td class="py-4">{{ request.reference }}</td>
+          <td class="py-4">
+            <div class="text-body-2 font-weight-medium">
+              {{ formatUserName(request) }}
+            </div>
+            <div v-if="request.user.email" class="text-caption text-grey-darken-1">
+              {{ request.user.email }}
+            </div>
+            <div v-if="request.user.phoneNumber" class="text-caption text-grey-darken-1">
+              {{ request.user.phoneNumber }}
+            </div>
+          </td>
           <td class="py-4">{{ formatRoleLabel(request.role) }}</td>
           <td class="py-4">
             <v-chip size="small" :color="statusColor(request.status)" variant="tonal">
@@ -177,6 +189,26 @@ const selectedCoverLetterRequest = ref<RoleRequestViewModel | null>(null)
 const processingRequestId = ref<number | null>(null)
 const processingAction = ref<'approve' | 'reject' | null>(null)
 
+const formatUserName = (request: RoleRequestViewModel) => {
+  const firstName = request.user.firstName?.trim() ?? ''
+  const surname = request.user.surname?.trim() ?? ''
+  const fullName = `${firstName} ${surname}`.trim()
+
+  if (fullName) {
+    return fullName
+  }
+
+  if (request.user.email) {
+    return request.user.email
+  }
+
+  if (request.user.id != null) {
+    return `#${request.user.id}`
+  }
+
+  return '-'
+}
+
 const formatRoleLabel = (role: string) => {
   const key = `roles.${role}`
   const translated = t(key)
@@ -287,6 +319,9 @@ const filteredRequests = computed(() => {
         !query ||
         request.reference.toLowerCase().includes(query) ||
         request.role.toLowerCase().includes(query) ||
+        formatUserName(request).toLowerCase().includes(query) ||
+        (request.user.email ?? '').toLowerCase().includes(query) ||
+        (request.user.phoneNumber ?? '').toLowerCase().includes(query) ||
         (request.coverLetter ?? '').toLowerCase().includes(query)
 
     const matchesRole = !selectedRole.value || request.role === selectedRole.value
