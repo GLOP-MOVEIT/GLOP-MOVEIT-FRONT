@@ -12,24 +12,30 @@
     <v-skeleton-loader v-if="isLoading" type="card" class="mb-6" />
 
     <div v-else-if="championship" class="mb-6">
-      <div class="d-flex flex-wrap align-center justify-space-between mb-4">
-        <div>
-          <div class="text-overline mb-1">{{ t('championshipDetails.title') }}</div>
-          <h1 class="text-h4 font-weight-bold mb-2">{{ championship.name }}</h1>
-          <div class="text-body-2 text-grey-darken-1">
-            {{ formatDateRange(championship.startDate, championship.endDate) }}
+      <section class="championship-hero mb-6">
+        <div class="text-overline section-label mb-2">{{ t('championshipDetails.title') }}</div>
+        <div class="d-flex flex-wrap align-start justify-space-between ga-4">
+          <div>
+            <h1 class="text-h4 font-weight-bold mb-2">{{ championship.name }}</h1>
+            <div class="text-body-1 text-grey-darken-1">
+              {{ formatDateRange(championship.startDate, championship.endDate) }}
+            </div>
+          </div>
+          <div class="d-flex flex-wrap ga-2">
+            <v-chip color="primary" variant="tonal">{{ competitions.length }} {{ t('championshipDetails.competitionsTitle') }}</v-chip>
+            <v-chip color="info" variant="tonal">{{ sportFilterOptions.length }} sport(s)</v-chip>
           </div>
         </div>
-      </div>
+      </section>
 
-      <v-card variant="outlined" class="pa-4 mb-6">
+      <v-card variant="outlined" class="summary-card pa-4 mb-6">
         <div class="text-subtitle-1 font-weight-medium mb-2">{{ t('championshipDetails.about') }}</div>
-        <div class="text-body-2 text-grey-darken-1">
+        <div class="text-body-2 text-grey-darken-1 summary-copy">
           {{ championship.description || t('championshipDetails.noDescription') }}
         </div>
       </v-card>
 
-      <v-card variant="outlined" class="pa-4">
+      <section class="mb-6">
         <div class="d-flex align-center justify-space-between mb-4">
           <div>
             <div class="text-subtitle-1 font-weight-medium">{{ t('championshipDetails.competitionsTitle') }}</div>
@@ -41,6 +47,7 @@
         </div>
 
         <v-select
+          v-if="competitions.length > 0 && sportFilterOptions.length > 1"
           v-model="selectedSport"
           :items="sportFilterOptions"
           item-title="title"
@@ -66,72 +73,23 @@
             cols="12"
             md="6"
           >
-            <v-card
-              variant="tonal"
-              class="pa-3 h-100"
-              rounded="lg"
-              hover
-              :to="{ name: 'competition-details', params: { id: competition.competitionId } }"
-            >
-              <div class="text-subtitle-2 font-weight-bold mb-2">{{ competition.competitionName }}</div>
-
-              <div class="d-flex align-center gap-2 mb-2 flex-wrap">
-                <v-chip size="x-small" color="primary" variant="outlined" prepend-icon="mdi-trophy-outline">
-                  {{ getSportLabel(competition.competitionSport) }}
-                </v-chip>
-                <v-chip size="x-small" color="secondary" variant="outlined" prepend-icon="mdi-tournament">
-                  {{ getCompetitionTypeLabel(competition.competitionType) }}
-                </v-chip>
-                <v-chip size="x-small" color="info" variant="outlined" prepend-icon="mdi-account-group-outline">
-                  {{ t(`admin.participantType.${competition.participantType}`) }}
-                </v-chip>
-              </div>
-
-              <div class="d-flex align-center text-caption text-grey-darken-2 mb-2">
-                <v-icon size="14" class="mr-1">mdi-calendar-range</v-icon>
-                {{ formatDateRange(competition.competitionStartDate, competition.competitionEndDate) }}
-              </div>
-
-              <div class="d-flex align-center gap-3 text-caption text-grey-darken-2 mb-2">
-                <span>
-                  <v-icon size="14" class="mr-1">mdi-repeat</v-icon>
-                  {{ competition.nbManches }} {{ t('championshipDetails.rounds') }}
-                </span>
-                <span>
-                  <v-icon size="14" class="mr-1">mdi-account-multiple</v-icon>
-                  {{ competition.maxPerHeat }} {{ t('championshipDetails.perHeat') }}
-                </span>
-              </div>
-
-              <div v-if="competition.competitionDescription" class="text-caption text-grey-darken-1 mb-2">
-                {{ competition.competitionDescription }}
-              </div>
-
-              <div class="d-flex align-center text-caption mt-1">
-                <v-icon size="14" class="mr-1" :color="competition.assignedCommissaireId ? 'success' : 'grey'">
-                  mdi-shield-account-outline
-                </v-icon>
-                <span :class="competition.assignedCommissaireId ? 'text-success' : 'text-grey'">
-                  {{ getCommissaireLabel(competition.assignedCommissaireId) }}
-                </span>
-              </div>
-
-              <div v-if="canManageCompetition(competition)" class="d-flex justify-end mt-3">
-                <v-btn
-                  color="primary"
-                  variant="outlined"
-                  size="small"
-                  :to="{ name: 'commissioner-competition-management', params: { id: competition.competitionId } }"
-                  @click.stop
-                >
-                  <v-icon size="18" class="mr-1">mdi-cog</v-icon>
-                  {{ t('championshipDetails.manageTrials') }}
-                </v-btn>
-              </div>
-            </v-card>
+            <ChampionshipCompetitionCard
+              :competition="competition"
+              :sport-label="getSportLabel(competition.competitionSport)"
+              :competition-type-label="getCompetitionTypeLabel(competition.competitionType)"
+              :participant-type-label="t(`admin.participantType.${competition.participantType}`)"
+              :date-range-label="formatDateRange(competition.competitionStartDate, competition.competitionEndDate)"
+              :rounds-label="t('championshipDetails.rounds')"
+              :per-heat-label="t('championshipDetails.perHeat')"
+              :commissaire-label="getCommissaireLabel(competition.assignedCommissaireId)"
+              :commissaire-short-label="competition.assignedCommissaireId ? t('championshipDetails.commissaireAssigned') : t('championshipDetails.noCommissaire')"
+              :no-description-label="t('championshipDetails.noDescription')"
+              :manage-label="t('championshipDetails.manageTrials')"
+              :show-manage-button="canManageCompetition(competition)"
+            />
           </v-col>
         </v-row>
-      </v-card>
+      </section>
     </div>
   </v-container>
 </template>
@@ -146,6 +104,7 @@ import { useUserStore } from '@/stores/user'
 import type { Championship, Competition } from '@/types/competition'
 import { getUserDisplayName, UserRole } from '@/types/user'
 import { formatDateRange as formatDateRangeUtil } from '@/utils/date'
+import ChampionshipCompetitionCard from '@/components/championship/ChampionshipCompetitionCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -273,3 +232,34 @@ const goBack = () => {
 
 onMounted(loadChampionship)
 </script>
+
+<style scoped>
+.section-label {
+  color: rgb(25, 118, 210);
+}
+
+.championship-hero {
+  padding: 28px;
+  border-radius: 30px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    radial-gradient(circle at top left, rgba(25, 118, 210, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.96));
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+}
+
+.summary-card {
+  border-radius: 24px;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+.summary-card {
+  background:
+    linear-gradient(180deg, rgba(25, 118, 210, 0.04), rgba(255, 255, 255, 0) 140px),
+    white;
+}
+
+.summary-copy {
+  max-width: 64ch;
+}
+</style>

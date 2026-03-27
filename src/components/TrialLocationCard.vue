@@ -12,10 +12,11 @@
       <span>{{ entrance }}</span>
     </div>
     <v-btn
-      size="x-small"
-      variant="tonal"
+      size="small"
+      variant="elevated"
       color="info"
-      class="mt-2 align-self-start"
+      class="mt-3 trial-location-button"
+      block
       prepend-icon="mdi-directions"
       @click="openMapItinerary"
     >
@@ -59,3 +60,9 @@ const openMapItinerary = () => {
 }
 </script>
 
+<style scoped>
+.trial-location-button {
+  min-height: 36px;
+  width: 100%;
+}
+</style>
