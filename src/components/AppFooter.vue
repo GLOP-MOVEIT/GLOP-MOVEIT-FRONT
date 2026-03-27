@@ -18,13 +18,13 @@ const currentYear = computed(() => new Date().getFullYear())
           <strong>CiblOrgaSport</strong> © {{ currentYear }} - {{ t('footer.rightsReserved') }}
         </v-col>
         <v-col cols="12" md="6" class="text-center text-md-right">
-          <v-btn variant="text" size="small" href="#" class="mx-1">
+          <v-btn variant="text" size="small" :to="{ name: 'legal-notice' }" class="mx-1">
             {{ t('footer.legal') }}
           </v-btn>
-          <v-btn variant="text" size="small" href="#" class="mx-1">
+          <v-btn variant="text" size="small" :to="{ name: 'privacy-policy' }" class="mx-1">
             {{ t('footer.privacy') }}
           </v-btn>
-          <v-btn variant="text" size="small" href="#" class="mx-1">
+          <v-btn variant="text" size="small" :to="{ name: 'contact-page' }" class="mx-1">
             {{ t('footer.contact') }}
           </v-btn>
         </v-col>
