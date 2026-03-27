@@ -58,6 +58,14 @@ const mapCenter = computed<[number, number]>(() => props.coordinates ?? [46.6033
       </l-map>
     </div>
   </div>
+
+  <v-alert
+    v-else
+    type="info"
+    variant="tonal"
+  >
+    {{ t('publicProfile.locationUnavailable') }}
+  </v-alert>
 </template>
 
 <style scoped>

@@ -58,52 +58,24 @@
 
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import PublicProfileLocationSection from '@/components/profile/PublicProfileLocationSection.vue'
 import PublicProfileResultsSection, {
   type AthleteResultEntry,
 } from '@/components/profile/PublicProfileResultsSection.vue'
+import championshipService from '@/services/championshipService'
 import locationService from '@/services/locationService'
+import resultService from '@/services/resultService'
 import userService from '@/services/userService'
 import { useUserStore } from '@/stores/user'
+import type { Trial } from '@/types/competition'
 import { matchesUserRole, UserRole, type User } from '@/types/user'
 
 const route = useRoute()
 const userStore = useUserStore()
 const { t, d, locale } = useI18n()
-
-const demoAthleteResults: AthleteResultEntry[] = [
-  {
-    trialId: 12,
-    trialName: 'Trial 12',
-    trialStartDate: '2026-03-24T14:00:00',
-    positionLabel: '#1',
-    scoreLabel: '9.82',
-  },
-  {
-    trialId: 14,
-    trialName: 'Trial 14',
-    trialStartDate: '2026-03-24T16:00:00',
-    positionLabel: '#2',
-    scoreLabel: '9.95',
-  },
-  {
-    trialId: 18,
-    trialName: 'Trial 18',
-    trialStartDate: '2026-03-25T10:00:00',
-    positionLabel: '#3',
-    scoreLabel: '10.11',
-  },
-  {
-    trialId: 21,
-    trialName: 'Trial 21',
-    trialStartDate: '2026-03-26T11:30:00',
-    positionLabel: '#4',
-    scoreLabel: '10.20',
-  },
-]
 
 const isLoading = ref(true)
 const isLoadingLocation = ref(false)
@@ -139,11 +111,6 @@ const isAthlete = computed(() => {
 })
 
 const requesterId = computed(() => userStore.user?.userId ?? null)
-const requesterCanLocateSpectator = computed(() => {
-  return userStore.hasRole(UserRole.SPECTATOR) ||
-    userStore.hasRole(UserRole.ADMIN) ||
-    userStore.hasRole(UserRole.REFEREE)
-})
 const requesterCanLocateAthlete = computed(() => {
   return userStore.hasRole(UserRole.ADMIN) || userStore.hasRole(UserRole.REFEREE)
 })
@@ -156,7 +123,7 @@ const showLocationSection = computed(() => {
     return requesterCanLocateAthlete.value
   }
 
-  return profile.value.acceptsLocationSharing && requesterCanLocateSpectator.value
+  return profile.value.acceptsLocationSharing
 })
 
 const formatRoleLabel = (role?: string) => {
@@ -177,6 +144,26 @@ const formatDate = (value: string) => {
   } catch {
     return value
   }
+}
+
+const buildTrialsMap = async () => {
+  const competitions = await championshipService.getAllCompetitions()
+  const trialsByCompetition = await Promise.all(
+    competitions.map(async (competition) => {
+      try {
+        return await championshipService.getTrialsByCompetition(competition.competitionId)
+      } catch {
+        return []
+      }
+    }),
+  )
+
+  return trialsByCompetition
+    .flat()
+    .reduce((map, trial) => {
+      map.set(trial.trialId, trial)
+      return map
+    }, new Map<number, Trial>())
 }
 
 const loadLocation = async (targetProfile: User) => {
@@ -205,6 +192,14 @@ const loadLocation = async (targetProfile: User) => {
   }
 }
 
+watchEffect(() => {
+  if (!profile.value || !requesterId.value || !showLocationSection.value || isLoading.value) {
+    return
+  }
+
+  void loadLocation(profile.value)
+})
+
 const loadAthleteResults = async (targetProfile: User) => {
   athleteResults.value = []
   resultsError.value = ''
@@ -214,7 +209,35 @@ const loadAthleteResults = async (targetProfile: User) => {
     return
   }
 
-  athleteResults.value = demoAthleteResults
+  try {
+    const [results, trialsMap] = await Promise.all([
+      resultService.getAllResultsByParticipantId(targetProfile.userId),
+      buildTrialsMap(),
+    ])
+
+    athleteResults.value = results
+      .map((result) => {
+        const ranking = result.rankings.find((entry) => entry.id === targetProfile.userId)
+        const trial = trialsMap.get(result.trialId)
+
+        if (!ranking || !trial) {
+          return null
+        }
+
+        return {
+          trialId: trial.trialId,
+          trialName: trial.trialName,
+          trialStartDate: trial.trialStartDate,
+          positionLabel: `#${ranking.position}`,
+          scoreLabel: ranking.score,
+        }
+      })
+      .filter((entry): entry is AthleteResultEntry => entry !== null)
+      .sort((a, b) => new Date(b.trialStartDate).getTime() - new Date(a.trialStartDate).getTime())
+  } catch (error) {
+    console.error('Load athlete results error:', error)
+    resultsError.value = t('publicProfile.resultsLoadError')
+  }
 }
 
 const loadProfile = async () => {
@@ -237,7 +260,6 @@ const loadProfile = async () => {
     profile.value = loadedProfile
 
     await loadAthleteResults(loadedProfile)
-    await loadLocation(loadedProfile)
   } catch (error) {
     console.error('Load public profile error:', error)
     errorMessage.value = axios.isAxiosError(error) && error.response?.status === 404
