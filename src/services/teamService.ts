@@ -20,7 +20,7 @@ const teamService = {
     const { data } = await apiClient.get<PagedResponse<Team> | Team[]>(`/teams?${params.toString()}`)
 
     if (data && typeof data === 'object' && 'content' in data) {
-      return data.content as Team[]
+      return data.content
     }
 
     return Array.isArray(data) ? data : []

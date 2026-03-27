@@ -361,7 +361,8 @@ const getAthleteName = (userId: number): string => {
       .map(athlete => `${athlete.firstName} ${athlete.surname}`.trim())
       .join(', ')
 
-    return `${team.name}${athleteNames ? ` (${athleteNames})` : ''}`
+    const athletesPart = athleteNames ? ` (${athleteNames})` : ''
+    return `${team.name}${athletesPart}`
   }
 
   const athlete = athletes.value.find((a) => a.userId === userId)
@@ -507,10 +508,10 @@ const saveResult = async () => {
       lastTrial: editForm.value.lastTrial,
       rankings,
     }
-    if (editForm.value.resultId !== undefined) {
-      await resultService.updateResult(payload)
-    } else {
+    if (editForm.value.resultId === undefined) {
       await resultService.saveResult(payload)
+    } else {
+      await resultService.updateResult(payload)
     }
 
     // Update trial status to COMPLETED with all fields

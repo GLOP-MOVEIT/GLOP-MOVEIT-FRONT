@@ -86,16 +86,13 @@ const isCreatingTeam = ref(false)
 const isAddingAthlete = ref(false)
 const error = ref('')
 
-// Synchroniser avec les props
 watch(() => props.teams, (newTeams) => {
   localTeams.value = [...newTeams]
 }, { deep: true })
 
-// Athlètes disponibles pour une équipe (ceux qui ne sont pas déjà dans cette équipe OU dans une autre équipe)
 const availableAthletesForTeam = (team: Team) => {
-  const teamAthleteIds = team.athletes.map(a => a.userId)
+  const teamAthleteIds = new Set(team.athletes.map(a => a.userId))
 
-  // Récupérer tous les athlètes déjà dans d'autres équipes
   const athletesInOtherTeams = new Set<number>()
   localTeams.value.forEach(t => {
     if (t.teamId !== team.teamId) {
@@ -104,7 +101,7 @@ const availableAthletesForTeam = (team: Team) => {
   })
 
   return props.athletes
-    .filter(a => !teamAthleteIds.includes(a.userId) && !athletesInOtherTeams.has(a.userId))
+    .filter(a => !teamAthleteIds.has(a.userId) && !athletesInOtherTeams.has(a.userId))
     .map(a => ({
       ...a,
       displayName: getUserDisplayName(a),

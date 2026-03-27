@@ -208,7 +208,8 @@ const getAthleteNameById = (athleteId: number, trialId?: number): string => {
       .map(athlete => `${athlete.firstName} ${athlete.surname}`.trim())
       .join(', ')
 
-    return `${team.name}${athleteNames ? ` (${athleteNames})` : ''}`
+    const athletesPart = athleteNames ? ` (${athleteNames})` : ''
+    return `${team.name}${athletesPart}`
   }
 
   const athlete = athletes.value.find((a) => a.userId === athleteId)
